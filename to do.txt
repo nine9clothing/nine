@@ -1,0 +1,19 @@
+Admin...
+Sales under message
+//Ig video add
+// Dashboard, monthly chart, age group chart, city wise
+
+//Insights, 5 top selling
+
+
+User...
+Home, newsletter and //ig, animation
+About, text bg will be changed
+// Contact us, ph number
+Login, email load
+
+
+
+Mobile view, icon hamburger animatipn
+Sort mobile, zoom on that produxt
+Filter animation
