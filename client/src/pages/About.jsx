@@ -8,10 +8,10 @@ const About = () => {
     wrapper: {
       position: 'relative',
       minHeight: '100vh',
-      color: '#fff', // Main text color
+      color: '#fff',
       fontFamily: 'Arial, sans-serif',
       overflow: 'hidden',
-      backgroundColor: 'black', // Dark background for the content
+      backgroundColor: 'black',
     },
     movingBackground: {
       position: 'absolute',
@@ -25,20 +25,20 @@ const About = () => {
       alignItems: 'center',
       pointerEvents: 'none',
       zIndex: 0,
-      animation: 'scrollUp 20s linear infinite', // Increased speed for bigger text
+      animation: 'scrollUp 20s linear infinite', 
       whiteSpace: 'nowrap',
     },
     bgText: {
-      fontSize: '3rem', // Increased font size for larger text
+      fontSize: '4rem', 
       fontWeight: 'bold',
-      opacity: 0.2, // Darker text opacity
-      color: '#Ffa500', // Dark text color for the background text
+      opacity: 0.2, 
+      color: '#Ffa500', 
       textTransform: 'uppercase',
       lineHeight: '1.9',
-      width: '100%', // Ensure text fills the screen
+      width: '100%',
       display: 'inline-block',
       textAlign: 'center',
-      fontFamily: '"Abril Extra Bold", sans-serif' // Applied to headings
+      fontFamily: '"Abril Extra Bold", sans-serif'
     },
     contentSection: {
       position: 'relative',
@@ -52,12 +52,12 @@ const About = () => {
       fontSize: "2.8rem",
       fontWeight: '900',
       marginBottom: '30px',
-      fontFamily: '"Abril Extra Bold", sans-serif', // Applied to headings (replacing Oswald)
+      fontFamily: '"Abril Extra Bold", sans-serif', 
       color: '#Ffa500', 
       textShadow: '2px 2px 5px rgba(0, 0, 0, 0.3)', 
     },
     paragraph: {
-      fontFamily: '"Louvette Semi Bold", sans-serif', // Applied to descriptions (replacing Roboto)
+      fontFamily: '"Louvette Semi Bold", sans-serif', 
       fontSize: '1.1rem', 
       color: '#f1f1f1', 
       lineHeight: '1.9',
@@ -77,7 +77,7 @@ const About = () => {
       textDecoration: "none",
       margin: "0 10px",
       fontSize: "14px",
-      fontFamily: '"Louvette Semi Bold", sans-serif' // Applied to descriptions
+      fontFamily: '"Louvette Semi Bold", sans-serif' 
     },
     separator: {
       color: "#fff",
@@ -91,7 +91,6 @@ const About = () => {
     `,
   };
 
-  // Inject animation keyframes once
   if (typeof document !== 'undefined') {
     if (!document.getElementById('about-keyframes')) {
       const styleTag = document.createElement('style');
@@ -105,60 +104,78 @@ const About = () => {
     <div style={styles.wrapper}>
       <Navbar showLogo={true} />
       
-      {/* Animated Background Text */}
       <div style={styles.movingBackground}>
         {[
-          "HANDCRAFTED WITH SOUL • SHAPED BY INTENTION • FASHION THAT SPEAKS YOU",
-          "MADE TO BE SEEN • HEARD • FELT • NINE9 MOVEMENT • STYLE WITH PURPOSE •",
-          "BE BOLD • BE AUTHENTIC • BE NINE9 • YOUR STYLE IS YOUR POWER • STYLE WITH PURPOSE ",
-          "EVERY STITCH TELLS A STORY • CREATIVITY IS OUR FABRIC • STYLE WITH PURPOSE •",
-          "UNAPOLOGETICALLY YOU • STYLE WITH PURPOSE • ART IN MOTION • STYLE WITH PURPOSE ",
-          "CLOTHES WITH CHARACTER • CULTURE IN EVERY THREAD • STYLE WITH PURPOSE •",
-          "HANDCRAFTED WITH SOUL • SHAPED BY INTENTION • FASHION THAT SPEAKS YOU",
-          "MADE TO BE SEEN • HEARD • FELT • NINE9 MOVEMENT • STYLE WITH PURPOSE •",
-          "BE BOLD • BE AUTHENTIC • BE NINE9 • YOUR STYLE IS YOUR POWER",
-          "EVERY STITCH TELLS A STORY • CREATIVITY IS OUR FABRIC • SHAPED BY INTENTION ",
-          "UNAPOLOGETICALLY YOU • STYLE WITH PURPOSE • ART IN MOTION",
-          "CLOTHES WITH CHARACTER • CULTURE IN EVERY THREAD",
-          "MADE TO BE SEEN • HEARD • FELT • NINE9 MOVEMENT • STYLE WITH PURPOSE •",
-          "BE BOLD • BE AUTHENTIC • BE NINE9 • YOUR STYLE IS YOUR POWER",
-          "EVERY STITCH TELLS A STORY • CREATIVITY IS OUR FABRIC • STYLE WITH PURPOSE •",
-          "UNAPOLOGETICALLY YOU • STYLE WITH PURPOSE • ART IN MOTION",
-          "CLOTHES WITH CHARACTER • CULTURE IN EVERY THREAD • STYLE WITH PURPOSE •",
-          "HANDCRAFTED WITH SOUL • SHAPED BY INTENTION • FASHION THAT SPEAKS YOU",
-          "MADE TO BE SEEN • HEARD • FELT • NINE9 MOVEMENT • STYLE WITH PURPOSE •",
-          "BE BOLD • BE AUTHENTIC • BE NINE9 • YOUR STYLE IS YOUR POWER",
-          "EVERY STITCH TELLS A STORY • CREATIVITY IS OUR FABRIC •",
-          "UNAPOLOGETICALLY YOU • STYLE WITH PURPOSE • ART IN MOTION",
-          "CLOTHES WITH CHARACTER • CULTURE IN EVERY THREAD • STYLE WITH PURPOSE •",
-          "HANDCRAFTED WITH SOUL • SHAPED BY INTENTION • FASHION THAT SPEAKS YOU",
-          "MADE TO BE SEEN • HEARD • FELT • NINE9 MOVEMENT • STYLE WITH PURPOSE •",
-          "BE BOLD • BE AUTHENTIC • BE NINE9 • YOUR STYLE IS YOUR POWER",
-          "EVERY STITCH TELLS A STORY • CREATIVITY IS OUR FABRIC • SHAPED BY INTENTION ",
-          "UNAPOLOGETICALLY YOU • STYLE WITH PURPOSE • ART IN MOTION",
-          "CLOTHES WITH CHARACTER • CULTURE IN EVERY THREAD",
-          "MADE TO BE SEEN • HEARD • FELT • NINE9 MOVEMENT • STYLE WITH PURPOSE •",
-          "BE BOLD • BE AUTHENTIC • BE NINE9 • YOUR STYLE IS YOUR POWER",
-          "EVERY STITCH TELLS A STORY • CREATIVITY IS OUR FABRIC • STYLE WITH PURPOSE •",
-          "UNAPOLOGETICALLY YOU • STYLE WITH PURPOSE • ART IN MOTION",
-          "CLOTHES WITH CHARACTER • CULTURE IN EVERY THREAD • STYLE WITH PURPOSE •",
-          "HANDCRAFTED WITH SOUL • SHAPED BY INTENTION • FASHION THAT SPEAKS YOU",
-          "MADE TO BE SEEN • HEARD • FELT • NINE9 MOVEMENT • STYLE WITH PURPOSE •",
-          "BE BOLD • BE AUTHENTIC • BE NINE9 • YOUR STYLE IS YOUR POWER",
-          "EVERY STITCH TELLS A STORY • CREATIVITY IS OUR FABRIC • STYLE WITH PURPOSE •",
-          "UNAPOLOGETICALLY YOU • STYLE WITH PURPOSE • ART IN MOTION",
-          "CLOTHES WITH CHARACTER • CULTURE IN EVERY THREAD • STYLE WITH PURPOSE •",
-          "HANDCRAFTED WITH SOUL • SHAPED BY INTENTION • FASHION THAT SPEAKS YOU",
-          "MADE TO BE SEEN • HEARD • FELT • NINE9 MOVEMENT • STYLE WITH PURPOSE •",
-          "BE BOLD • BE AUTHENTIC • BE NINE9 • YOUR STYLE IS YOUR POWER",
-          "EVERY STITCH TELLS A STORY • CREATIVITY IS OUR FABRIC • SHAPED BY INTENTION ",
-          "UNAPOLOGETICALLY YOU • STYLE WITH PURPOSE • ART IN MOTION",
-          "CLOTHES WITH CHARACTER • CULTURE IN EVERY THREAD",
-          "MADE TO BE SEEN • HEARD • FELT • NINE9 MOVEMENT • STYLE WITH PURPOSE •",
-          "BE BOLD • BE AUTHENTIC • BE NINE9 • YOUR STYLE IS YOUR POWER",
-          "EVERY STITCH TELLS A STORY • CREATIVITY IS OUR FABRIC • STYLE WITH PURPOSE •",
-          "UNAPOLOGETICALLY YOU • STYLE WITH PURPOSE • ART IN MOTION",
-          "CLOTHES WITH CHARACTER • CULTURE IN EVERY THREAD • STYLE WITH PURPOSE •",
+          "MADE BY ATRIST, FOR SOULS WHO WEAR ART",
+          "MADE BY ATRIST, FOR SOULS WHO WEAR ART",
+          "MADE BY ATRIST, FOR SOULS WHO WEAR ART",
+          "MADE BY ATRIST, FOR SOULS WHO WEAR ART",
+          "MADE BY ATRIST, FOR SOULS WHO WEAR ART",
+          "MADE BY ATRIST, FOR SOULS WHO WEAR ART",
+          "MADE BY ATRIST, FOR SOULS WHO WEAR ART",
+          "MADE BY ATRIST, FOR SOULS WHO WEAR ART",
+          "MADE BY ATRIST, FOR SOULS WHO WEAR ART",
+          "MADE BY ATRIST, FOR SOULS WHO WEAR ART",
+          "MADE BY ATRIST, FOR SOULS WHO WEAR ART",
+          "MADE BY ATRIST, FOR SOULS WHO WEAR ART",
+          "MADE BY ATRIST, FOR SOULS WHO WEAR ART",
+          "MADE BY ATRIST, FOR SOULS WHO WEAR ART",
+          "MADE BY ATRIST, FOR SOULS WHO WEAR ART",
+          "MADE BY ATRIST, FOR SOULS WHO WEAR ART",
+          "MADE BY ATRIST, FOR SOULS WHO WEAR ART",
+          "MADE BY ATRIST, FOR SOULS WHO WEAR ART",
+          "MADE BY ATRIST, FOR SOULS WHO WEAR ART",
+          "MADE BY ATRIST, FOR SOULS WHO WEAR ART",
+          "MADE BY ATRIST, FOR SOULS WHO WEAR ART",
+          "MADE BY ATRIST, FOR SOULS WHO WEAR ART",
+          "MADE BY ATRIST, FOR SOULS WHO WEAR ART",
+          "MADE BY ATRIST, FOR SOULS WHO WEAR ART",
+          "MADE BY ATRIST, FOR SOULS WHO WEAR ART",
+          "MADE BY ATRIST, FOR SOULS WHO WEAR ART",
+          "MADE BY ATRIST, FOR SOULS WHO WEAR ART",
+          "MADE BY ATRIST, FOR SOULS WHO WEAR ART",
+          "MADE BY ATRIST, FOR SOULS WHO WEAR ART",
+          "MADE BY ATRIST, FOR SOULS WHO WEAR ART",
+          "MADE BY ATRIST, FOR SOULS WHO WEAR ART",
+          "MADE BY ATRIST, FOR SOULS WHO WEAR ART",
+          "MADE BY ATRIST, FOR SOULS WHO WEAR ART",
+          "MADE BY ATRIST, FOR SOULS WHO WEAR ART",
+          "MADE BY ATRIST, FOR SOULS WHO WEAR ART",
+          "MADE BY ATRIST, FOR SOULS WHO WEAR ART",
+          "MADE BY ATRIST, FOR SOULS WHO WEAR ART",
+          "MADE BY ATRIST, FOR SOULS WHO WEAR ART",
+          "MADE BY ATRIST, FOR SOULS WHO WEAR ART",
+          "MADE BY ATRIST, FOR SOULS WHO WEAR ART",
+          "MADE BY ATRIST, FOR SOULS WHO WEAR ART",
+          "MADE BY ATRIST, FOR SOULS WHO WEAR ART",
+          "MADE BY ATRIST, FOR SOULS WHO WEAR ART",
+          "MADE BY ATRIST, FOR SOULS WHO WEAR ART",
+          "MADE BY ATRIST, FOR SOULS WHO WEAR ART",
+          "MADE BY ATRIST, FOR SOULS WHO WEAR ART",
+          "MADE BY ATRIST, FOR SOULS WHO WEAR ART",
+          "MADE BY ATRIST, FOR SOULS WHO WEAR ART",
+          "MADE BY ATRIST, FOR SOULS WHO WEAR ART",
+          "MADE BY ATRIST, FOR SOULS WHO WEAR ART",
+          "MADE BY ATRIST, FOR SOULS WHO WEAR ART",
+          "MADE BY ATRIST, FOR SOULS WHO WEAR ART",
+          "MADE BY ATRIST, FOR SOULS WHO WEAR ART",
+          "MADE BY ATRIST, FOR SOULS WHO WEAR ART",
+          "MADE BY ATRIST, FOR SOULS WHO WEAR ART",
+          "MADE BY ATRIST, FOR SOULS WHO WEAR ART",
+          "MADE BY ATRIST, FOR SOULS WHO WEAR ART",
+          "MADE BY ATRIST, FOR SOULS WHO WEAR ART",
+          "MADE BY ATRIST, FOR SOULS WHO WEAR ART",
+          "MADE BY ATRIST, FOR SOULS WHO WEAR ART",
+          "MADE BY ATRIST, FOR SOULS WHO WEAR ART",
+          "MADE BY ATRIST, FOR SOULS WHO WEAR ART",
+          "MADE BY ATRIST, FOR SOULS WHO WEAR ART",
+          "MADE BY ATRIST, FOR SOULS WHO WEAR ART",
+          "MADE BY ATRIST, FOR SOULS WHO WEAR ART",
+          "MADE BY ATRIST, FOR SOULS WHO WEAR ART",
+          "MADE BY ATRIST, FOR SOULS WHO WEAR ART",
+          "MADE BY ATRIST, FOR SOULS WHO WEAR ART",
+          "MADE BY ATRIST, FOR SOULS WHO WEAR ART",
+          "MADE BY ATRIST, FOR SOULS WHO WEAR ART",
         ].map((line, idx) => (
           <div key={idx} style={styles.bgText}>{line}</div>
         ))}

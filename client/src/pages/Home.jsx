@@ -13,34 +13,24 @@ const supabase = createClient(
 );
 
 const Home = () => {
-  const [animate, setAnimate] = useState(false);
-  const [animationDone, setAnimationDone] = useState(false);
+  const [gridVisible, setGridVisible] = useState(true); 
+  const [logoEffect, setLogoEffect] = useState(0); 
   const heroImages = ["/images/n1.jpg", "/images/n2.jpg", "/images/n3.jpg"];
   const [currentSlide, setCurrentSlide] = useState(0);
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
   const [videos, setVideos] = useState([]);
   const [email, setEmail] = useState("");
   const [subscribeStatus, setSubscribeStatus] = useState({ message: "", type: "" });
-  // State for rotating words
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const words = ["Talk 🗨️", "Collaborate 🫂", "Create  🧠"];
 
   useEffect(() => {
     const handleResize = () => setWindowWidth(window.innerWidth);
     window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+    return () => window.addEventListener("resize", handleResize);
   }, []);
 
   const isMobile = windowWidth < 768;
-
-  useEffect(() => {
-    const animateTimeout = setTimeout(() => setAnimate(true), 1000);
-    const doneTimeout = setTimeout(() => setAnimationDone(true), 2500);
-    return () => {
-      clearTimeout(animateTimeout);
-      clearTimeout(doneTimeout);
-    };
-  }, []);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -74,13 +64,33 @@ const Home = () => {
     fetchVideos();
   }, []);
 
-  // Effect for rotating words
   useEffect(() => {
     const wordInterval = setInterval(() => {
       setCurrentWordIndex((prev) => (prev + 1) % words.length);
-    }, 2000); // Rotate every 2 seconds
+    }, 2000);
     return () => clearInterval(wordInterval);
   }, [words.length]);
+
+  useEffect(() => {
+    const logoEffectInterval = setInterval(() => {
+      setLogoEffect((prev) => {
+        if (prev >= 7) { // 4 cycles (0-1, 2-3, 4-5, 6-7)
+          clearInterval(logoEffectInterval);
+          return prev;
+        }
+        return prev + 1;
+      });
+    }, 300); 
+
+    return () => clearInterval(logoEffectInterval);
+  }, []);
+
+  useEffect(() => {
+    const gridTimeout = setTimeout(() => {
+      setGridVisible(false); 
+    }, isMobile ? 3600 : 3900);
+    return () => clearTimeout(gridTimeout);
+  }, [isMobile]);
 
   const goToPrevSlide = () => {
     setCurrentSlide((prev) => (prev - 1 + heroImages.length) % heroImages.length);
@@ -133,7 +143,7 @@ const Home = () => {
 
   return (
     <div style={{ margin: 0, padding: 0, fontFamily: "Arial, sans-serif" }}>
-      {!animationDone && (
+      {gridVisible && (
         <div
           style={{
             position: "fixed",
@@ -141,35 +151,125 @@ const Home = () => {
             left: 0,
             width: "100vw",
             height: "100vh",
-            backgroundColor: "black",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
             zIndex: 9999,
             pointerEvents: "none",
+            backgroundColor: "black",
           }}
         >
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gridTemplateRows: "1fr 1fr",
+              width: "100%",
+              height: "100%",
+            }}
+          >
+            {Array.from({ length: 4 }).map((_, index) => {
+              const fadeAnimations = [
+                `fadeBox0 ${isMobile ? "0.5s" : "0.6s"} ease-in-out 2.9s forwards`, 
+                `fadeBox1 ${isMobile ? "0.5s" : "0.6s"} ease-in-out 2.9s forwards`,
+                `fadeBox2 ${isMobile ? "0.5s" : "0.6s"} ease-in-out 2.9s forwards`, 
+                `fadeBox3 ${isMobile ? "0.5s" : "0.6s"} ease-in-out 2.9s forwards`, 
+              ];
+
+              return (
+                <div
+                  key={index}
+                  style={{
+                    backgroundColor: "rgba(0, 0, 0, 0.1)", 
+                    opacity: 1,
+                    position: "relative",
+                    animation: fadeAnimations[index],
+                    border: "1px solid rgba(255, 255, 255, 0.2)", 
+                    willChange: "opacity, transform",
+                  }}
+                />
+              );
+            })}
+          </div>
+
+          <div
+            className="horizontalLineOut"
+            style={{
+              position: "absolute",
+              top: isMobile ? "calc(40% - 7px)" : "calc(40% - 7px)",
+              left: 0,
+              width: "100%",
+              height: "2px",
+              backgroundColor: "white",
+              opacity: 0,
+              filter: "drop-shadow(0 0 4px rgba(255, 165, 0, 0.5))", 
+              willChange: "opacity, transform",
+            }}
+          />
+          <div
+            className="horizontalLineOut2"
+            style={{
+              position: "absolute",
+              top: isMobile ? "calc(60% + 5px)" : "calc(60% + 5px)", 
+              left: 0,
+              width: "100%",
+              height: "2px",
+              backgroundColor: "white",
+              opacity: 0,
+              filter: "drop-shadow(0 0 4px rgba(255, 165, 0, 0.5))", 
+              willChange: "opacity, transform",
+            }}
+          />
+
+          <div
+            className="verticalLineOut"
+            style={{
+              position: "absolute",
+              left: isMobile ? "calc(30% - 7px)" : "calc(30% - 7px)", 
+              top: 0,
+              height: "100%",
+              width: "2px",
+              backgroundColor: "white",
+              opacity: 0,
+              filter: "drop-shadow(0 0 4px rgba(255, 165, 0, 0.5))", 
+              willChange: "opacity, transform",
+            }}
+          />
+          <div
+            className="verticalLineOut2"
+            style={{
+              position: "absolute",
+              left: isMobile ? "calc(70% + 5px)" : "calc(70% + 5px)", 
+              top: 0,
+              height: "100%",
+              width: "2px",
+              backgroundColor: "white",
+              opacity: 0,
+              filter: "drop-shadow(0 0 4px rgba(255, 165, 0, 0.5))", 
+              willChange: "opacity, transform",
+            }}
+          />
+
           <img
             src={logo}
             alt="nine9 Logo"
             style={{
               position: "absolute",
-              height: animate ? (isMobile ? "6vw" : "8vw") : (isMobile ? "40vw" : "50vw"),
-              maxHeight: animate ? (isMobile ? "40px" : "60px") : (isMobile ? "300px" : "450px"),
-              top: animate ? (isMobile ? "15px" : "20px") : "50%",
-              left: animate ? (isMobile ? "20px" : "40px") : "50%",
-              transform: animate ? "translate(0, 0)" : "translate(-50%, -50%)",
-              transition: "all 1.2s ease-in-out",
-              zIndex: 10000,
-              borderRadius: "6px",
+              top: isMobile ? "47%" : "47%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              width: "80%",
+              maxWidth: isMobile ? "150px" : "620px",
+              height: isMobile ? "110px" : "350px", 
+              zIndex: 10000, 
+              filter: logoEffect % 2 === 0 ? "grayscale(100%)" : "none", 
+              transition: "filter 0.3s ease, transform 0.3s ease",
+              animation: `logoPulse ${isMobile ? "1s" : "1.2s"} ease-in-out 2.4s forwards`, 
+              willChange: "transform, filter",
             }}
           />
         </div>
       )}
 
-      <Navbar showLogo={animationDone} />
+      <Navbar showLogo={true} />
 
-      {/* Hero Section */}
       <section style={{ position: "relative", height: isMobile ? "80vh" : "100vh", overflow: "hidden" }}>
         {heroImages.map((src, index) => (
           <img
@@ -220,7 +320,7 @@ const Home = () => {
               fontWeight: "900",
               letterSpacing: "2px",
               marginBottom: "10px",
-              fontFamily: '"Abril Extra Bold", sans-serif', // Applied to headings
+              fontFamily: '"Abril Extra Bold", sans-serif',
             }}
           >
             ESSENCE X EDGE
@@ -231,7 +331,7 @@ const Home = () => {
               fontWeight: "300",
               letterSpacing: "2px",
               marginBottom: "20px",
-              fontFamily: '"Louvette Semi Bold", sans-serif', // Applied to descriptions
+              fontFamily: '"Louvette Semi Bold", sans-serif',
             }}
           >
             Styled with Intent
@@ -294,7 +394,7 @@ const Home = () => {
             fontWeight: "700",
             textAlign: "center",
             color: "#Ffa500",
-            fontFamily: '"Abril Extra Bold", sans-serif', // Applied to headings (replacing Oswald)
+            fontFamily: '"Abril Extra Bold", sans-serif',
             marginBottom: "12px",
             letterSpacing: "2px",
           }}
@@ -483,22 +583,6 @@ const Home = () => {
           overflow: "hidden",
         }}
       >
-        {/* <div
-          style={{
-            position: "absolute",
-            top: isMobile ? "35%" : "35%",
-            left: isMobile ? "50%" : "40%",
-            transform: "translate(-50%, -50%)",
-            color: "#ffffff",
-            fontSize: isMobile ? "1.2rem" : "1.8rem",
-            fontWeight: "100",
-            zIndex: 2,
-            textAlign: isMobile ? "center" : "left",
-            width: isMobile ? "90%" : "auto",
-          }}
-        >
-      At Nine9, we’re building a collective of individuals who don’t just wear clothes — they wear meaning. So if you're someone who refuses to blend in, someone who wants to wear who they are, then you're already one of us. Welcome to the Nine9. T&C accepting to send email notification .         </div> */}
-
         <div
           style={{
             position: "absolute",
@@ -513,7 +597,7 @@ const Home = () => {
             zIndex: 1,
             pointerEvents: "none",
             textTransform: "uppercase",
-            fontFamily: '"Abril Extra Bold", sans-serif', // Applied to headings (replacing Arial Black)
+            fontFamily: '"Abril Extra Bold", sans-serif',
             width: isMobile ? "100%" : "auto",
             textAlign: isMobile ? "center" : "left",
           }}
@@ -544,7 +628,7 @@ const Home = () => {
               display: "inline-block",
               color: "#Ffa500",
               animation: "jump 0.5s ease-in-out",
-              fontFamily: '"Abril Extra Bold", sans-serif', // Applied to headings
+              fontFamily: '"Abril Extra Bold", sans-serif',
             }}
           >
             {words[currentWordIndex]}
@@ -581,14 +665,14 @@ const Home = () => {
               style={{
                 padding: "12px 20px",
                 fontSize: "1rem",
-                border: "2px solid #Ffa500",
+                border: "1px solid #Ffa500",
                 borderRadius: "25px",
                 backgroundColor: "#1a1a1a",
                 color: "#ffffff",
                 width: isMobile ? "100%" : "300px",
                 outline: "none",
                 transition: "border-color 0.3s ease",
-                fontFamily: '"Louvette Semi Bold", sans-serif', // Applied to descriptions
+                fontFamily: '"Louvette Semi Bold", sans-serif',
               }}
               onFocus={(e) => (e.target.style.borderColor = "#e69500")}
               onBlur={(e) => (e.target.style.borderColor = "#Ffa500")}
@@ -607,7 +691,7 @@ const Home = () => {
                 transition: "background-color 0.3s ease, transform 0.3s ease",
                 boxShadow: "0 4px 10px rgba(255, 165, 0, 0.4)",
                 width: isMobile ? "100%" : "auto",
-                fontFamily: '"Abril Extra Bold", sans-serif', // Applied to headings
+                fontFamily: '"Abril Extra Bold", sans-serif',
               }}
               onMouseEnter={(e) => {
                 e.target.style.backgroundColor = "#e69500";
@@ -628,7 +712,7 @@ const Home = () => {
                 color: subscribeStatus.type === "success" ? "#4caf50" : "#f44336",
                 marginTop: "10px",
                 transition: "opacity 0.3s ease",
-                fontFamily: '"Louvette Semi Bold", sans-serif', // Applied to descriptions
+                fontFamily: '"Louvette Semi Bold", sans-serif',
               }}
             >
               {subscribeStatus.message}
@@ -642,6 +726,246 @@ const Home = () => {
 
       <style>
         {`
+          @keyframes lineFadeIn {
+            0% { opacity: 0; transform: scale(0.8); }
+            100% { opacity: 1; transform: scale(1); }
+          }
+
+          @keyframes horizontalLineOut {
+            0% { top: calc(40% - 7px); opacity: 1; transform: scaleY(1) skewX(0deg); }
+            20% { top: calc(30% - 7px); opacity: 0.9; transform: scaleY(1.1) skewX(3deg); }
+            40% { top: calc(20% - 7px); opacity: 0.8; transform: scaleY(1.15) skewX(4deg); }
+            60% { top: calc(10% - 7px); opacity: 0.6; transform: scaleY(1.1) skewX(2deg); }
+            80% { top: calc(5% - 7px); opacity: 0.3; transform: scaleY(1.05) skewX(0deg); }
+            100% { top: 0; opacity: 0; transform: scaleY(1) skewX(-1deg); }
+          }
+
+          @keyframes horizontalLineOut2 {
+            0% { top: calc(60% + 5px); opacity: 1; transform: scaleY(1) skewX(0deg); }
+            20% { top: calc(70% + 5px); opacity: 0.9; transform: scaleY(1.1) skewX(-3deg); }
+            40% { top: calc(80% + 5px); opacity: 0.8; transform: scaleY(1.15) skewX(-4deg); }
+            60% { top: calc(90% + 5px); opacity: 0.6; transform: scaleY(1.1) skewX(-2deg); }
+            80% { top: calc(95% + 5px); opacity: 0.3; transform: scaleY(1.05) skewX(0deg); }
+            100% { top: 100%; opacity: 0; transform: scaleY(1) skewX(1deg); }
+          }
+
+          @keyframes verticalLineOut {
+            0% { left: calc(30% - 7px); opacity: 1; transform: scaleX(1) skewY(0deg); }
+            20% { left: calc(20% - 7px); opacity: 0.9; transform: scaleX(1.1) skewY(3deg); }
+            40% { left: calc(10% - 7px); opacity: 0.8; transform: scaleX(1.15) skewY(4deg); }
+            60% { left: calc(5% - 7px); opacity: 0.6; transform: scaleX(1.1) skewY(2deg); }
+            80% { left: calc(2% - 7px); opacity: 0.3; transform: scaleX(1.05) skewY(0deg); }
+            100% { left: 0; opacity: 0; transform: scaleX(1) skewY(-1deg); }
+          }
+
+          @keyframes verticalLineOut2 {
+            0% { left: calc(70% + 5px); opacity: 1; transform: scaleX(1) skewY(0deg); }
+            20% { left: calc(80% + 5px); opacity: 0.9; transform: scaleX(1.1) skewY(-3deg); }
+            40% { left: calc(90% + 5px); opacity: 0.8; transform: scaleX(1.15) skewY(-4deg); }
+            60% { left: calc(95% + 5px); opacity: 0.6; transform: scaleX(1.1) skewY(-2deg); }
+            80% { left: calc(98% + 5px); opacity: 0.3; transform: scaleX(1.05) skewY(0deg); }
+            100% { left: 100%; opacity: 0; transform: scaleX(1) skewY(1deg); }
+          }
+
+          @keyframes logoPulse {
+            0% { transform: translate(-50%, -50%) scale(1); }
+            50% { transform: translate(-50%, -50%) scale(1.05); }
+            100% { transform: translate(-50%, -50%) scale(1); }
+          }
+
+          .horizontalLineOut {
+            animation: lineFadeIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards,
+                      horizontalLineOut 1.2s cubic-bezier(0.22, 1, 0.36, 1) 2.4s forwards;
+            position: relative;
+          }
+
+          .horizontalLineOut::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(to right, rgba(255, 165, 0, 0.2), rgba(255, 165, 0, 0));
+            animation: trailFade 1.2s cubic-bezier(0.22, 1, 0.36, 1) 2.4s forwards;
+            willChange: opacity;
+          }
+
+          .horizontalLineOut2 {
+            animation: lineFadeIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards,
+                      horizontalLineOut2 1.2s cubic-bezier(0.22, 1, 0.36, 1) 2.4s forwards;
+            position: relative;
+          }
+
+          .horizontalLineOut2::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(to left, rgba(255, 165, 0, 0.2), rgba(255, 165, 0, 0));
+            animation: trailFade 1.2s cubic-bezier(0.22, 1, 0.36, 1) 2.4s forwards;
+            willChange: opacity;
+          }
+
+          .verticalLineOut {
+            animation: lineFadeIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards,
+                      verticalLineOut 1.2s cubic-bezier(0.22, 1, 0.36, 1) 2.4s forwards;
+            position: relative;
+          }
+
+          .verticalLineOut::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 2px;
+            height: 100%;
+            background: linear-gradient(to bottom, rgba(255, 165, 0, 0.2), rgba(255, 165, 0, 0));
+            animation: trailFade 1.2s cubic-bezier(0.22, 1, 0.36, 1) 2.4s forwards;
+            willChange: opacity;
+          }
+
+          .verticalLineOut2 {
+            animation: lineFadeIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards,
+                      verticalLineOut2 1.2s cubic-bezier(0.22, 1, 0.36, 1) 2.4s forwards;
+            position: relative;
+          }
+
+          .verticalLineOut2::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 2px;
+            height: 100%;
+            background: linear-gradient(to top, rgba(255, 165, 0, 0.2), rgba(255, 165, 0, 0));
+            animation: trailFade 1.2s cubic-bezier(0.22, 1, 0.36, 1) 2.4s forwards;
+            willChange: opacity;
+          }
+
+          @keyframes trailFade {
+            0% { opacity: 0.4; }
+            100% { opacity: 0; }
+          }
+
+          @keyframes fadeBox0 {
+            0% { opacity: 1; transform: scale(1) translate(0, 0); }
+            50% { opacity: 0.5; transform: scale(1.1) translate(-20px, -20px); }
+            100% { opacity: 0; transform: scale(1.2) translate(-30px, -30px); }
+          }
+          @keyframes fadeBox1 {
+            0% { opacity: 1; transform: scale(1) translate(0, 0); }
+            50% { opacity: 0.5; transform: scale(1.1) translate(20px, -20px); }
+            100% { opacity: 0; transform: scale(1.2) translate(30px, -30px); }
+          }
+          @keyframes fadeBox2 {
+            0% { opacity: 1; transform: scale(1) translate(0, 0); }
+            50% { opacity: 0.5; transform: scale(1.1) translate(-20px, 20px); }
+            100% { opacity: 0; transform: scale(1.2) translate(-30px, 30px); }
+          }
+          @keyframes fadeBox3 {
+            0% { opacity: 1; transform: scale(1) translate(0, 0); }
+            50% { opacity: 0.5; transform: scale(1.1) translate(20px, 20px); }
+            100% { opacity: 0; transform: scale(1.2) translate(30px, 30px); }
+          }
+
+          @media (max-width: 768px) {
+            @keyframes horizontalLineOut {
+              0% { top: calc(20% - 7px); opacity: 1; transform: scaleY(1) skewX(0deg); }
+              20% { top: calc(15% - 7px); opacity: 0.9; transform: scaleY(1.05) skewX(2deg); }
+              40% { top: calc(10% - 7px); opacity: 0.8; transform: scaleY(1.1) skewX(3deg); }
+              60% { top: calc(5% - 7px); opacity: 0.6; transform: scaleY(1.05) skewX(1deg); }
+              80% { top: calc(2% - 7px); opacity: 0.3; transform: scaleY(1.02) skewX(0deg); }
+              100% { top: 0; opacity: 0; transform: scaleY(1) skewX(-1deg); }
+            }
+
+            @keyframes horizontalLineOut2 {
+              0% { top: calc(80% + 5px); opacity: 1; transform: scaleY(1) skewX(0deg); }
+              20% { top: calc(85% + 5px); opacity: 0.9; transform: scaleY(1.05) skewX(-2deg); }
+              40% { top: calc(90% + 5px); opacity: 0.8; transform: scaleY(1.1) skewX(-3deg); }
+              60% { top: calc(95% + 5px); opacity: 0.6; transform: scaleY(1.05) skewX(-1deg); }
+              80% { top: calc(98% + 5px); opacity: 0.3; transform: scaleY(1.02) skewX(0deg); }
+              100% { top: 100%; opacity: 0; transform: scaleY(1) skewX(1deg); }
+            }
+
+            @keyframes verticalLineOut {
+              0% { left: calc(10% - 7px); opacity: 1; transform: scaleX(1) skewY(0deg); }
+              20% { left: calc(5% - 7px); opacity: 0.9; transform: scaleX(1.05) skewY(2deg); }
+              40% { left: calc(2% - 7px); opacity: 0.8; transform: scaleX(1.1) skewY(3deg); }
+              60% { left: calc(1% - 7px); opacity: 0.6; transform: scaleX(1.05) skewY(1deg); }
+              80% { left: calc(0.5% - 7px); opacity: 0.3; transform: scaleX(1.02) skewY(0deg); }
+              100% { left: 0; opacity: 0; transform: scaleX(1) skewY(-1deg); }
+            }
+
+            @keyframes verticalLineOut2 {
+              0% { left: calc(90% + 5px); opacity: 1; transform: scaleX(1) skewY(0deg); }
+              20% { left: calc(95% + 5px); opacity: 0.9; transform: scaleX(1.05) skewY(-2deg); }
+              40% { left: calc(98% + 5px); opacity: 0.8; transform: scaleX(1.1) skewY(-3deg); }
+              60% { left: calc(99% + 5px); opacity: 0.6; transform: scaleX(1.05) skewY(-1deg); }
+              80% { left: calc(99.5% + 5px); opacity: 0.3; transform: scaleX(1.02) skewY(0deg); }
+              100% { left: 100%; opacity: 0; transform: scaleX(1) skewY(1deg); }
+            }
+
+            @keyframes fadeBox0 {
+              0% { opacity: 1; transform: scale(1) translate(0, 0); }
+              50% { opacity: 0.5; transform: scale(1.05) translate(-10px, -10px); }
+              100% { opacity: 0; transform: scale(1.15) translate(-15px, -15px); }
+            }
+            @keyframes fadeBox1 {
+              0% { opacity: 1; transform: scale(1) translate(0, 0); }
+              50% { opacity: 0.5; transform: scale(1.05) translate(10px, -10px); }
+              100% { opacity: 0; transform: scale(1.15) translate(15px, -15px); }
+            }
+            @keyframes fadeBox2 {
+              0% { opacity: 1; transform: scale(1) translate(0, 0); }
+              50% { opacity: 0.5; transform: scale(1.05) translate(-10px, 10px); }
+              100% { opacity: 0; transform: scale(1.15) translate(-15px, 15px); }
+            }
+            @keyframes fadeBox3 {
+              0% { opacity: 1; transform: scale(1) translate(0, 0); }
+              50% { opacity: 0.5; transform: scale(1.05) translate(10px, 10px); }
+              100% { opacity: 0; transform: scale(1.15) translate(15px, 15px); }
+            }
+
+            .horizontalLineOut {
+              animation: lineFadeIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards,
+                        horizontalLineOut 1s cubic-bezier(0.22, 1, 0.36, 1) 2.4s forwards;
+            }
+
+            .horizontalLineOut::after {
+              animation: trailFade 1s cubic-bezier(0.22, 1, 0.36, 1) 2.4s forwards;
+            }
+
+            .horizontalLineOut2 {
+              animation: lineFadeIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards,
+                        horizontalLineOut2 1s cubic-bezier(0.22, 1, 0.36, 1) 2.4s forwards;
+            }
+
+            .horizontalLineOut2::after {
+              animation: trailFade 1s cubic-bezier(0.22, 1, 0.36, 1) 2.4s forwards;
+            }
+
+            .verticalLineOut {
+              animation: lineFadeIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards,
+                        verticalLineOut 1s cubic-bezier(0.22, 1, 0.36, 1) 2.4s forwards;
+            }
+
+            .verticalLineOut::after {
+              animation: trailFade 1s cubic-bezier(0.22, 1, 0.36, 1) 2.4s forwards;
+            }
+
+            .verticalLineOut2 {
+              animation: lineFadeIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards,
+                        verticalLineOut2 1s cubic-bezier(0.22, 1, 0.36, 1) 2.4s forwards;
+            }
+
+            .verticalLineOut2::after {
+              animation: trailFade 1s cubic-bezier(0.22, 1, 0.36, 1) 2.4s forwards;
+            }
+          }
+
           @keyframes fadeIn {
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
