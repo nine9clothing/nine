@@ -16,7 +16,7 @@ const ProductGrid = ({ singleLine = false, isMobile = false }) => {
   const mobileView = isMobile || windowWidth < 768;
 
   useEffect(() => {
-    fetch('http://localhost:5000/api/products')
+    fetch('https://nine-ymmn.onrender.com/api/products')
       .then(response => response.json())
       .then(data => {
         const sorted = [...data].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
