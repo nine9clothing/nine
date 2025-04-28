@@ -55,19 +55,17 @@ const MyOrders = () => {
       if (!error) {
         const filteredOrders = [];
         const orderMap = new Map();
+        const skus = new Set();
 
-        // Process only one row per order_id (e.g., the latest based on created_at)
+        // Collect unique SKUs from all items
         data.forEach((order) => {
-          // Only consider rows where order_id matches display_order_id
           if (order.order_id === order.display_order_id) {
-            // If order_id is not in the map or this row is newer, update the map
+            order.items.forEach(item => skus.add(item.sku));
             if (!orderMap.has(order.order_id) || new Date(order.created_at) > new Date(orderMap.get(order.order_id).created_at)) {
-              // Ensure each item has a unique identifier
               const itemsWithUniqueIds = order.items.map((item, index) => ({
                 ...item,
                 id: item.id || `${order.order_id}-item-${index}`
               }));
-
               orderMap.set(order.order_id, {
                 ...order,
                 items: itemsWithUniqueIds
@@ -76,8 +74,35 @@ const MyOrders = () => {
           }
         });
 
-        // Convert map values to array
-        filteredOrders.push(...orderMap.values());
+        // Fetch product images for all SKUs in one query
+        const { data: products, error: productError } = await supabase
+          .from('products')
+          .select('id, media_urls')
+          .in('id', Array.from(skus));
+
+        if (productError) {
+          console.error('Error fetching products:', productError.message);
+          setToastMessage({ message: 'Error fetching product images: ' + productError.message, type: 'error' });
+        }
+
+        // Create a map of SKU to image URL
+        const productImageMap = new Map();
+        products?.forEach(product => {
+          const img = Array.isArray(product.media_urls)
+            ? product.media_urls.find(url => url.match(/\.(jpeg|jpg|png|gif|webp)$/i))
+            : null;
+          productImageMap.set(product.id, img || 'https://via.placeholder.com/100?text=No+Image');
+        });
+
+        // Add image_url to each item
+        orderMap.forEach((order) => {
+          const updatedItems = order.items.map(item => ({
+            ...item,
+            image_url: productImageMap.get(item.sku) || 'https://via.placeholder.com/100?text=No+Image'
+          }));
+          filteredOrders.push({ ...order, items: updatedItems });
+        });
+
         setOrders(filteredOrders);
       } else {
         console.error('Error loading orders:', error.message);
@@ -88,16 +113,6 @@ const MyOrders = () => {
 
     fetchOrders();
   }, []);
-
-  const getFirstImageFromMedia = (urls) => {
-    if (Array.isArray(urls)) {
-      const img = urls.find(url =>
-        url.match(/\.(jpeg|jpg|png|gif|webp)$/i)
-      );
-      return img || 'https://via.placeholder.com/100?text=No+Image';
-    }
-    return 'https://via.placeholder.com/100?text=No+Image';
-  };
 
   const canExchange = (createdAt, status) => {
     const orderDate = new Date(createdAt);
@@ -148,14 +163,12 @@ const MyOrders = () => {
     }
 
     try {
-      // Find the order to update
       const orderToUpdate = orders.find(order => order.order_id === selectedOrderId);
 
       if (!orderToUpdate) {
         throw new Error('Order not found');
       }
 
-      // Create an updated items array with exchange info
       const updatedItems = orderToUpdate.items.map(item => {
         if (selectedItems.includes(item.id)) {
           return {
@@ -166,7 +179,6 @@ const MyOrders = () => {
         return item;
       });
 
-      // Create exchanged_items array with both ID and name
       const exchangedItemsWithDetails = orderToUpdate.items
         .filter(item => selectedItems.includes(item.id))
         .map(item => ({
@@ -174,7 +186,6 @@ const MyOrders = () => {
           name: item.name
         }));
 
-      // Update the order in the database
       const { error } = await supabase
         .from('orders')
         .update({
@@ -195,7 +206,6 @@ const MyOrders = () => {
         type: 'success'
       });
 
-      // Update the local state to reflect the exchange request
       setOrders(orders.map(order =>
         order.order_id === selectedOrderId
           ? {
@@ -268,7 +278,7 @@ const MyOrders = () => {
                     {order.items.map((item, idx) => (
                       <div key={`${order.order_id}-item-${idx}`} style={styles.itemRowMobile}>
                         <img
-                          src={getFirstImageFromMedia(item.media_urls)}
+                          src={item.image_url}
                           alt={item.name}
                           style={styles.itemImageMobile}
                         />
@@ -358,7 +368,7 @@ const MyOrders = () => {
                     {order.items.map((item, idx) => (
                       <div key={`${order.order_id}-item-${idx}`} style={styles.itemRow}>
                         <img
-                          src={getFirstImageFromMedia(item.media_urls)}
+                          src={item.image_url}
                           alt={item.name}
                           style={styles.itemImage}
                         />
@@ -407,7 +417,7 @@ const MyOrders = () => {
                       />
                       <div style={styles.itemPreview}>
                         <img
-                          src={getFirstImageFromMedia(item.media_urls)}
+                          src={item.image_url}
                           alt={item.name}
                           style={styles.exchangeItemImage}
                         />
@@ -459,13 +469,14 @@ const MyOrders = () => {
   );
 };
 
+// Styles remain the same
 const styles = {
   pageWrapper: {
     display: 'flex',
     flexDirection: 'column',
     minHeight: '100vh',
     backgroundColor: 'black',
-    fontFamily: "'Roboto', sans-serif" // Base font
+    fontFamily: "'Roboto', sans-serif"
   },
   container: {
     flex: 1,
@@ -474,7 +485,7 @@ const styles = {
     margin: '0 auto',
   },
   heading: {
-    fontFamily: "'Abril Extra Bold', sans-serif", // Applied to headings
+    fontFamily: "'Abril Extra Bold', sans-serif",
     fontSize: "2.8rem",
     fontWeight: '700',
     textAlign: 'center',
@@ -486,7 +497,7 @@ const styles = {
     textAlign: 'center',
     fontSize: '1rem',
     color: '#666',
-    fontFamily: "'Louvette Semi Bold', sans-serif" // Applied to descriptions
+    fontFamily: "'Louvette Semi Bold', sans-serif"
   },
   orderCard: {
     backgroundColor: '#fff',
@@ -521,7 +532,7 @@ const styles = {
     fontWeight: '700',
     color: '#111',
     margin: 0,
-    fontFamily: "'Abril Extra Bold', sans-serif" // Applied to headings
+    fontFamily: "'Abril Extra Bold', sans-serif"
   },
   orderStatus: {
     color: '#fff',
@@ -529,13 +540,13 @@ const styles = {
     borderRadius: '6px',
     fontSize: '0.85rem',
     textTransform: 'capitalize',
-    fontFamily: "'Louvette Semi Bold', sans-serif" // Applied to descriptions
+    fontFamily: "'Louvette Semi Bold', sans-serif"
   },
   meta: {
     fontSize: '0.95rem',
     margin: '6px 0',
     color: '#444',
-    fontFamily: "'Louvette Semi Bold', sans-serif" // Applied to descriptions
+    fontFamily: "'Louvette Semi Bold', sans-serif"
   },
   section: {
     marginTop: '20px',
@@ -545,7 +556,7 @@ const styles = {
     fontSize: '1.05rem',
     marginBottom: '8px',
     color: '#111',
-    fontFamily: "'Abril Extra Bold', sans-serif" // Applied to headings
+    fontFamily: "'Abril Extra Bold', sans-serif"
   },
   itemRow: {
     display: 'flex',
@@ -569,12 +580,12 @@ const styles = {
   itemName: {
     fontWeight: '600',
     marginBottom: '4px',
-    fontFamily: "'Louvette Semi Bold', sans-serif" // Applied to descriptions
+    fontFamily: "'Louvette Semi Bold', sans-serif"
   },
   itemDetails: {
     fontSize: '0.9rem',
     color: '#666',
-    fontFamily: "'Louvette Semi Bold', sans-serif" // Applied to descriptions
+    fontFamily: "'Louvette Semi Bold', sans-serif"
   },
   exchangeTag: {
     display: 'inline-block',
@@ -584,7 +595,7 @@ const styles = {
     padding: '2px 6px',
     borderRadius: '4px',
     marginTop: '4px',
-    fontFamily: "'Louvette Semi Bold', sans-serif" // Applied to descriptions
+    fontFamily: "'Louvette Semi Bold', sans-serif"
   },
   exchangeButton: {
     marginTop: '20px',
@@ -596,7 +607,7 @@ const styles = {
     fontSize: '0.95rem',
     cursor: 'pointer',
     transition: 'background-color 0.2s',
-    fontFamily: "'Abril Extra Bold', sans-serif" // Applied to headings
+    fontFamily: "'Abril Extra Bold', sans-serif"
   },
   exchangeTimelineExceeded: {
     marginTop: '20px',
@@ -606,7 +617,7 @@ const styles = {
     borderRadius: '6px',
     fontSize: '0.95rem',
     border: '1px solid #f5c6cb',
-    fontFamily: "'Louvette Semi Bold', sans-serif" // Applied to descriptions
+    fontFamily: "'Louvette Semi Bold', sans-serif"
   },
   containerMobile: {
     flex: 1,
@@ -615,7 +626,7 @@ const styles = {
     margin: '0 auto',
   },
   headingMobile: {
-    fontFamily: "'Abril Extra Bold', sans-serif", // Applied to headings
+    fontFamily: "'Abril Extra Bold', sans-serif",
     fontSize: "2rem",
     fontWeight: '700',
     textAlign: 'center',
@@ -641,7 +652,7 @@ const styles = {
     fontWeight: '700',
     color: '#111',
     margin: 0,
-    fontFamily: "'Abril Extra Bold', sans-serif" // Applied to headings
+    fontFamily: "'Abril Extra Bold', sans-serif"
   },
   orderStatusMobile: {
     color: '#fff',
@@ -649,7 +660,7 @@ const styles = {
     borderRadius: '6px',
     fontSize: '0.8rem',
     textTransform: 'capitalize',
-    fontFamily: "'Louvette Semi Bold', sans-serif" // Applied to descriptions
+    fontFamily: "'Louvette Semi Bold', sans-serif"
   },
   mobileMetaInfo: {
     marginBottom: '12px',
@@ -658,7 +669,7 @@ const styles = {
     fontSize: '0.9rem',
     margin: '4px 0',
     color: '#444',
-    fontFamily: "'Louvette Semi Bold', sans-serif" // Applied to descriptions
+    fontFamily: "'Louvette Semi Bold', sans-serif"
   },
   mobileSection: {
     marginTop: '16px',
@@ -669,7 +680,7 @@ const styles = {
     fontSize: '1rem',
     marginBottom: '6px',
     color: '#111',
-    fontFamily: "'Abril Extra Bold', sans-serif" // Applied to headings
+    fontFamily: "'Abril Extra Bold', sans-serif"
   },
   itemRowMobile: {
     display: 'flex',
@@ -698,12 +709,12 @@ const styles = {
     textOverflow: 'ellipsis',
     overflow: 'hidden',
     whiteSpace: 'nowrap',
-    fontFamily: "'Louvette Semi Bold', sans-serif" // Applied to descriptions
+    fontFamily: "'Louvette Semi Bold', sans-serif"
   },
   itemDetailsMobile: {
     fontSize: '0.85rem',
     color: '#666',
-    fontFamily: "'Louvette Semi Bold', sans-serif" // Applied to descriptions
+    fontFamily: "'Louvette Semi Bold', sans-serif"
   },
   exchangeTagMobile: {
     display: 'inline-block',
@@ -713,7 +724,7 @@ const styles = {
     padding: '1px 4px',
     borderRadius: '4px',
     marginTop: '2px',
-    fontFamily: "'Louvette Semi Bold', sans-serif" // Applied to descriptions
+    fontFamily: "'Louvette Semi Bold', sans-serif"
   },
   exchangeButtonMobile: {
     marginTop: '16px',
@@ -726,7 +737,7 @@ const styles = {
     cursor: 'pointer',
     width: '100%',
     transition: 'background-color 0.2s',
-    fontFamily: "'Abril Extra Bold', sans-serif" // Applied to headings
+    fontFamily: "'Abril Extra Bold', sans-serif"
   },
   exchangeTimelineExceededMobile: {
     marginTop: '16px',
@@ -736,7 +747,7 @@ const styles = {
     borderRadius: '6px',
     fontSize: '0.85rem',
     border: '1px solid #f5c6cb',
-    fontFamily: "'Louvette Semi Bold', sans-serif" // Applied to descriptions
+    fontFamily: "'Louvette Semi Bold', sans-serif"
   },
   modalOverlay: {
     position: 'fixed',
@@ -775,7 +786,7 @@ const styles = {
     fontWeight: '700',
     marginBottom: '16px',
     color: '#111',
-    fontFamily: "'Abril Extra Bold', sans-serif" // Applied to headings
+    fontFamily: "'Abril Extra Bold', sans-serif"
   },
   modalSection: {
     marginBottom: '20px',
@@ -785,13 +796,13 @@ const styles = {
     fontWeight: '600',
     marginBottom: '10px',
     color: '#333',
-    fontFamily: "'Abril Extra Bold', sans-serif" // Applied to headings
+    fontFamily: "'Abril Extra Bold', sans-serif"
   },
   modalText: {
     fontSize: '1rem',
     marginBottom: '16px',
     color: '#444',
-    fontFamily: "'Louvette Semi Bold', sans-serif" // Applied to descriptions
+    fontFamily: "'Louvette Semi Bold', sans-serif"
   },
   itemSelectionContainer: {
     maxHeight: '200px',
@@ -812,7 +823,7 @@ const styles = {
     alignItems: 'center',
     gap: '10px',
     cursor: 'pointer',
-    fontFamily: "'Louvette Semi Bold', sans-serif" // Applied to descriptions
+    fontFamily: "'Louvette Semi Bold', sans-serif"
   },
   checkbox: {
     width: '18px',
@@ -835,12 +846,12 @@ const styles = {
     fontWeight: '600',
     fontSize: '0.9rem',
     marginBottom: '2px',
-    fontFamily: "'Louvette Semi Bold', sans-serif" // Applied to descriptions
+    fontFamily: "'Louvette Semi Bold', sans-serif"
   },
   exchangeItemDetails: {
     fontSize: '0.8rem',
     color: '#666',
-    fontFamily: "'Louvette Semi Bold', sans-serif" // Applied to descriptions
+    fontFamily: "'Louvette Semi Bold', sans-serif"
   },
   select: {
     width: '100%',
@@ -848,7 +859,7 @@ const styles = {
     fontSize: '1rem',
     borderRadius: '6px',
     border: '1px solid #ccc',
-    fontFamily: "'Louvette Semi Bold', sans-serif" // Applied to descriptions
+    fontFamily: "'Louvette Semi Bold', sans-serif"
   },
   modalButtons: {
     display: 'flex',
@@ -865,7 +876,7 @@ const styles = {
     fontSize: '0.95rem',
     cursor: 'pointer',
     transition: 'background-color 0.2s',
-    fontFamily: "'Abril Extra Bold', sans-serif" // Applied to headings
+    fontFamily: "'Abril Extra Bold', sans-serif"
   },
   submitButton: {
     padding: '8px 16px',
@@ -876,7 +887,7 @@ const styles = {
     fontSize: '0.95rem',
     cursor: 'pointer',
     transition: 'background-color 0.2s',
-    fontFamily: "'Abril Extra Bold', sans-serif" // Applied to headings
+    fontFamily: "'Abril Extra Bold', sans-serif"
   },
 };
 

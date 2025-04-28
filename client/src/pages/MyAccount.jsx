@@ -277,7 +277,7 @@ const MyAccount = () => {
             marginBottom: '2rem',
             textAlign: 'center',
             fontFamily: "'Abril Extra Bold', sans-serif" // Applied to headings
-          }}>My Account</h1>
+          }}>Profile</h1>
 
           {toast.show && (
             <ToastMessage

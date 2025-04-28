@@ -23,8 +23,8 @@ const Footer = () => {
 
   const socialIcons = [
     { Icon: Facebook, href: "https://facebook.com" },
-    { Icon: Instagram, href: "https://instagram.com" },
-    { Icon: Youtube, href: "https://youtube.com" },
+    { Icon: Instagram, href: "https://www.instagram.com/nine9.co.in/?hl=en" },
+    { Icon: Youtube, href: "https://youtube.com/@life.at.nine9?si=PjEQwxESTGxxbdCv" },
   ];
 
   return (

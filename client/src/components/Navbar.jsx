@@ -455,7 +455,7 @@ const Navbar = ({ showLogo }) => {
                       setMenuOpen(false);
                     }}
                   >
-                    My Account
+                    Profile
                   </Link>
                   <Link
                     to="/my-orders"
@@ -465,17 +465,7 @@ const Navbar = ({ showLogo }) => {
                       setMenuOpen(false);
                     }}
                   >
-                    My Orders
-                  </Link>
-                  <Link
-                    to="/about"
-                    style={styles.dropdownItem}
-                    onClick={() => {
-                      setDropdownOpen(false);
-                      setMenuOpen(false);
-                    }}
-                  >
-                    About Us
+                    Orders
                   </Link>
                   <Link
                     to="/rewards"
@@ -487,6 +477,17 @@ const Navbar = ({ showLogo }) => {
                   >
                     Rewards
                   </Link>
+                  <Link
+                    to="/about"
+                    style={styles.dropdownItem}
+                    onClick={() => {
+                      setDropdownOpen(false);
+                      setMenuOpen(false);
+                    }}
+                  >
+                    About Us
+                  </Link>
+             
                   <Link
                     to="/contact"
                     style={styles.dropdownItem}
@@ -632,10 +633,11 @@ const Navbar = ({ showLogo }) => {
           <Link to="/sort" style={styles.mobileMenuItem} onClick={() => setMenuOpen(false)}>Collection</Link>
           {user && (
             <>
-              <Link to="/my-account" style={styles.mobileMenuItem} onClick={() => setMenuOpen(false)}>My Account</Link>
-              <Link to="/my-orders" style={styles.mobileMenuItem} onClick={() => setMenuOpen(false)}>My Orders</Link>
-              <Link to="/about" style={styles.mobileMenuItem} onClick={() => setMenuOpen(false)}>About</Link>
-              <Link to="/contact" style={styles.mobileMenuItem} onClick={() => setMenuOpen(false)}>Contact</Link>
+              <Link to="/my-account" style={styles.mobileMenuItem} onClick={() => setMenuOpen(false)}>Profile</Link>
+              <Link to="/my-orders" style={styles.mobileMenuItem} onClick={() => setMenuOpen(false)}>Orders</Link>
+              <Link to="/rewards" style={styles.mobileMenuItem} onClick={() => setMenuOpen(false)}>Rewards</Link>
+              <Link to="/about" style={styles.mobileMenuItem} onClick={() => setMenuOpen(false)}>About Us</Link>
+              <Link to="/contact" style={styles.mobileMenuItem} onClick={() => setMenuOpen(false)}>Contact Us</Link>
             </>
           )}
           {user ? (

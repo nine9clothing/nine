@@ -16,9 +16,8 @@ const CartCheckout = () => {
   const [discount, setDiscount] = useState(0);
   const [appliedPromo, setAppliedPromo] = useState(null);
   const [points, setPoints] = useState(0);
-  const [pointsToRedeem, setPointsToRedeem] = useState('');
+  const [redeemPoints, setRedeemPoints] = useState(false);
   const [pointsDiscount, setPointsDiscount] = useState(0);
-  const [redeemError, setRedeemError] = useState('');
 
   const navigate = useNavigate();
   const subtotal = cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
@@ -61,6 +60,16 @@ const CartCheckout = () => {
 
     getUserAndPoints();
   }, []);
+
+  useEffect(() => {
+    if (redeemPoints) {
+      const maxPointsFor99 = 495; // 99 * 5 points per rupee
+      const pointsToRedeem = Math.min(points, maxPointsFor99);
+      setPointsDiscount(pointsToRedeem / 5);
+      setToastMessage({ message: `₹${(pointsToRedeem / 5).toFixed(2)} Redeemed.`, type: 'success' });    } else {
+      setPointsDiscount(0);
+    }
+  }, [redeemPoints, points]);
 
   const handleRemoveItem = (itemId) => {
     removeFromCart(itemId);
@@ -138,33 +147,6 @@ const CartCheckout = () => {
     }
   };
 
-  const handleApplyPoints = () => {
-    setRedeemError('');
-    const pointsToRedeemNum = parseInt(pointsToRedeem, 10);
-
-    if (isNaN(pointsToRedeemNum) || pointsToRedeemNum <= 0) {
-      setRedeemError('Please enter a valid number of points.');
-      setPointsDiscount(0);
-      return;
-    }
-
-    if (pointsToRedeemNum > points) {
-      setRedeemError('You do not have enough points to redeem.');
-      setPointsDiscount(0);
-      return;
-    }
-
-    const discountAmount = pointsToRedeemNum / 5;
-    if (discountAmount > 99) {
-      setRedeemError('Maximum redemption is ₹99 worth of points (495 points).');
-      setPointsDiscount(0);
-      return;
-    }
-
-    setPointsDiscount(discountAmount);
-    setToastMessage({ message: ` ${pointsToRedeemNum} Points Redeemed.`, type: 'success' });
-  };
-
   const handlePlaceOrder = async () => {
     if (cartItems.length === 0) {
       setToastMessage({ message: 'Your cart is empty.', type: 'error' });
@@ -180,7 +162,7 @@ const CartCheckout = () => {
       state: { 
         subtotal,
         discount,
-        pointsToRedeem: parseInt(pointsToRedeem, 10) || 0,
+        pointsToRedeem: redeemPoints ? Math.min(points, 495) : 0,
         pointsDiscount,
         total: totalAfterDiscount,
         appliedPromo,
@@ -276,29 +258,29 @@ const CartCheckout = () => {
             </div>
 
             <div style={styles.promoCodeSection}>
-              <input
-                type="number"
-                placeholder="Enter points to redeem"
-                value={pointsToRedeem}
-                onChange={(e) => setPointsToRedeem(e.target.value)}
-                style={styles.promoInput}
-              />
-              <button onClick={handleApplyPoints} style={styles.applyPromoBtn}>
-                Preview Points
-              </button>
+              <label style={styles.checkboxContainer}>
+                <input
+                  type="checkbox"
+                  checked={redeemPoints}
+                  onChange={(e) => setRedeemPoints(e.target.checked)}
+                  style={styles.checkboxInput}
+                />
+                <span style={{
+                  ...styles.checkboxCustom,
+                  backgroundColor: redeemPoints ? '#Ffa500' : '#1f1f1f',
+                }}>
+                  {redeemPoints && <span style={styles.checkboxCheckmark}>✓</span>}
+                </span>
+                <span style={styles.checkboxLabel}>Redeem Points (Max ₹99)</span>
+              </label>
             </div>
-            {pointsToRedeem && !redeemError && (
+            {redeemPoints && (
               <p style={{ ...styles.orderItemMeta, color: '#Ffa500' }}>
-                {pointsToRedeem} points = ₹{(parseInt(pointsToRedeem, 10) / 5).toFixed(2)} discount 
-              </p>
-            )}
-            {redeemError && (
-              <p style={{ ...styles.orderItemMeta, color: 'red' }}>
-                {redeemError}
+                {/* {Math.min(points, 495)} points = ₹{pointsDiscount.toFixed(2)} discount */}
               </p>
             )}
             <p style={{ ...styles.orderItemMeta, color: '#9ca3af' }}>
-              Available Points: {points}
+              Available Balance: ₹{(points / 5).toFixed(2)}
             </p>
 
             <hr style={{ margin: '12px 0', borderColor: '#eee' }} />
@@ -368,7 +350,7 @@ const styles = {
     color: 'white',
     textAlign: window.innerWidth <= 768 ? 'center' : 'left',
     fontFamily: "'Abril Extra Bold', sans-serif",
-    fontSize: window.innerWidth <= 768 ? '2rem' : '2.8rem',
+    fontSize: window.innerWidth <= 768 ? '2rem' : '2.3rem',
   },
   leftColumn: {
     flex: '1',
@@ -506,6 +488,7 @@ const styles = {
     display: 'flex',
     gap: '12px',
     margin: '12px 0',
+    alignItems: 'center',
   },
   promoInput: {
     flex: 1,
@@ -528,6 +511,44 @@ const styles = {
     cursor: 'pointer',
     transition: 'background-color 0.2s ease',
     fontSize: '0.9rem',
+  },
+  checkboxContainer: {
+    display: 'flex',
+    alignItems: 'center',
+    position: 'relative',
+    cursor: 'pointer',
+    userSelect: 'none',
+  },
+  checkboxInput: {
+    position: 'absolute',
+    opacity: 0,
+    cursor: 'pointer',
+    height: 0,
+    width: 0,
+  },
+  checkboxCustom: {
+    height: '20px',
+    width: '20px',
+    border: '2px solid #Ffa500',
+    borderRadius: '4px',
+    marginRight: '10px',
+    transition: 'all 0.2s ease',
+    position: 'relative',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkboxCheckmark: {
+    color: 'black',
+    fontSize: '14px',
+    fontWeight: 'bold',
+    position: 'absolute',
+  },
+  checkboxLabel: {
+    color: '#ffffff',
+    fontSize: '0.9rem',
+    fontFamily: "'Louvette Semi Bold', sans-serif",
+    transition: 'color 0.2s ease',
   },
   totalRow: {
     display: 'flex',
