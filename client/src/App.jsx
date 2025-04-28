@@ -20,6 +20,7 @@ import ShippingPolicy from './pages/policy/ShippingPolicy';
 import TermsAndConditions from './pages/policy/TermsAndConditions'; 
 import Exchange from './pages/policy/Exchange';
 import MyAccount from './pages/MyAccount';
+import Rewards from './pages/Rewards';
 
 import AdminLayout from './components/AdminLayout';
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -63,8 +64,9 @@ const App = () => {
           <Route path="/t&c" element={<TermsAndConditions />} />
           <Route path="/exchange" element={<Exchange />} />
           <Route path="/my-account" element={<MyAccount />} />
+          <Route path="/rewards" element={<Rewards />} />
 
-
+          
           {/* Admin Routes (with custom layout) */}
           <Route path="/admin" element={<AdminLayout />}>
             <Route path="dashboard" element={<AdminDashboard />} />

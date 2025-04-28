@@ -27,7 +27,7 @@ const Home = () => {
   useEffect(() => {
     const handleResize = () => setWindowWidth(window.innerWidth);
     window.addEventListener("resize", handleResize);
-    return () => window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   const isMobile = windowWidth < 768;
@@ -74,13 +74,13 @@ const Home = () => {
   useEffect(() => {
     const logoEffectInterval = setInterval(() => {
       setLogoEffect((prev) => {
-        if (prev >= 7) { // 4 cycles (0-1, 2-3, 4-5, 6-7)
+        if (prev >= 5) { // 3 blink cycles (0-1, 2-3, 4-5)
           clearInterval(logoEffectInterval);
           return prev;
         }
         return prev + 1;
       });
-    }, 300); 
+    }, 300); // Blink every 300ms
 
     return () => clearInterval(logoEffectInterval);
   }, []);
@@ -167,21 +167,21 @@ const Home = () => {
           >
             {Array.from({ length: 4 }).map((_, index) => {
               const fadeAnimations = [
-                `fadeBox0 ${isMobile ? "0.5s" : "0.6s"} ease-in-out 2.9s forwards`, 
+                `fadeBox0 ${isMobile ? "0.5s" : "0.6s"} ease-in-out 2.9s forwards`,
                 `fadeBox1 ${isMobile ? "0.5s" : "0.6s"} ease-in-out 2.9s forwards`,
-                `fadeBox2 ${isMobile ? "0.5s" : "0.6s"} ease-in-out 2.9s forwards`, 
-                `fadeBox3 ${isMobile ? "0.5s" : "0.6s"} ease-in-out 2.9s forwards`, 
+                `fadeBox2 ${isMobile ? "0.5s" : "0.6s"} ease-in-out 2.9s forwards`,
+                `fadeBox3 ${isMobile ? "0.5s" : "0.6s"} ease-in-out 2.9s forwards`,
               ];
 
               return (
                 <div
                   key={index}
                   style={{
-                    backgroundColor: "rgba(0, 0, 0, 0.1)", 
+                    backgroundColor: "rgba(0, 0, 0, 0.1)",
                     opacity: 1,
                     position: "relative",
                     animation: fadeAnimations[index],
-                    border: "1px solid rgba(255, 255, 255, 0.2)", 
+                    border: "1px solid rgba(255, 255, 255, 0.2)",
                     willChange: "opacity, transform",
                   }}
                 />
@@ -189,6 +189,7 @@ const Home = () => {
             })}
           </div>
 
+          {/* Horizontal Line 1 */}
           <div
             className="horizontalLineOut"
             style={{
@@ -199,54 +200,58 @@ const Home = () => {
               height: "2px",
               backgroundColor: "white",
               opacity: 0,
-              filter: "drop-shadow(0 0 4px rgba(255, 165, 0, 0.5))", 
+              filter: "drop-shadow(0 0 4px rgba(255, 165, 0, 0.5))",
               willChange: "opacity, transform",
             }}
           />
+          {/* Horizontal Line 2 */}
           <div
             className="horizontalLineOut2"
             style={{
               position: "absolute",
-              top: isMobile ? "calc(60% + 5px)" : "calc(60% + 5px)", 
+              top: isMobile ? "calc(60% + 5px)" : "calc(60% + 5px)",
               left: 0,
               width: "100%",
               height: "2px",
               backgroundColor: "white",
               opacity: 0,
-              filter: "drop-shadow(0 0 4px rgba(255, 165, 0, 0.5))", 
+              filter: "drop-shadow(0 0 4px rgba(255, 165, 0, 0.5))",
               willChange: "opacity, transform",
             }}
           />
 
+          {/* Vertical Line 1 */}
           <div
             className="verticalLineOut"
             style={{
               position: "absolute",
-              left: isMobile ? "calc(30% - 7px)" : "calc(30% - 7px)", 
+              left: isMobile ? "calc(30% - 7px)" : "calc(30% - 7px)",
               top: 0,
               height: "100%",
               width: "2px",
               backgroundColor: "white",
               opacity: 0,
-              filter: "drop-shadow(0 0 4px rgba(255, 165, 0, 0.5))", 
+              filter: "drop-shadow(0 0 4px rgba(255, 165, 0, 0.5))",
               willChange: "opacity, transform",
             }}
           />
+          {/* Vertical Line 2 */}
           <div
             className="verticalLineOut2"
             style={{
               position: "absolute",
-              left: isMobile ? "calc(70% + 5px)" : "calc(70% + 5px)", 
+              left: isMobile ? "calc(70% + 5px)" : "calc(70% + 5px)",
               top: 0,
               height: "100%",
               width: "2px",
               backgroundColor: "white",
               opacity: 0,
-              filter: "drop-shadow(0 0 4px rgba(255, 165, 0, 0.5))", 
+              filter: "drop-shadow(0 0 4px rgba(255, 165, 0, 0.5))",
               willChange: "opacity, transform",
             }}
           />
 
+          {/* Nine9 Logo */}
           <img
             src={logo}
             alt="nine9 Logo"
@@ -257,12 +262,13 @@ const Home = () => {
               transform: "translate(-50%, -50%)",
               width: "80%",
               maxWidth: isMobile ? "150px" : "620px",
-              height: isMobile ? "110px" : "350px", 
-              zIndex: 10000, 
-              filter: logoEffect % 2 === 0 ? "grayscale(100%)" : "none", 
-              transition: "filter 0.3s ease, transform 0.3s ease",
-              animation: `logoPulse ${isMobile ? "1s" : "1.2s"} ease-in-out 2.4s forwards`, 
-              willChange: "transform, filter",
+              height: isMobile ? "110px" : "350px",
+              zIndex: 10000,
+              filter: logoEffect % 2 === 0 ? "grayscale(100%)" : "none",
+              transition: "filter 0.3s ease",
+              animation: `logoBlink ${isMobile ? "3s" : "3.2s"} ease-in-out 2s forwards`,
+              opacity: 0, // Start invisible
+              willChange: "transform, filter, opacity",
             }}
           />
         </div>
@@ -767,15 +773,18 @@ const Home = () => {
             100% { left: 100%; opacity: 0; transform: scaleX(1) skewY(1deg); }
           }
 
-          @keyframes logoPulse {
-            0% { transform: translate(-50%, -50%) scale(1); }
-            50% { transform: translate(-50%, -50%) scale(1.05); }
-            100% { transform: translate(-50%, -50%) scale(1); }
+          @keyframes logoBlink {
+            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+            20% { opacity: 1; transform: translate(-50%, -50%) scale(1.05); }
+            40% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+            60% { opacity: 1; transform: translate(-50%, -50%) scale(1.05); }
+            80% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+            100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
           }
 
           .horizontalLineOut {
             animation: lineFadeIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards,
-                      horizontalLineOut 1.2s cubic-bezier(0.22, 1, 0.36, 1) 2.4s forwards;
+                      horizontalLineOut 0.8s cubic-bezier(0.22, 1, 0.36, 1) 1.8s forwards;
             position: relative;
           }
 
@@ -787,13 +796,13 @@ const Home = () => {
             width: 100%;
             height: 2px;
             background: linear-gradient(to right, rgba(255, 165, 0, 0.2), rgba(255, 165, 0, 0));
-            animation: trailFade 1.2s cubic-bezier(0.22, 1, 0.36, 1) 2.4s forwards;
+            animation: trailFade 0.8s cubic-bezier(0.22, 1, 0.36, 1) 1.8s forwards;
             willChange: opacity;
           }
 
           .horizontalLineOut2 {
             animation: lineFadeIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards,
-                      horizontalLineOut2 1.2s cubic-bezier(0.22, 1, 0.36, 1) 2.4s forwards;
+                      horizontalLineOut2 0.8s cubic-bezier(0.22, 1, 0.36, 1) 1.8s forwards;
             position: relative;
           }
 
@@ -805,13 +814,13 @@ const Home = () => {
             width: 100%;
             height: 2px;
             background: linear-gradient(to left, rgba(255, 165, 0, 0.2), rgba(255, 165, 0, 0));
-            animation: trailFade 1.2s cubic-bezier(0.22, 1, 0.36, 1) 2.4s forwards;
+            animation: trailFade 0.8s cubic-bezier(0.22, 1, 0.36, 1) 1.8s forwards;
             willChange: opacity;
           }
 
           .verticalLineOut {
             animation: lineFadeIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards,
-                      verticalLineOut 1.2s cubic-bezier(0.22, 1, 0.36, 1) 2.4s forwards;
+                      verticalLineOut 0.8s cubic-bezier(0.22, 1, 0.36, 1) 1.8s forwards;
             position: relative;
           }
 
@@ -823,13 +832,13 @@ const Home = () => {
             width: 2px;
             height: 100%;
             background: linear-gradient(to bottom, rgba(255, 165, 0, 0.2), rgba(255, 165, 0, 0));
-            animation: trailFade 1.2s cubic-bezier(0.22, 1, 0.36, 1) 2.4s forwards;
+            animation: trailFade 0.8s cubic-bezier(0.22, 1, 0.36, 1) 1.8s forwards;
             willChange: opacity;
           }
 
           .verticalLineOut2 {
             animation: lineFadeIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards,
-                      verticalLineOut2 1.2s cubic-bezier(0.22, 1, 0.36, 1) 2.4s forwards;
+                      verticalLineOut2 0.8s cubic-bezier(0.22, 1, 0.36, 1) 1.8s forwards;
             position: relative;
           }
 
@@ -841,7 +850,7 @@ const Home = () => {
             width: 2px;
             height: 100%;
             background: linear-gradient(to top, rgba(255, 165, 0, 0.2), rgba(255, 165, 0, 0));
-            animation: trailFade 1.2s cubic-bezier(0.22, 1, 0.36, 1) 2.4s forwards;
+            animation: trailFade 0.8s cubic-bezier(0.22, 1, 0.36, 1) 1.8s forwards;
             willChange: opacity;
           }
 
@@ -931,38 +940,38 @@ const Home = () => {
 
             .horizontalLineOut {
               animation: lineFadeIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards,
-                        horizontalLineOut 1s cubic-bezier(0.22, 1, 0.36, 1) 2.4s forwards;
+                        horizontalLineOut 0.8s cubic-bezier(0.22, 1, 0.36, 1) 1.8s forwards;
             }
 
             .horizontalLineOut::after {
-              animation: trailFade 1s cubic-bezier(0.22, 1, 0.36, 1) 2.4s forwards;
+              animation: trailFade 0.8s cubic-bezier(0.22, 1, 0.36, 1) 1.8s forwards;
             }
 
             .horizontalLineOut2 {
               animation: lineFadeIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards,
-                        horizontalLineOut2 1s cubic-bezier(0.22, 1, 0.36, 1) 2.4s forwards;
+                        horizontalLineOut2 0.8s cubic-bezier(0.22, 1, 0.36, 1) 1.8s forwards;
             }
 
             .horizontalLineOut2::after {
-              animation: trailFade 1s cubic-bezier(0.22, 1, 0.36, 1) 2.4s forwards;
+              animation: trailFade 0.8s cubic-bezier(0.22, 1, 0.36, 1) 1.8s forwards;
             }
 
             .verticalLineOut {
               animation: lineFadeIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards,
-                        verticalLineOut 1s cubic-bezier(0.22, 1, 0.36, 1) 2.4s forwards;
+                        verticalLineOut 0.8s cubic-bezier(0.22, 1, 0.36, 1) 1.8s forwards;
             }
 
             .verticalLineOut::after {
-              animation: trailFade 1s cubic-bezier(0.22, 1, 0.36, 1) 2.4s forwards;
+              animation: trailFade 0.8s cubic-bezier(0.22, 1, 0.36, 1) 1.8s forwards;
             }
 
             .verticalLineOut2 {
               animation: lineFadeIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards,
-                        verticalLineOut2 1s cubic-bezier(0.22, 1, 0.36, 1) 2.4s forwards;
+                        verticalLineOut2 0.8s cubic-bezier(0.22, 1, 0.36, 1) 1.8s forwards;
             }
 
             .verticalLineOut2::after {
-              animation: trailFade 1s cubic-bezier(0.22, 1, 0.36, 1) 2.4s forwards;
+              animation: trailFade 0.8s cubic-bezier(0.22, 1, 0.36, 1) 1.8s forwards;
             }
           }
 

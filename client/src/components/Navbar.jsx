@@ -478,6 +478,16 @@ const Navbar = ({ showLogo }) => {
                     About Us
                   </Link>
                   <Link
+                    to="/rewards"
+                    style={styles.dropdownItem}
+                    onClick={() => {
+                      setDropdownOpen(false);
+                      setMenuOpen(false);
+                    }}
+                  >
+                    Rewards
+                  </Link>
+                  <Link
                     to="/contact"
                     style={styles.dropdownItem}
                     onClick={() => {

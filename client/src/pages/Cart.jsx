@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase';
 import Navbar from '../components/Navbar';
 import { useNavigate } from 'react-router-dom';
 import ToastMessage from '../ToastMessage';
-import Footer from "../pages/Footer";      
+import Footer from "../pages/Footer";
 
 const CartCheckout = () => {
   const { cartItems, updateQuantity, removeFromCart, clearCart } = useContext(CartContext);
@@ -12,24 +12,54 @@ const CartCheckout = () => {
   const [loadingOrder, setLoadingOrder] = useState(false);
   const [toastMessage, setToastMessage] = useState(null);
   const [confirmClear, setConfirmClear] = useState(false);
-  const [promoCode, setPromoCode] = useState(''); // State for promo code input
-  const [discount, setDiscount] = useState(0); // State for applied discount
-  const [appliedPromo, setAppliedPromo] = useState(null); // State for applied promo code details
+  const [promoCode, setPromoCode] = useState('');
+  const [discount, setDiscount] = useState(0);
+  const [appliedPromo, setAppliedPromo] = useState(null);
+  const [points, setPoints] = useState(0);
+  const [pointsToRedeem, setPointsToRedeem] = useState('');
+  const [pointsDiscount, setPointsDiscount] = useState(0);
+  const [redeemError, setRedeemError] = useState('');
 
   const navigate = useNavigate();
   const subtotal = cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
-  const totalAfterDiscount = subtotal - discount; // Calculate total after discount
+  const totalAfterDiscount = subtotal - (discount + pointsDiscount);
 
   useEffect(() => {
-    const getUser = async () => {
+    const getUserAndPoints = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       const currentUser = session?.user;
       if (currentUser) {
         setUser(currentUser);
+
+        const { data: ordersData, error: ordersError } = await supabase
+          .from('orders')
+          .select('display_order_id, total_amount, shipping_charges')
+          .eq('user_id', currentUser.id);
+
+        if (ordersError) throw ordersError;
+
+        const ordersWithPoints = ordersData.map(order => {
+          const totalAmount = order.total_amount != null ? order.total_amount : 0;
+          const shippingCharges = order.shipping_charges != null ? order.shipping_charges : 0;
+          const netAmount = totalAmount - shippingCharges;
+          return { net_amount: netAmount };
+        });
+
+        const totalEarnedPoints = ordersWithPoints.reduce((sum, order) => sum + Math.max(0, Math.floor(order.net_amount / 100) * 10), 0);
+
+        const { data: redemptionsData, error: redemptionsError } = await supabase
+          .from('point_redemptions')
+          .select('points_redeemed')
+          .eq('user_id', currentUser.id);
+
+        if (redemptionsError) throw redemptionsError;
+
+        const totalRedeemedPoints = redemptionsData.reduce((sum, redemption) => sum + redemption.points_redeemed, 0);
+        setPoints(totalEarnedPoints - totalRedeemedPoints);
       }
     };
 
-    getUser();
+    getUserAndPoints();
   }, []);
 
   const handleRemoveItem = (itemId) => {
@@ -52,7 +82,6 @@ const CartCheckout = () => {
     setConfirmClear(false);
   };
 
-  // Function to check and validate promo code without incrementing usage
   const handleApplyPromoCode = async () => {
     if (!promoCode) {
       setToastMessage({ message: 'Please enter a promo code.', type: 'error' });
@@ -66,7 +95,6 @@ const CartCheckout = () => {
     }
 
     try {
-      // Fetch the promo code from the promocodes table
       const { data: promo, error } = await supabase
         .from('promocodes')
         .select('*')
@@ -80,7 +108,6 @@ const CartCheckout = () => {
         return;
       }
 
-      // Check if the user has exceeded the max uses for this promo code
       const { data: usageData, error: usageError } = await supabase
         .from('promo_usage')
         .select('usage_count')
@@ -100,19 +127,42 @@ const CartCheckout = () => {
         return;
       }
 
-      // Apply the discount (assuming the discount column is a percentage for simplicity)
-      const discountAmount = (subtotal * promo.discount) / 100; // e.g., 10% discount
+      const discountAmount = (subtotal * promo.discount) / 100;
       setDiscount(discountAmount);
       setAppliedPromo(promo);
       setToastMessage({ message: `Promo code applied! ${promo.discount}% off.`, type: 'success' });
-
-      // We no longer increment usage count here - it will be done at order completion
-
     } catch (error) {
       setToastMessage({ message: 'Error applying promo code.', type: 'error' });
       setDiscount(0);
       setAppliedPromo(null);
     }
+  };
+
+  const handleApplyPoints = () => {
+    setRedeemError('');
+    const pointsToRedeemNum = parseInt(pointsToRedeem, 10);
+
+    if (isNaN(pointsToRedeemNum) || pointsToRedeemNum <= 0) {
+      setRedeemError('Please enter a valid number of points.');
+      setPointsDiscount(0);
+      return;
+    }
+
+    if (pointsToRedeemNum > points) {
+      setRedeemError('You do not have enough points to redeem.');
+      setPointsDiscount(0);
+      return;
+    }
+
+    const discountAmount = pointsToRedeemNum / 5;
+    if (discountAmount > 99) {
+      setRedeemError('Maximum redemption is ₹99 worth of points (495 points).');
+      setPointsDiscount(0);
+      return;
+    }
+
+    setPointsDiscount(discountAmount);
+    setToastMessage({ message: ` ${pointsToRedeemNum} Points Redeemed.`, type: 'success' });
   };
 
   const handlePlaceOrder = async () => {
@@ -125,24 +175,24 @@ const CartCheckout = () => {
       setTimeout(() => navigate('/login'), 1500);
       return;
     }
-  
-    // Navigate to checkout page with subtotal, discount, total, and promo code information
+
     navigate('/checkout', { 
       state: { 
         subtotal,
         discount,
+        pointsToRedeem: parseInt(pointsToRedeem, 10) || 0,
+        pointsDiscount,
         total: totalAfterDiscount,
-        appliedPromo: appliedPromo, // Pass the promo code data to the checkout page
+        appliedPromo,
       } 
     });
   };
-  
+
   return (
     <div style={styles.pageWrapper}>
       <Navbar showLogo={true} />
 
       <div style={styles.container}>
-        {/* Left Column: Cart Items */}
         <div style={styles.leftColumn}>
           <h2 style={styles.columnHeading}>Your Cart</h2>
           {cartItems.length === 0 ? (
@@ -197,11 +247,9 @@ const CartCheckout = () => {
           )}
         </div>
 
-        {/* Right Column: Checkout Summary */}
         <div style={styles.rightColumn}>
           <h2 style={styles.columnHeading}>Checkout Summary</h2>
 
-          {/* Order Details Card */}
           <div style={styles.card}>
             <h3 style={styles.cardTitle}>Order Details</h3>
             {cartItems.map((item, idx) => (
@@ -214,7 +262,6 @@ const CartCheckout = () => {
             ))}
             <hr style={{ margin: '12px 0', borderColor: '#eee' }} />
 
-            {/* Promo Code Section */}
             <div style={styles.promoCodeSection}>
               <input
                 type="text"
@@ -227,9 +274,35 @@ const CartCheckout = () => {
                 Apply
               </button>
             </div>
+
+            <div style={styles.promoCodeSection}>
+              <input
+                type="number"
+                placeholder="Enter points to redeem"
+                value={pointsToRedeem}
+                onChange={(e) => setPointsToRedeem(e.target.value)}
+                style={styles.promoInput}
+              />
+              <button onClick={handleApplyPoints} style={styles.applyPromoBtn}>
+                Preview Points
+              </button>
+            </div>
+            {pointsToRedeem && !redeemError && (
+              <p style={{ ...styles.orderItemMeta, color: '#Ffa500' }}>
+                {pointsToRedeem} points = ₹{(parseInt(pointsToRedeem, 10) / 5).toFixed(2)} discount 
+              </p>
+            )}
+            {redeemError && (
+              <p style={{ ...styles.orderItemMeta, color: 'red' }}>
+                {redeemError}
+              </p>
+            )}
+            <p style={{ ...styles.orderItemMeta, color: '#9ca3af' }}>
+              Available Points: {points}
+            </p>
+
             <hr style={{ margin: '12px 0', borderColor: '#eee' }} />
 
-            {/* Subtotal, Discount, and Total */}
             <div style={styles.totalRow}>
               <span>Subtotal</span>
               <span>₹{subtotal.toFixed(2)}</span>
@@ -240,13 +313,18 @@ const CartCheckout = () => {
                 <span>-₹{discount.toFixed(2)}</span>
               </div>
             )}
+            {pointsDiscount > 0 && (
+              <div style={styles.totalRow}>
+                <span>Points Discount </span>
+                <span>-₹{pointsDiscount.toFixed(2)}</span>
+              </div>
+            )}
             <div style={styles.totalRow}>
               <span style={{ fontWeight: '600' }}>Total</span>
               <span style={{ fontWeight: '600' }}>₹{totalAfterDiscount.toFixed(2)}</span>
             </div>
           </div>
 
-          {/* Place Order Button */}
           <button onClick={handlePlaceOrder} disabled={loadingOrder} style={styles.placeOrderBtn}>
             {loadingOrder ? 'Proceeding...' : 'Proceed to Checkout'}
           </button>
@@ -255,7 +333,6 @@ const CartCheckout = () => {
 
       <Footer />
 
-      {/* Toast Notification */}
       {toastMessage && (
         <ToastMessage
           message={toastMessage.message}
@@ -290,7 +367,7 @@ const styles = {
     fontWeight: '700',
     color: 'white',
     textAlign: window.innerWidth <= 768 ? 'center' : 'left',
-    fontFamily: "'Abril Extra Bold', sans-serif", // Applied to headings (replacing Oswald)
+    fontFamily: "'Abril Extra Bold', sans-serif",
     fontSize: window.innerWidth <= 768 ? '2rem' : '2.8rem',
   },
   leftColumn: {
@@ -330,13 +407,13 @@ const styles = {
     fontWeight: '600',
     marginBottom: '8px',
     color: '#ffffff',
-    fontFamily: "'Abril Extra Bold', sans-serif" // Applied to headings
+    fontFamily: "'Abril Extra Bold', sans-serif"
   },
   itemSize: {
     fontSize: window.innerWidth <= 768 ? '0.95rem' : '0.85rem',
     color: '#9ca3af',
     marginBottom: '10px',
-    fontFamily: "'Louvette Semi Bold', sans-serif" // Applied to descriptions
+    fontFamily: "'Louvette Semi Bold', sans-serif"
   },
   qtyRow: {
     display: 'flex',
@@ -345,7 +422,7 @@ const styles = {
     color: 'white',
     marginBottom: '10px',
     justifyContent: window.innerWidth <= 768 ? 'center' : 'flex-start',
-    fontFamily: "'Louvette Semi Bold', sans-serif" // Applied to descriptions
+    fontFamily: "'Louvette Semi Bold', sans-serif"
   },
   qtyInput: {
     width: window.innerWidth <= 768 ? '80px' : '64px',
@@ -356,20 +433,20 @@ const styles = {
     color: '#ffffff',
     fontSize: window.innerWidth <= 768 ? '0.95rem' : '0.9rem',
     textAlign: 'center',
-    fontFamily: "'Louvette Semi Bold', sans-serif" // Applied to descriptions
+    fontFamily: "'Louvette Semi Bold', sans-serif"
   },
   itemPrice: {
     fontSize: window.innerWidth <= 768 ? '1.25rem' : '1.1rem',
     fontWeight: '600',
     color: '#ffffff',
-    fontFamily: "'Louvette Semi Bold', sans-serif" // Applied to descriptions
+    fontFamily: "'Louvette Semi Bold', sans-serif"
   },
   removeBtn: {
     backgroundColor: '#Ffa500',
     color: 'black',
     padding: '12px 25px',
     border: 'none',
-    fontFamily: "'Abril Extra Bold', sans-serif", // Applied to headings (replacing Roboto)
+    fontFamily: "'Abril Extra Bold', sans-serif",
     borderRadius: '50px',
     fontWeight: 'bold',
     cursor: 'pointer',
@@ -382,7 +459,7 @@ const styles = {
     color: 'black',
     padding: '12px 25px',
     border: 'none',
-    fontFamily: "'Abril Extra Bold', sans-serif", // Applied to headings (replacing Roboto)
+    fontFamily: "'Abril Extra Bold', sans-serif",
     borderRadius: '50px',
     fontWeight: 'bold',
     cursor: 'pointer',
@@ -403,7 +480,7 @@ const styles = {
     marginBottom: '16px',
     color: '#Ffa500',
     textAlign: window.innerWidth <= 768 ? 'center' : 'left',
-    fontFamily: "'Abril Extra Bold', sans-serif" // Applied to headings
+    fontFamily: "'Abril Extra Bold', sans-serif"
   },
   orderRow: {
     display: 'flex',
@@ -416,14 +493,14 @@ const styles = {
     fontWeight: '600',
     fontSize: window.innerWidth <= 768 ? '1.05rem' : '1rem',
     color: '#ffffff',
-    fontFamily: "'Abril Extra Bold', sans-serif" // Applied to headings
+    fontFamily: "'Abril Extra Bold', sans-serif"
   },
   orderItemMeta: {
     color: '#9ca3af',
     marginLeft: window.innerWidth <= 768 ? '0' : '4px',
     marginTop: window.innerWidth <= 768 ? '4px' : '0',
     fontSize: window.innerWidth <= 768 ? '0.9rem' : '0.85rem',
-    fontFamily: "'Louvette Semi Bold', sans-serif" // Applied to descriptions
+    fontFamily: "'Louvette Semi Bold', sans-serif"
   },
   promoCodeSection: {
     display: 'flex',
@@ -438,14 +515,14 @@ const styles = {
     backgroundColor: '#1f1f1f',
     color: '#ffffff',
     fontSize: '0.9rem',
-    fontFamily: "'Louvette Semi Bold', sans-serif" // Applied to descriptions
+    fontFamily: "'Louvette Semi Bold', sans-serif"
   },
   applyPromoBtn: {
     backgroundColor: '#Ffa500',
     color: 'black',
     padding: '10px 20px',
     border: 'none',
-    fontFamily: "'Abril Extra Bold', sans-serif", // Applied to headings (replacing Roboto)
+    fontFamily: "'Abril Extra Bold', sans-serif",
     borderRadius: '8px',
     fontWeight: 'bold',
     cursor: 'pointer',
@@ -458,14 +535,14 @@ const styles = {
     fontSize: window.innerWidth <= 768 ? '1.25rem' : '1.1rem',
     padding: window.innerWidth <= 768 ? '12px 0' : '8px 0',
     color: '#Ffa500',
-    fontFamily: "'Louvette Semi Bold', sans-serif" // Applied to descriptions
+    fontFamily: "'Louvette Semi Bold', sans-serif"
   },
   placeOrderBtn: {
     backgroundColor: 'white',
     color: 'black',
     padding: '12px 25px',
     border: 'none',
-    fontFamily: "'Abril Extra Bold', sans-serif", // Applied to headings (replacing Roboto)
+    fontFamily: "'Abril Extra Bold', sans-serif",
     borderRadius: '50px',
     fontWeight: 'bold',
     cursor: 'pointer',
@@ -482,8 +559,8 @@ const styles = {
     padding: window.innerWidth <= 768 ? '24px' : '16px',
     backgroundColor: '#2d2d2d',
     borderRadius: '12px',
-    fontFamily: "'Louvette Semi Bold', sans-serif" // Applied to descriptions
+    fontFamily: "'Louvette Semi Bold', sans-serif"
   },
-};  
+};
 
 export default CartCheckout;

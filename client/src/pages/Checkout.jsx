@@ -861,10 +861,12 @@ const Checkout = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Use the subtotal, discount, and total passed from CartCheckout
+  // Use the subtotal, discount, total, pointsToRedeem, and pointsDiscount passed from CartCheckout
   const subtotal = location.state?.subtotal || cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
   const discount = location.state?.discount || 0;
-  const totalAfterDiscount = location.state?.total || subtotal - discount;
+  const pointsToRedeem = location.state?.pointsToRedeem || 0;
+  const pointsDiscount = location.state?.pointsDiscount || 0;
+  const totalAfterDiscount = location.state?.total || subtotal - (discount + pointsDiscount);
   const appliedPromo = location.state?.appliedPromo || null;
 
   // Calculate final total including shipping
@@ -1120,7 +1122,7 @@ const Checkout = () => {
         order_id,
         total: totalWithShipping, // Save the total including shipping
         total_amount: totalWithShipping, // Match the DB schema
-        discount,
+        discount: discount + pointsDiscount, // Include both promo and points discount
         shipping_charges: selectedShippingOption.rate, 
         items: orderItems,
         status: 'placed',
@@ -1143,13 +1145,24 @@ const Checkout = () => {
       }
 
       console.log('Order saved to Supabase with all items and shipping:', data);
-      
+
+      // Redeem points only if pointsToRedeem is greater than 0
+      if (pointsToRedeem > 0) {
+        const { error: redemptionError } = await supabase
+          .from('point_redemptions')
+          .insert({
+            user_id: user.id,
+            points_redeemed: pointsToRedeem,
+            discount_amount: pointsDiscount
+          });
+        if (redemptionError) throw redemptionError;
+      }
+
       // Track promo code usage if one was applied
       if (appliedPromo) {
         try {
           console.log('Tracking promo code usage:', appliedPromo);
           
-          // Check if user has existing usage record
           const { data: usageData, error: usageError } = await supabase
             .from('promo_usage')
             .select('usage_count')
@@ -1206,7 +1219,7 @@ const Checkout = () => {
             order_id,
             total: totalWithShipping, 
             total_amount: totalWithShipping, 
-            discount,
+            discount: discount + pointsDiscount,
             items: orderItems,
             status: 'placed',
             shipping_name: selectedAddress.name,
@@ -1268,6 +1281,12 @@ const Checkout = () => {
               <div style={styles.totalRow}>
                 <span>Discount</span>
                 <span>-₹{discount.toFixed(2)}</span>
+              </div>
+            )}
+            {pointsDiscount > 0 && (
+              <div style={styles.totalRow}>
+                <span>Points Discount</span>
+                <span>-₹{pointsDiscount.toFixed(2)}</span>
               </div>
             )}
             {selectedShippingOption && (
@@ -1391,7 +1410,6 @@ const Checkout = () => {
               <p style={styles.emptyText}>{shippingError}</p>
             ) : selectedShippingOption ? (
               <div style={styles.selectedAddressBox}>
-                {/* <p><strong>{selectedShippingOption.courier_name}</strong></p> */}
                 <p>Estimated Delivery in {selectedShippingOption.estimated_delivery_days} days</p>
                 <p>Shipping Cost: ₹{selectedShippingOption.rate.toFixed(2)}</p>
               </div>
