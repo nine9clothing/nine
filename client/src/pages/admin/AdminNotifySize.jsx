@@ -968,7 +968,7 @@ const AdminNotifySize = () => {
                 
                 {!notif.email_sent && (
                   <div style={styles.actionsContainer}>
-                    <button
+                    {/* <button
                       onClick={() => sendAvailabilityEmail(notif)}
                       disabled={sendingEmail[notif.id]}
                       style={{
@@ -977,7 +977,7 @@ const AdminNotifySize = () => {
                       }}
                     >
                       {sendingEmail[notif.id] ? 'Sending...' : 'Send Availability Email'}
-                    </button>
+                    </button> */}
                   </div>
                 )}
               </div>
