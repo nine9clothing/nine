@@ -140,6 +140,7 @@ const styles = {
     fontSize: window.innerWidth <= 768 ? '2rem' : '2.2rem',
     marginBottom: '30px',
     color: '#Ffa500',
+    marginTop: '55px',
     textAlign: 'center',
   },
   loadingText: {
