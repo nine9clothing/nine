@@ -137,7 +137,7 @@ const styles = {
   pageTitle: {
     fontWeight: '700',
     fontFamily: "'Abril Extra Bold', sans-serif", // Applied to headings
-    fontSize: '2.8rem',
+    fontSize: window.innerWidth <= 768 ? '2rem' : '2.2rem',
     marginBottom: '30px',
     color: '#Ffa500',
     textAlign: 'center',
