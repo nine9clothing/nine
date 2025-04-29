@@ -206,12 +206,6 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const cors = require('cors');
-app.use(cors({
-  origin: 'https://nine9.co.in/',
-  credentials: true
-}));
-
 // Add a root route handler
 app.get('/', (req, res) => {
   res.json({ message: 'Welcome to the Nine9 Backend API' });
