@@ -378,7 +378,7 @@ const Rewards = () => {
                                     borderRadius: '8px',
                                     margin: '15px 0'
                                 }}>
-                                    No activity found. <a href="/shop" style={{ color: '#Ffa500', textDecoration: 'underline', fontWeight: 'bold' }}>Start shopping to earn points!</a>
+                                    No activity found. <a href="/sort" style={{ color: '#Ffa500', textDecoration: 'underline', fontWeight: 'bold' }}>Start shopping to earn points!</a>
                                 </p>
                             ) : (
                                 <div style={{ overflowX: 'auto' }}>
@@ -494,6 +494,7 @@ const Rewards = () => {
                                         width: '100%',
                                         height: '100%',
                                         backfaceVisibility: 'hidden',
+                                        transform:"rotateY(0deg)",
                                         background: 'linear-gradient(145deg, rgba(255, 255, 255, 0.95), rgba(230, 230, 230, 0.95))',
                                         borderRadius: '12px',
                                         padding: '20px',

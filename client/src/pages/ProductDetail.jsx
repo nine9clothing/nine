@@ -173,7 +173,7 @@ const ProductDetail = () => {
   };
 
   return (
-    <div>
+    <div className="bg-black">
       <Navbar showLogo={true} />
       <div style={isMobile ? styles.mobileContainer : styles.container}>
         <div style={isMobile ? styles.mobileContentWrapper : styles.contentWrapper}>

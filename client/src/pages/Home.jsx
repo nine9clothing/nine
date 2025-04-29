@@ -730,300 +730,239 @@ const Home = () => {
         </div>
       </section>
 
-      <style>
-        {`
-          @keyframes lineFadeIn {
-            0% { opacity: 0; transform: scale(0.8); }
-            100% { opacity: 1; transform: scale(1); }
-          }
+<style>
+  {`
+    /* Snake-like inward motion for horizontal line 1 */
+    @keyframes snakeInHorizontal1 {
+      0% { top: 0; opacity: 0; transform: translateX(0); filter: blur(3px); }
+      25% { transform: translateX(10px); }
+      50% { transform: translateX(-10px); }
+      75% { transform: translateX(5px); }
+      100% { top: calc(40% - 7px); opacity: 1; transform: translateX(0); filter: blur(0); }
+    }
 
-          @keyframes horizontalLineOut {
-            0% { top: calc(40% - 7px); opacity: 1; transform: scaleY(1) skewX(0deg); }
-            20% { top: calc(30% - 7px); opacity: 0.9; transform: scaleY(1.1) skewX(3deg); }
-            40% { top: calc(20% - 7px); opacity: 0.8; transform: scaleY(1.15) skewX(4deg); }
-            60% { top: calc(10% - 7px); opacity: 0.6; transform: scaleY(1.1) skewX(2deg); }
-            80% { top: calc(5% - 7px); opacity: 0.3; transform: scaleY(1.05) skewX(0deg); }
-            100% { top: 0; opacity: 0; transform: scaleY(1) skewX(-1deg); }
-          }
+    /* Snake-like inward motion for horizontal line 2 */
+    @keyframes snakeInHorizontal2 {
+      0% { top: 100%; opacity: 0; transform: translateX(0); filter: blur(3px); }
+      25% { transform: translateX(-10px); }
+      50% { transform: translateX(10px); }
+      75% { transform: translateX(-5px); }
+      100% { top: calc(60% + 5px); opacity: 1; transform: translateX(0); filter: blur(0); }
+    }
 
-          @keyframes horizontalLineOut2 {
-            0% { top: calc(60% + 5px); opacity: 1; transform: scaleY(1) skewX(0deg); }
-            20% { top: calc(70% + 5px); opacity: 0.9; transform: scaleY(1.1) skewX(-3deg); }
-            40% { top: calc(80% + 5px); opacity: 0.8; transform: scaleY(1.15) skewX(-4deg); }
-            60% { top: calc(90% + 5px); opacity: 0.6; transform: scaleY(1.1) skewX(-2deg); }
-            80% { top: calc(95% + 5px); opacity: 0.3; transform: scaleY(1.05) skewX(0deg); }
-            100% { top: 100%; opacity: 0; transform: scaleY(1) skewX(1deg); }
-          }
+    /* Snake-like inward motion for vertical line 1 */
+    @keyframes snakeInVertical1 {
+      0% { left: 0; opacity: 0; transform: translateY(0); filter: blur(3px); }
+      25% { transform: translateY(10px); }
+      50% { transform: translateY(-10px); }
+      75% { transform: translateY(5px); }
+      100% { left: calc(30% - 7px); opacity: 1; transform: translateY(0); filter: blur(0); }
+    }
 
-          @keyframes verticalLineOut {
-            0% { left: calc(30% - 7px); opacity: 1; transform: scaleX(1) skewY(0deg); }
-            20% { left: calc(20% - 7px); opacity: 0.9; transform: scaleX(1.1) skewY(3deg); }
-            40% { left: calc(10% - 7px); opacity: 0.8; transform: scaleX(1.15) skewY(4deg); }
-            60% { left: calc(5% - 7px); opacity: 0.6; transform: scaleX(1.1) skewY(2deg); }
-            80% { left: calc(2% - 7px); opacity: 0.3; transform: scaleX(1.05) skewY(0deg); }
-            100% { left: 0; opacity: 0; transform: scaleX(1) skewY(-1deg); }
-          }
+    /* Snake-like inward motion for vertical line 2 */
+    @keyframes snakeInVertical2 {
+      0% { left: 100%; opacity: 0; transform: translateY(0); filter: blur(3px); }
+      25% { transform: translateY(-10px); }
+      50% { transform: translateY(10px); }
+      75% { transform: translateY(-5px); }
+      100% { left: calc(70% + 5px); opacity: 1; transform: translateY(0); filter: blur(0); }
+    }
 
-          @keyframes verticalLineOut2 {
-            0% { left: calc(70% + 5px); opacity: 1; transform: scaleX(1) skewY(0deg); }
-            20% { left: calc(80% + 5px); opacity: 0.9; transform: scaleX(1.1) skewY(-3deg); }
-            40% { left: calc(90% + 5px); opacity: 0.8; transform: scaleX(1.15) skewY(-4deg); }
-            60% { left: calc(95% + 5px); opacity: 0.6; transform: scaleX(1.1) skewY(-2deg); }
-            80% { left: calc(98% + 5px); opacity: 0.3; transform: scaleX(1.05) skewY(0deg); }
-            100% { left: 100%; opacity: 0; transform: scaleX(1) skewY(1deg); }
-          }
+    /* Smooth fade-out for horizontal line 1 */
+    @keyframes horizontalLineOut {
+      0% { top: calc(40% - 7px); opacity: 1; filter: brightness(1) drop-shadow(0 0 4px #FFA500); }
+      100% { top: 0; opacity: 0; filter: brightness(0.7) drop-shadow(0 0 2px #FFA500); }
+    }
 
-          @keyframes logoBlink {
-            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
-            20% { opacity: 1; transform: translate(-50%, -50%) scale(1.05); }
-            40% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-            60% { opacity: 1; transform: translate(-50%, -50%) scale(1.05); }
-            80% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-            100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-          }
+    /* Smooth fade-out for horizontal line 2 */
+    @keyframes horizontalLineOut2 {
+      0% { top: calc(60% + 5px); opacity: 1; filter: brightness(1) drop-shadow(0 0 4px #FFA500); }
+      100% { top: 100%; opacity: 0; filter: brightness(0.7) drop-shadow(0 0 2px #FFA500); }
+    }
 
-          .horizontalLineOut {
-            animation: lineFadeIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards,
-                      horizontalLineOut 0.8s cubic-bezier(0.22, 1, 0.36, 1) 1.8s forwards;
-            position: relative;
-          }
+    /* Smooth fade-out for vertical line 1 */
+    @keyframes verticalLineOut {
+      0% { left: calc(30% - 7px); opacity: 1; filter: brightness(1) drop-shadow(0 0 4px #FFA500); }
+      100% { left: 0; opacity: 0; filter: brightness(0.7) drop-shadow(0 0 2px #FFA500); }
+    }
 
-          .horizontalLineOut::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 2px;
-            background: linear-gradient(to right, rgba(255, 165, 0, 0.2), rgba(255, 165, 0, 0));
-            animation: trailFade 0.8s cubic-bezier(0.22, 1, 0.36, 1) 1.8s forwards;
-            willChange: opacity;
-          }
+    /* Smooth fade-out for vertical line 2 */
+    @keyframes verticalLineOut2 {
+      0% { left: calc(70% + 5px); opacity: 1; filter: brightness(1) drop-shadow(0 0 4px #FFA500); }
+      100% { left: 100%; opacity: 0; filter: brightness(0.7) drop-shadow(0 0 2px #FFA500); }
+    }
 
-          .horizontalLineOut2 {
-            animation: lineFadeIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards,
-                      horizontalLineOut2 0.8s cubic-bezier(0.22, 1, 0.36, 1) 1.8s forwards;
-            position: relative;
-          }
+    /* Refined logo entrance with #FFA500 and white glow */
+    @keyframes logoBlink {
+      0% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); filter: drop-shadow(0 0 0 #FFA500); }
+      25% { opacity: 1; transform: translate(-50%, -50%) scale(1); filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.6)); }
+      50% { opacity: 1; transform: translate(-50%, -50%) scale(0.98); filter: drop-shadow(0 0 6px #FFA500); }
+      75% { opacity: 1; transform: translate(-50%, -50%) scale(1); filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.4)); }
+      100% { opacity: 1; transform: translate(-50%, -50%) scale(1); filter: drop-shadow(0 0 4px #FFA500); }
+    }
 
-          .horizontalLineOut2::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 2px;
-            background: linear-gradient(to left, rgba(255, 165, 0, 0.2), rgba(255, 165, 0, 0));
-            animation: trailFade 0.8s cubic-bezier(0.22, 1, 0.36, 1) 1.8s forwards;
-            willChange: opacity;
-          }
+    /* Apply animations with increased timing gaps */
+    .horizontalLineOut {
+      animation: snakeInHorizontal1 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards,
+                horizontalLineOut 2.5s ease-out 1.2s forwards;
+      willChange: top, opacity, transform, filter;
+      background: #FFA500;
+    }
 
-          .verticalLineOut {
-            animation: lineFadeIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards,
-                      verticalLineOut 0.8s cubic-bezier(0.22, 1, 0.36, 1) 1.8s forwards;
-            position: relative;
-          }
+    .horizontalLineOut::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background: linear-gradient(to right, #FFA500, white, transparent);
+      animation: trailFade 1.5s ease-out 1.2s forwards;
+      willChange: opacity, filter;
+      filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.5));
+    }
 
-          .verticalLineOut::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 2px;
-            height: 100%;
-            background: linear-gradient(to bottom, rgba(255, 165, 0, 0.2), rgba(255, 165, 0, 0));
-            animation: trailFade 0.8s cubic-bezier(0.22, 1, 0.36, 1) 1.8s forwards;
-            willChange: opacity;
-          }
+    .horizontalLineOut2 {
+      animation: snakeInHorizontal2 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.6s forwards,
+                horizontalLineOut2 2.5s ease-out 1.8s forwards;
+      willChange: top, opacity, transform, filter;
+      background: #FFA500;
+    }
 
-          .verticalLineOut2 {
-            animation: lineFadeIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards,
-                      verticalLineOut2 0.8s cubic-bezier(0.22, 1, 0.36, 1) 1.8s forwards;
-            position: relative;
-          }
+    .horizontalLineOut2::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background: linear-gradient(to left, #FFA500, white, transparent);
+      animation: trailFade 1.5s ease-out 1.8s forwards;
+      willChange: opacity, filter;
+      filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.5));
+    }
 
-          .verticalLineOut2::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 2px;
-            height: 100%;
-            background: linear-gradient(to top, rgba(255, 165, 0, 0.2), rgba(255, 165, 0, 0));
-            animation: trailFade 0.8s cubic-bezier(0.22, 1, 0.36, 1) 1.8s forwards;
-            willChange: opacity;
-          }
+    .verticalLineOut {
+      animation: snakeInVertical1 0.8s cubic-bezier(0.4, 0, 0.2, 1) 1.2s forwards,
+                verticalLineOut 2.5s ease-out 2.4s forwards;
+      willChange: left, opacity, transform, filter;
+      background: #FFA500;
+    }
 
-          @keyframes trailFade {
-            0% { opacity: 0.4; }
-            100% { opacity: 0; }
-          }
+    .verticalLineOut::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 2px;
+      height: 100%;
+      background: linear-gradient(to bottom, #FFA500, white, transparent);
+      animation: trailFade 1.5s ease-out 2.4s forwards;
+      willChange: opacity, filter;
+      filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.5));
+    }
 
-          @keyframes fadeBox0 {
-            0% { opacity: 1; transform: scale(1) translate(0, 0); }
-            50% { opacity: 0.5; transform: scale(1.1) translate(-20px, -20px); }
-            100% { opacity: 0; transform: scale(1.2) translate(-30px, -30px); }
-          }
-          @keyframes fadeBox1 {
-            0% { opacity: 1; transform: scale(1) translate(0, 0); }
-            50% { opacity: 0.5; transform: scale(1.1) translate(20px, -20px); }
-            100% { opacity: 0; transform: scale(1.2) translate(30px, -30px); }
-          }
-          @keyframes fadeBox2 {
-            0% { opacity: 1; transform: scale(1) translate(0, 0); }
-            50% { opacity: 0.5; transform: scale(1.1) translate(-20px, 20px); }
-            100% { opacity: 0; transform: scale(1.2) translate(-30px, 30px); }
-          }
-          @keyframes fadeBox3 {
-            0% { opacity: 1; transform: scale(1) translate(0, 0); }
-            50% { opacity: 0.5; transform: scale(1.1) translate(20px, 20px); }
-            100% { opacity: 0; transform: scale(1.2) translate(30px, 30px); }
-          }
+    .verticalLineOut2 {
+      animation: snakeInVertical2 0.8s cubic-bezier(0.4, 0, 0.2, 1) 1.8s forwards,
+                verticalLineOut2 2.5s ease-out 3s forwards;
+      willChange: left, opacity, transform, filter;
+      background: #FFA500;
+    }
 
-          @media (max-width: 768px) {
-            @keyframes horizontalLineOut {
-              0% { top: calc(20% - 7px); opacity: 1; transform: scaleY(1) skewX(0deg); }
-              20% { top: calc(15% - 7px); opacity: 0.9; transform: scaleY(1.05) skewX(2deg); }
-              40% { top: calc(10% - 7px); opacity: 0.8; transform: scaleY(1.1) skewX(3deg); }
-              60% { top: calc(5% - 7px); opacity: 0.6; transform: scaleY(1.05) skewX(1deg); }
-              80% { top: calc(2% - 7px); opacity: 0.3; transform: scaleY(1.02) skewX(0deg); }
-              100% { top: 0; opacity: 0; transform: scaleY(1) skewX(-1deg); }
-            }
+    .verticalLineOut2::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 2px;
+      height: 100%;
+      background: linear-gradient(to top, #FFA500, white, transparent);
+      animation: trailFade 1.5s ease-out 3s forwards;
+      willChange: opacity, filter;
+      filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.5));
+    }
 
-            @keyframes horizontalLineOut2 {
-              0% { top: calc(80% + 5px); opacity: 1; transform: scaleY(1) skewX(0deg); }
-              20% { top: calc(85% + 5px); opacity: 0.9; transform: scaleY(1.05) skewX(-2deg); }
-              40% { top: calc(90% + 5px); opacity: 0.8; transform: scaleY(1.1) skewX(-3deg); }
-              60% { top: calc(95% + 5px); opacity: 0.6; transform: scaleY(1.05) skewX(-1deg); }
-              80% { top: calc(98% + 5px); opacity: 0.3; transform: scaleY(1.02) skewX(0deg); }
-              100% { top: 100%; opacity: 0; transform: scaleY(1) skewX(1deg); }
-            }
+    /* Enhanced trail effect */
+    @keyframes trailFade {
+      0% { opacity: 0; filter: blur(3px); }
+      20% { opacity: 0.7; filter: blur(1px); }
+      80% { opacity: 0.7; filter: blur(1px); }
+      100% { opacity: 0; filter: blur(3px); }
+    }
 
-            @keyframes verticalLineOut {
-              0% { left: calc(10% - 7px); opacity: 1; transform: scaleX(1) skewY(0deg); }
-              20% { left: calc(5% - 7px); opacity: 0.9; transform: scaleX(1.05) skewY(2deg); }
-              40% { left: calc(2% - 7px); opacity: 0.8; transform: scaleX(1.1) skewY(3deg); }
-              60% { left: calc(1% - 7px); opacity: 0.6; transform: scaleX(1.05) skewY(1deg); }
-              80% { left: calc(0.5% - 7px); opacity: 0.3; transform: scaleX(1.02) skewY(0deg); }
-              100% { left: 0; opacity: 0; transform: scaleX(1) skewY(-1deg); }
-            }
+    /* Refined box animations */
+    @keyframes fadeBox0 {
+      0% { opacity: 1; transform: scale(1) translate(0, 0); filter: blur(0); }
+      50% { opacity: 0.6; transform: scale(1.05) translate(-15px, -15px); filter: blur(1px); }
+      100% { opacity: 0; transform: scale(1.1) translate(-20px, -20px); filter: blur(2px); }
+    }
 
-            @keyframes verticalLineOut2 {
-              0% { left: calc(90% + 5px); opacity: 1; transform: scaleX(1) skewY(0deg); }
-              20% { left: calc(95% + 5px); opacity: 0.9; transform: scaleX(1.05) skewY(-2deg); }
-              40% { left: calc(98% + 5px); opacity: 0.8; transform: scaleX(1.1) skewY(-3deg); }
-              60% { left: calc(99% + 5px); opacity: 0.6; transform: scaleX(1.05) skewY(-1deg); }
-              80% { left: calc(99.5% + 5px); opacity: 0.3; transform: scaleX(1.02) skewY(0deg); }
-              100% { left: 100%; opacity: 0; transform: scaleX(1) skewY(1deg); }
-            }
+    @keyframes fadeBox1 {
+      0% { opacity: 1; transform: scale(1) translate(0, 0); filter: blur(0); }
+      50% { opacity: 0.6; transform: scale(1.05) translate(15px, -15px); filter: blur(1px); }
+      100% { opacity: 0; transform: scale(1.1) translate(20px, -20px); filter: blur(2px); }
+    }
 
-            @keyframes fadeBox0 {
-              0% { opacity: 1; transform: scale(1) translate(0, 0); }
-              50% { opacity: 0.5; transform: scale(1.05) translate(-10px, -10px); }
-              100% { opacity: 0; transform: scale(1.15) translate(-15px, -15px); }
-            }
-            @keyframes fadeBox1 {
-              0% { opacity: 1; transform: scale(1) translate(0, 0); }
-              50% { opacity: 0.5; transform: scale(1.05) translate(10px, -10px); }
-              100% { opacity: 0; transform: scale(1.15) translate(15px, -15px); }
-            }
-            @keyframes fadeBox2 {
-              0% { opacity: 1; transform: scale(1) translate(0, 0); }
-              50% { opacity: 0.5; transform: scale(1.05) translate(-10px, 10px); }
-              100% { opacity: 0; transform: scale(1.15) translate(-15px, 15px); }
-            }
-            @keyframes fadeBox3 {
-              0% { opacity: 1; transform: scale(1) translate(0, 0); }
-              50% { opacity: 0.5; transform: scale(1.05) translate(10px, 10px); }
-              100% { opacity: 0; transform: scale(1.15) translate(15px, 15px); }
-            }
+    @keyframes fadeBox2 {
+      0% { opacity: 1; transform: scale(1) translate(0, 0); filter: blur(0); }
+      50% { opacity: 0.6; transform: scale(1.05) translate(-15px, 15px); filter: blur(1px); }
+      100% { opacity: 0; transform: scale(1.1) translate(-20px, 20px); filter: blur(2px); }
+    }
 
-            .horizontalLineOut {
-              animation: lineFadeIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards,
-                        horizontalLineOut 0.8s cubic-bezier(0.22, 1, 0.36, 1) 1.8s forwards;
-            }
+    @keyframes fadeBox3 {
+      0% { opacity: 1; transform: scale(1) translate(0, 0); filter: blur(0); }
+      50% { opacity: 0.6; transform: scale(1.05) translate(15px, 15px); filter: blur(1px); }
+      100% { opacity: 0; transform: scale(1.1) translate(20px, 20px); filter: blur(2px); }
+    }
 
-            .horizontalLineOut::after {
-              animation: trailFade 0.8s cubic-bezier(0.22, 1, 0.36, 1) 1.8s forwards;
-            }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(15px); filter: blur(1px); }
+      to { opacity: 1; transform: translateY(0); filter: blur(0); }
+    }
 
-            .horizontalLineOut2 {
-              animation: lineFadeIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards,
-                        horizontalLineOut2 0.8s cubic-bezier(0.22, 1, 0.36, 1) 1.8s forwards;
-            }
+    @keyframes scrollProducts {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
 
-            .horizontalLineOut2::after {
-              animation: trailFade 0.8s cubic-bezier(0.22, 1, 0.36, 1) 1.8s forwards;
-            }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); filter: blur(1px); }
+      to { opacity: 1; transform: translateY(0); filter: blur(0); }
+    }
 
-            .verticalLineOut {
-              animation: lineFadeIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards,
-                        verticalLineOut 0.8s cubic-bezier(0.22, 1, 0.36, 1) 1.8s forwards;
-            }
+    @keyframes slideInLeft {
+      from { opacity: 0; transform: translateX(-15px); filter: blur(1px); }
+      to { opacity: 1; transform: translateX(0); filter: blur(0); }
+    }
 
-            .verticalLineOut::after {
-              animation: trailFade 0.8s cubic-bezier(0.22, 1, 0.36, 1) 1.8s forwards;
-            }
+    @keyframes slideInUp {
+      from { opacity: 0; transform: translateY(15px); filter: blur(1px); }
+      to { opacity: 1; transform: translateY(0); filter: blur(0); }
+    }
 
-            .verticalLineOut2 {
-              animation: lineFadeIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards,
-                        verticalLineOut2 0.8s cubic-bezier(0.22, 1, 0.36, 1) 1.8s forwards;
-            }
+    @keyframes slideInRight {
+      from { opacity: 0; transform: translateX(15px); filter: blur(1px); }
+      to { opacity: 1; transform: translateX(0); filter: blur(0); }
+    }
 
-            .verticalLineOut2::after {
-              animation: trailFade 0.8s cubic-bezier(0.22, 1, 0.36, 1) 1.8s forwards;
-            }
-          }
+    @keyframes jump {
+      0% { transform: translateY(0); opacity: 1; filter: drop-shadow(0 0 0 #FFA500); }
+      50% { transform: translateY(-8px); opacity: 0.8; filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.5)); }
+      100% { transform: translateY(0); opacity: 1; filter: drop-shadow(0 0 3px #FFA500); }
+    }
 
-          @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-          }
-
-          @keyframes scrollProducts {
-            0% { transform: translateX(0); }
-            100% { transform: translateX(-50%); }
-          }
-
-          @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(30px); }
-            to { opacity: 1; transform: translateY(0); }
-          }
-
-          @keyframes slideInLeft {
-            from { opacity: 0; transform: translateX(-20px); }
-            to { opacity: 1; transform: translateX(0); }
-          }
-
-          @keyframes slideInUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-          }
-
-          @keyframes slideInRight {
-            from { opacity: 0; transform: translateX(20px); }
-            to { opacity: 1; transform: translateX(0); }
-          }
-
-          @keyframes jump {
-            0% { transform: translateY(0); opacity: 1; }
-            50% { transform: translateY(-10px); opacity: 0.5; }
-            100% { transform: translateY(0); opacity: 1; }
-          }
-
-          @media (max-width: 768px) {
-            .product-item {
-              transform: scale(0.85);
-            }
-            
-            .reel-item {
-              width: 150px !important;
-              height: 250px !important;
-            }
-          }
-        `}
-      </style>
-
+    @media (max-width: 768px) {
+      .product-item {
+        transform: scale(0.85);
+      }
+      
+      .reel-item {
+        width: 150px !important;
+        height: 250px !important;
+      }
+    }
+  `}
+</style>
       <Footer />
     </div>
   );

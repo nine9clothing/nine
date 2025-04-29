@@ -71,7 +71,6 @@ const VideoPage = ({ video, onClose, allVideos }) => {
     }
   }, [currentVideoIndex]);
 
-  // Get styles based on device size
   const getStyles = () => {
     return {
       fullScreenContainer: {
@@ -88,13 +87,13 @@ const VideoPage = ({ video, onClose, allVideos }) => {
       },
       closeButton: {
         position: 'absolute',
-        top: isMobile ? '12px' : '16px',
-        left: isMobile ? '12px' : '16px',
+        top: isMobile ? '8px' : '16px', 
+        left: isMobile ? '8px' : '16px', 
         zIndex: 1001,
         color: '#fff',
         background: 'none',
         border: 'none',
-        padding: isMobile ? '6px' : '8px',
+        padding: isMobile ? '4px' : '8px', 
         cursor: 'pointer'
       },
       videoContainer: {
@@ -116,12 +115,12 @@ const VideoPage = ({ video, onClose, allVideos }) => {
       },
       navigationButton: {
         position: 'absolute',
-        right: isMobile ? '12px' : '16px',
+        right: isMobile ? '8px' : '16px', 
         zIndex: 40,
         color: '#fff',
         backgroundColor: 'rgba(0, 0, 0, 0.5)',
         borderRadius: '50%',
-        padding: isMobile ? '8px' : '12px',
+        padding: isMobile ? '6px' : '12px', 
         border: 'none',
         cursor: 'pointer',
         transition: 'transform 0.2s ease, opacity 0.2s ease'
@@ -141,38 +140,38 @@ const VideoPage = ({ video, onClose, allVideos }) => {
       },
       indicator: {
         height: '4px',
-        width: isMobile ? '16px' : '24px',
+        width: isMobile ? '12px' : '24px',
         borderRadius: '9999px'
       },
       muteButton: {
         position: 'absolute',
-        bottom: isMobile ? '60px' : '80px',
+        bottom: isMobile ? '40px' : '80px',
         left: '50%',
         transform: 'translateX(-50%)',
         backgroundColor: 'rgba(0, 0, 0, 0.5)',
         borderRadius: '4px',
-        padding: isMobile ? '6px 12px' : '8px 16px',
+        padding: isMobile ? '4px 8px' : '8px 16px', 
         display: 'flex',
         alignItems: 'center',
-        gap: isMobile ? '6px' : '8px',
+        gap: isMobile ? '4px' : '8px', 
         color: '#fff',
         zIndex: 40,
         cursor: 'pointer',
-        fontSize: isMobile ? '14px' : '16px',
-        fontFamily: '"Louvette Semi Bold", sans-serif' // Applied to descriptions
+        fontSize: isMobile ? '12px' : '16px', 
+        fontFamily: '"Louvette Semi Bold", sans-serif'
       },
       caption: {
         position: 'absolute',
-        bottom: isMobile ? '100px' : '128px',
+        bottom: isMobile ? '80px' : '128px', 
         left: '50%',
         transform: 'translateX(-50%)',
         color: '#fff',
-        fontSize: isMobile ? '18px' : '24px',
+        fontSize: isMobile ? '14px' : '24px', 
         fontWeight: 'bold',
         textAlign: 'center',
         maxWidth: '80%',
         zIndex: 40,
-        fontFamily: '"Abril Extra Bold", sans-serif' // Applied to headings
+        fontFamily: '"Abril Extra Bold", sans-serif'
       }
     };
   };
@@ -185,7 +184,7 @@ const VideoPage = ({ video, onClose, allVideos }) => {
         onClick={onClose}
         style={styles.closeButton}
       >
-        <X size={isMobile ? 20 : 24} />
+        <X size={isMobile ? 16 : 24} /> 
       </button>
       
       <div style={styles.videoContainer}>
@@ -214,7 +213,7 @@ const VideoPage = ({ video, onClose, allVideos }) => {
                 cursor: currentVideoIndex === 0 ? 'not-allowed' : 'pointer'
               }}
             >
-              <ChevronUp size={isMobile ? 18 : 24} style={{ transition: 'transform 0.2s ease' }} />
+              <ChevronUp size={isMobile ? 14 : 24} style={{ transition: 'transform 0.2s ease' }} /> 
             </button>
             
             <button 
@@ -227,7 +226,7 @@ const VideoPage = ({ video, onClose, allVideos }) => {
                 cursor: currentVideoIndex === allVideos.length - 1 ? 'not-allowed' : 'pointer'
               }}
             >
-              <ChevronDown size={isMobile ? 18 : 24} style={{ transition: 'transform 0.2s ease' }} />
+              <ChevronDown size={isMobile ? 14 : 24} style={{ transition: 'transform 0.2s ease' }} />
             </button>
           </>
         )}
@@ -247,7 +246,7 @@ const VideoPage = ({ video, onClose, allVideos }) => {
         {allVideos.length > 1 && (
           <div style={{
             position: 'absolute',
-            top: isMobile ? '46px' : '56px',
+            top: isMobile ? '36px' : '56px', 
             left: 0,
             right: 0,
             display: 'flex',
@@ -271,7 +270,7 @@ const VideoPage = ({ video, onClose, allVideos }) => {
           style={styles.muteButton}
           onClick={toggleMute}
         >
-          {isMuted ? <VolumeX size={isMobile ? 14 : 16} /> : <Volume2 size={isMobile ? 14 : 16} />}
+          {isMuted ? <VolumeX size={isMobile ? 12 : 16} /> : <Volume2 size={isMobile ? 12 : 16} />} 
           <span>Tap to {isMuted ? 'unmute' : 'mute'}</span>
         </div>
         
@@ -302,9 +301,9 @@ const ReelsSection = ({ singleLine = true, isMobile = false }) => {
   const mobileView = isMobile || windowWidth < 768;
 
   // Calculate card width based on mobile/desktop view
-  const cardWidth = mobileView ? 200 : 280;
+  const cardWidth = mobileView ? 160 : 280; // Reduced card width for mobile
   // Add gap between cards
-  const gapWidth = mobileView ? 12 : 20;
+  const gapWidth = mobileView ? 8 : 20; // Reduced gap for mobile
   // Total width of one card including its gap
   const totalCardWidth = cardWidth + gapWidth;
 
@@ -322,13 +321,13 @@ const ReelsSection = ({ singleLine = true, isMobile = false }) => {
       if (error) throw new Error(`Database error: ${error.message}`);
 
       const videoData = data.map((video, index) => ({
-        internalId: index, // Assign a unique internal ID for tracking
+        internalId: index,
         media_url: video.media_url,
-        title: video.title || "", // Optional field
-        description: video.description || "", // Optional field
-        category: video.category || "", // Optional field
-        tags: video.tags || "", // Optional field
-        caption: video.description || "", // Use description as caption (adjust if needed)
+        title: video.title || "",
+        description: video.description || "",
+        category: video.category || "",
+        tags: video.tags || "",
+        caption: video.description || "",
         created_at: video.created_at || new Date().toISOString(),
         updated_at: video.updated_at || new Date().toISOString(),
       }));
@@ -349,7 +348,6 @@ const ReelsSection = ({ singleLine = true, isMobile = false }) => {
   // Scroll to specific index/card smoothly
   const scrollToIndex = (index) => {
     if (carouselRef.current) {
-      // Calculate the exact position to scroll to
       const position = index * totalCardWidth;
       
       carouselRef.current.scrollTo({
@@ -362,14 +360,12 @@ const ReelsSection = ({ singleLine = true, isMobile = false }) => {
   // Handle manual navigation via previous button
   const handlePrev = () => {
     if (currentIndex > 0) {
-      // Clear auto-scrolling interval to prevent conflicts
       clearAutoScrollInterval();
       
       const newIndex = currentIndex - 1;
       setCurrentIndex(newIndex);
       scrollToIndex(newIndex);
       
-      // Restart auto-scrolling after a delay
       restartAutoScrollInterval();
     }
   };
@@ -377,14 +373,12 @@ const ReelsSection = ({ singleLine = true, isMobile = false }) => {
   // Handle manual navigation via next button
   const handleNext = () => {
     if (currentIndex < videos.length - 1) {
-      // Clear auto-scrolling interval to prevent conflicts
       clearAutoScrollInterval();
       
       const newIndex = currentIndex + 1;
       setCurrentIndex(newIndex);
       scrollToIndex(newIndex);
       
-      // Restart auto-scrolling after a delay
       restartAutoScrollInterval();
     }
   };
@@ -399,49 +393,38 @@ const ReelsSection = ({ singleLine = true, isMobile = false }) => {
 
   // Restart auto-scrolling after manual navigation
   const restartAutoScrollInterval = () => {
-    // Wait a bit before restarting the auto-scroll
     setTimeout(() => {
       startAutoScrollInterval();
-    }, 5000); // Wait 5 seconds before auto-scrolling resumes
+    }, 5000);
   };
 
-  // Start auto-scrolling
   const startAutoScrollInterval = () => {
-    // Clear any existing interval first
     clearAutoScrollInterval();
     
-    // Set up the new interval for auto-scrolling
     autoScrollIntervalRef.current = setInterval(() => {
       setCurrentIndex(prevIndex => {
-        // Calculate next index
         const nextIndex = prevIndex + 1;
         
-        // If we've reached the end, loop back to the beginning
         if (nextIndex >= videos.length) {
           const newIndex = 0;
           scrollToIndex(newIndex);
           return newIndex;
         }
         
-        // Otherwise, scroll to the next video
         scrollToIndex(nextIndex);
         return nextIndex;
       });
-    }, 3000); // Scroll every 3 seconds
+    }, 3000);
   };
 
-  // Set up auto-scrolling when videos are loaded
   useEffect(() => {
     if (videos.length <= 1) return;
     
-    // Start the auto-scrolling
     startAutoScrollInterval();
     
-    // Clean up on unmount
     return () => clearAutoScrollInterval();
   }, [videos.length]);
 
-  // Handle intersection observer for video playback
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -476,33 +459,26 @@ const ReelsSection = ({ singleLine = true, isMobile = false }) => {
     };
   }, [videos]);
 
-  // Update current index based on scroll position
   const handleScroll = useCallback(() => {
     if (carouselRef.current) {
-      // Calculate the current index based on scroll position
       const scrollPosition = carouselRef.current.scrollLeft;
       const calculatedIndex = Math.round(scrollPosition / totalCardWidth);
       
-      // Update the current index if it has changed
       if (calculatedIndex !== currentIndex && calculatedIndex >= 0 && calculatedIndex < videos.length) {
         setCurrentIndex(calculatedIndex);
       }
     }
   }, [currentIndex, videos.length, totalCardWidth]);
 
-  // Add scroll event listener
   useEffect(() => {
     const carousel = carouselRef.current;
     if (carousel) {
-      // Use passive listener for better performance
       carousel.addEventListener('scroll', handleScroll, { passive: true });
       return () => carousel.removeEventListener('scroll', handleScroll);
     }
   }, [handleScroll]);
 
-  // Handle click on video card
   const handleCardClick = (video, index) => {
-    // Clear auto-scrolling when a video is selected
     clearAutoScrollInterval();
     
     setClickedCardIndex(index);
@@ -512,19 +488,15 @@ const ReelsSection = ({ singleLine = true, isMobile = false }) => {
     }, 300);
   };
 
-  // Handle pagination dot click
   const handleDotClick = (index) => {
-    // Clear auto-scrolling interval to prevent conflicts
     clearAutoScrollInterval();
     
     setCurrentIndex(index);
     scrollToIndex(index);
     
-    // Restart auto-scrolling after a delay
     restartAutoScrollInterval();
   };
 
-  // Get styles based on device size
   const getStyles = () => {
     return {
       loadingContainer: {
@@ -532,33 +504,33 @@ const ReelsSection = ({ singleLine = true, isMobile = false }) => {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: mobileView ? '30px 0' : '40px 0'
+        padding: mobileView ? '20px 0' : '40px 0' 
       },
       loadingSpinner: {
-        width: mobileView ? '36px' : '48px',
-        height: mobileView ? '36px' : '48px',
-        border: '4px solid rgba(255, 255, 255, 0.1)',
+        width: mobileView ? '28px' : '48px',
+        height: mobileView ? '28px' : '48px',
+        border: '3px solid rgba(255, 255, 255, 0.1)',
         borderRadius: '50%',
         borderTopColor: '#Ffa500',
         animation: 'spin 1s linear infinite'
       },
       loadingText: {
-        marginTop: '16px',
+        marginTop: '12px',
         color: '#Ffa500',
-        fontSize: mobileView ? '1rem' : '1.2rem',
-        fontFamily: '"Louvette Semi Bold", sans-serif' // Applied to descriptions
+        fontSize: mobileView ? '0.9rem' : '1.2rem', 
+        fontFamily: '"Louvette Semi Bold", sans-serif'
       },
       errorText: {
         textAlign: 'center',
         color: '#Ffa500',
-        fontSize: mobileView ? '1.2rem' : '1.5rem',
-        padding: mobileView ? '30px 0' : '40px 0',
-        fontFamily: '"Louvette Semi Bold", sans-serif' // Applied to descriptions
+        fontSize: mobileView ? '1rem' : '1.5rem',
+        padding: mobileView ? '20px 0' : '40px 0', 
+        fontFamily: '"Louvette Semi Bold", sans-serif'
       },
       sectionContainer: {
         position: 'relative',
         width: '100%',
-        padding: mobileView ? '0 10px' : '0 20px'
+        padding: mobileView ? '0 5px' : '0 20px' 
       },
       navButton: {
         position: 'absolute',
@@ -567,8 +539,8 @@ const ReelsSection = ({ singleLine = true, isMobile = false }) => {
         backgroundColor: 'rgba(255, 255, 255, 0.2)',
         color: '#fff',
         borderRadius: '50%',
-        width: mobileView ? '32px' : '40px',
-        height: mobileView ? '32px' : '40px',
+        width: mobileView ? '28px' : '40px', 
+        height: mobileView ? '28px' : '40px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -589,15 +561,15 @@ const ReelsSection = ({ singleLine = true, isMobile = false }) => {
         display: 'flex',
         flexWrap: 'nowrap',
         gap: `${gapWidth}px`,
-        padding: '10px 0',
+        padding: '8px 0', 
       },
       videoCard: {
         width: `${cardWidth}px`,
         minWidth: `${cardWidth}px`,
-        height: mobileView ? '300px' : '410px',
+        height: mobileView ? '240px' : '410px', 
         position: 'relative',
         overflow: 'hidden',
-        borderRadius: '10px',
+        borderRadius: '3px', 
         cursor: 'pointer',
         flexShrink: 0,
         scrollSnapAlign: 'center',
@@ -611,43 +583,43 @@ const ReelsSection = ({ singleLine = true, isMobile = false }) => {
         width: '100%',
         height: '100%',
         objectFit: 'cover',
-        borderRadius: '10px'
+        borderRadius: '8px'
       },
       playIcon: {
         backgroundColor: 'rgba(0, 0, 0, 0.4)',
         borderRadius: '50%',
-        padding: mobileView ? '6px' : '10px',
+        padding: mobileView ? '4px' : '10px', 
         transition: 'transform 0.2s ease, opacity 0.2s ease'
       },
       caption: {
         position: 'absolute',
-        bottom: '10px',
+        bottom: '8px',
         left: '50%',
         transform: 'translateX(-50%)',
         backgroundColor: 'rgba(0, 0, 0, 0.6)',
-        padding: '5px 10px',
+        padding: '4px 8px', 
         borderRadius: '4px',
         color: '#Ffa500',
         fontWeight: 500,
         maxWidth: '90%',
         textAlign: 'center',
-        fontSize: mobileView ? '12px' : '14px',
-        fontFamily: '"Abril Extra Bold", sans-serif' // Applied to headings
+        fontSize: mobileView ? '10px' : '14px',
+        fontFamily: '"Abril Extra Bold", sans-serif'
       },
       paginationDot: {
-        height: mobileView ? '6px' : '8px',
+        height: mobileView ? '5px' : '8px', 
         borderRadius: '9999px',
         transition: 'all 0.3s ease-out',
         cursor: 'pointer'
       },
       sectionTitle: {
-        fontSize: mobileView ? "2rem" : "2.8rem",
+        fontSize: mobileView ? "1.5rem" : "2.8rem",
         fontWeight: "700",
         textAlign: 'center',
         color: "#Ffa500",
-        fontFamily: '"Abril Extra Bold", sans-serif', // Applied to headings (replacing Oswald)
-        marginBottom: mobileView ? "15px" : "20px",
-        letterSpacing: "2px"
+        fontFamily: '"Abril Extra Bold", sans-serif',
+        marginBottom: mobileView ? "10px" : "20px",
+        letterSpacing: "1px"
       }
     };
   };
@@ -680,12 +652,12 @@ const ReelsSection = ({ singleLine = true, isMobile = false }) => {
             disabled={currentIndex === 0}
             style={{
               ...styles.navButton,
-              left: mobileView ? '4px' : '8px',
+              left: mobileView ? '2px' : '8px', 
               cursor: currentIndex === 0 ? 'not-allowed' : 'pointer',
               opacity: currentIndex === 0 ? 0.5 : 1
             }}
           >
-            <ChevronLeft size={mobileView ? 16 : 20} style={{ transition: 'transform 0.2s ease' }} />
+            <ChevronLeft size={mobileView ? 14 : 20} style={{ transition: 'transform 0.2s ease' }} />
           </button>
         )}
         
@@ -699,10 +671,8 @@ const ReelsSection = ({ singleLine = true, isMobile = false }) => {
           <div 
             style={{
               ...styles.carouselInner,
-              // Add padding at the start to center first card
-              paddingLeft: mobileView ? '10px' : '20px',
-              // Add padding at the end for the last card
-              paddingRight: mobileView ? '10px' : '20px'
+              paddingLeft: mobileView ? '5px' : '20px', 
+              paddingRight: mobileView ? '5px' : '20px'
             }}
           >
             {videos.map((video, index) => (
@@ -734,7 +704,7 @@ const ReelsSection = ({ singleLine = true, isMobile = false }) => {
                   zIndex: 2,
                 }}>
                   <Play 
-                    size={mobileView ? 36 : 48} 
+                    size={mobileView ? 28 : 48} 
                     color="#fff" 
                     style={styles.playIcon}
                   />
@@ -763,16 +733,15 @@ const ReelsSection = ({ singleLine = true, isMobile = false }) => {
             disabled={currentIndex >= videos.length - 1}
             style={{
               ...styles.navButton,
-              right: mobileView ? '4px' : '8px',
+              right: mobileView ? '2px' : '8px', 
               cursor: currentIndex >= videos.length - 1 ? 'not-allowed' : 'pointer',
               opacity: currentIndex >= videos.length - 1 ? 0.5 : 1
             }}
           >
-            <ChevronRight size={mobileView ? 16 : 20} style={{ transition: 'transform 0.2s ease' }} />
+            <ChevronRight size={mobileView ? 14 : 20} style={{ transition: 'transform 0.2s ease' }} />
           </button>
         )}
-        
-        <div style={{
+        {/* <div style={{
           display: 'flex',
           justifyContent: 'center',
           marginTop: mobileView ? '12px' : '20px',
@@ -789,6 +758,33 @@ const ReelsSection = ({ singleLine = true, isMobile = false }) => {
               onClick={() => handleDotClick(idx)}
             ></div>
           ))}
+        </div> */}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'center',
+          marginTop: mobileView ? '8px' : '20px', 
+          gap: mobileView ? '4px' : '8px' 
+        }}>
+          {(() => {
+            const dots = [];
+            const startIndex = Math.max(0, currentIndex - 1);
+            const endIndex = Math.min(videos.length - 1, currentIndex + 1);
+
+            for (let idx = startIndex; idx <= endIndex; idx++) {
+              dots.push(
+                <div 
+                  key={idx} 
+                  style={{
+                    ...styles.paginationDot,
+                    width: idx === currentIndex ? (mobileView ? '20px' : '32px') : (mobileView ? '5px' : '8px'), // Smaller dots
+                    backgroundColor: idx === currentIndex ? '#Ffa500' : 'rgba(255, 165, 0, 0.5)'
+                  }}
+                  onClick={() => handleDotClick(idx)}
+                ></div>
+              );
+            }
+            return dots;
+          })()}
         </div>
       </div>
     );
@@ -818,7 +814,7 @@ const ReelsSection = ({ singleLine = true, isMobile = false }) => {
         `}
       </style>
       <section style={{
-        padding: mobileView ? "30px 0" : "40px 0",
+        padding: mobileView ? "20px 0" : "40px 0", 
         background: "#000",
         overflow: "hidden"
       }}>

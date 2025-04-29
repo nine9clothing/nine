@@ -187,7 +187,7 @@ const Navbar = ({ showLogo }) => {
       flex: 1,
       position: 'relative',
       zIndex: 1050,
-      marginLeft: isMobile ? '0' : '500px',
+      marginLeft: isMobile ? '0' : '35%',
       justifyContent: 'isMobile ? center : flex-start',
     },
     logo: {
