@@ -94,10 +94,10 @@ const Login = () => {
         setLoading(false);
         return;
       }
-      const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/;
+      const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
       if (!passwordRegex.test(password)) {
         setToastMessage({
-          message: "Password must be at least 8 characters long and contain at least one letter and one number.",
+          message: "Password must be at least 8 characters long and contain at least one letter, one number, and one special symbol",
           type: "error",
         });
         setLoading(false);
@@ -292,7 +292,7 @@ const Login = () => {
                 <input
                   id="regPassword"
                   type="password"
-                  placeholder="e.g. Abc123456"
+                  placeholder="e.g. Abc123!@#"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   style={inputStyle}

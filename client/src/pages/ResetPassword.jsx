@@ -36,10 +36,10 @@ const ResetPassword = () => {
       return;
     }
 
-    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/;
+    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
     if (!passwordRegex.test(newPassword)) {
       setToastMessage({
-        message: "Password must be at least 8 characters and contain letters and numbers.",
+        message: "Password must be at least 8 characters long and contain at least one letter, one number, and one special symbol ",
         type: "error",
       });
       setLoading(false);
