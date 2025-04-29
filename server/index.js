@@ -203,12 +203,8 @@ import orderRoutes from './routes/orderRoutes.js';
 dotenv.config();
 
 const app = express();
+app.use(cors());
 app.use(express.json());
-// On Node.js (Express):
-app.use(cors({
-  origin: 'https://nine9.co.in',
-  credentials: true
-}));
 
 // Add a root route handler
 app.get('/', (req, res) => {
