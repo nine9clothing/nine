@@ -204,6 +204,8 @@ const About = () => {
             <a href="/t&c" style={styles.link}>Privacy & Policy</a>
             <span style={styles.separator}>|</span>
             <a href="/faq" style={styles.link}>FAQs</a>
+            <span style={styles.separator}>|</span>
+            <a href="/exchange" style={styles.link}>Exchange Policy</a> 
           </div>
         </footer>
       </section>

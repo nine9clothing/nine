@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import logo from '../assets/nine9_logo.png';
-// Import icons from lucide-react
-import { Facebook, Instagram, Youtube } from 'lucide-react';
+import { FaWhatsapp } from 'react-icons/fa'; 
+import { Instagram, Youtube } from 'lucide-react';
 
 const Footer = () => {
   const [hoveredLink, setHoveredLink] = useState(null);
@@ -22,7 +22,7 @@ const Footer = () => {
   ];
 
   const socialIcons = [
-    { Icon: Facebook, href: "https://facebook.com" },
+    { Icon: FaWhatsapp, href: "https://wa.me/919226331361" },
     { Icon: Instagram, href: "https://www.instagram.com/nine9.co.in/?hl=en" },
     { Icon: Youtube, href: "https://youtube.com/@life.at.nine9?si=PjEQwxESTGxxbdCv" },
   ];
@@ -33,23 +33,21 @@ const Footer = () => {
       <div style={styles.container}>
         <div style={styles.leftSection}>
           <img src={logo} alt="Logo" style={styles.logo} />
-          {/* <p style={styles.companyText}>Nine9 - Quality You Can Trust</p> */}
-          
           <div style={styles.socialIcons}>
             {socialIcons.map(({ Icon, href }, index) => (
-              <a 
+              <a
                 key={index}
                 href={href}
                 style={{
                   ...styles.iconLink,
-                  ...(hoveredIcon === index ? styles.iconHover : {})
+                  ...(hoveredIcon === index ? styles.iconHover : {}),
                 }}
                 onMouseEnter={() => handleIconMouseEnter(index)}
                 onMouseLeave={handleIconMouseLeave}
               >
-                <Icon 
-                  size={20} 
-                  color={hoveredIcon === index ? "#FFD580" : "#FFA500"} 
+                <Icon
+                  size={20}
+                  color={hoveredIcon === index ? "#FFD580" : "#FFA500"}
                 />
               </a>
             ))}
@@ -57,8 +55,6 @@ const Footer = () => {
         </div>
 
         <div style={styles.rightSection}>
-        {/* <h3 style={styles.policiesHeading}>Policies</h3> */}
-
           {links.map((link, index) => (
             <div key={index} style={styles.linkContainer}>
               <a
@@ -113,21 +109,6 @@ const styles = {
     marginBottom: "10px",
     borderRadius: "6px",
   },
-  policiesHeading: {
-    color: "white",
-    fontSize: "26px",
-    fontWeight: "600",
-    textAlign: "right",
-    letterSpacing: "0.5px",
-    fontFamily: "'Abril Extra Bold', sans-serif" // Applied to headings
-  },
-  companyText: {
-    margin: "0 0 15px 0",
-    fontSize: "14px",
-    color: "#fff",
-    fontWeight: "300",
-    fontFamily: "'Louvette Semi Bold', sans-serif" // Applied to descriptions
-  },
   socialIcons: {
     display: "flex",
     gap: "15px",
@@ -141,7 +122,7 @@ const styles = {
     transition: "all 0.3s ease",
     padding: "2px",
     borderRadius: "50%",
-    marginLeft:"10px",
+    marginLeft: "10px",
     backgroundColor: "transparent",
   },
   iconHover: {
@@ -155,8 +136,8 @@ const styles = {
     alignItems: "flex-end",
     gap: "5px",
     justifyContent: "center",
-    paddingTop: "10px", 
-    height: "140px", 
+    paddingTop: "10px",
+    height: "140px",
   },
   linkContainer: {
     margin: "0",
@@ -168,7 +149,7 @@ const styles = {
     transition: "all 0.3s ease",
     fontWeight: "500",
     letterSpacing: "0.5px",
-    fontFamily: "'Louvette Semi Bold', sans-serif" // Applied to descriptions
+    fontFamily: "'Louvette Semi Bold', sans-serif",
   },
   linkHover: {
     color: "#FFD580",
