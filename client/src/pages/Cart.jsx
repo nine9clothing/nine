@@ -63,10 +63,11 @@ const CartCheckout = () => {
 
   useEffect(() => {
     if (redeemPoints) {
-      const maxPointsFor99 = 495; // 99 * 5 points per rupee
+      const maxPointsFor99 = 495;
       const pointsToRedeem = Math.min(points, maxPointsFor99);
       setPointsDiscount(pointsToRedeem / 5);
-      setToastMessage({ message: `₹${(pointsToRedeem / 5).toFixed(2)} Redeemed.`, type: 'success' });    } else {
+      setToastMessage({ message: `₹${(pointsToRedeem / 5).toFixed(2)} Redeemed.`, type: 'success' });
+    } else {
       setPointsDiscount(0);
     }
   }, [redeemPoints, points]);
@@ -195,11 +196,11 @@ const CartCheckout = () => {
                   <h3 style={styles.itemName}>{item.name}</h3>
                   {item.selectedSize && (
                     <p style={styles.itemSize}>
-                      Size: <span style={{ fontWeight: '600' }}>{item.selectedSize}</span>
+                      Size: {item.selectedSize}
                     </p>
                   )}
                   <div style={styles.qtyRow}>
-                    <label>Qty:</label>
+                    <span style={styles.qtyLabel}>Qty:</span>
                     <input
                       type="number"
                       min="1"
@@ -350,7 +351,7 @@ const styles = {
     color: 'white',
     textAlign: window.innerWidth <= 768 ? 'center' : 'left',
     fontFamily: "'Abril Extra Bold', sans-serif",
-    fontSize: window.innerWidth <= 768 ? '2rem' : '2.3rem',
+    fontSize: window.innerWidth <= 768 ? '2rem' : '2.2rem',
   },
   leftColumn: {
     flex: '1',
@@ -362,79 +363,80 @@ const styles = {
   },
   itemCard: {
     display: 'flex',
-    flexDirection: window.innerWidth <= 768 ? 'column' : 'row',
-    alignItems: window.innerWidth <= 768 ? 'center' : 'flex-start',
-    gap: window.innerWidth <= 768 ? '16px' : '20px',
-    marginBottom: '24px',
-    backgroundColor: '#2d2d2d',
-    borderRadius: '12px',
-    padding: window.innerWidth <= 768 ? '16px' : '20px',
-    boxShadow: '0 4px 6px rgba(0,0,0,0.2)',
-    transition: 'transform 0.2s ease-in-out',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: '16px',
+    marginBottom: '16px',
+    backgroundColor: '#1f1f1f',
+    borderRadius: '8px',
+    padding: '12px',
+    boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
   },
   itemImage: {
-    width: window.innerWidth <= 768 ? '160px' : '120px',
-    height: window.innerWidth <= 768 ? '160px' : '120px',
-    borderRadius: '10px',
+    width: '80px',
+    height: '80px',
+    borderRadius: '8px',
     objectFit: 'cover',
     border: '1px solid #3f3f3f',
   },
   itemInfo: {
     flex: 1,
-    textAlign: window.innerWidth <= 768 ? 'center' : 'left',
-    width: window.innerWidth <= 768 ? '100%' : 'auto',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
   },
   itemName: {
-    fontSize: window.innerWidth <= 768 ? '1.25rem' : '1.1rem',
+    fontSize: '1rem',
     fontWeight: '600',
-    marginBottom: '8px',
+    marginBottom: '4px',
     color: '#ffffff',
-    fontFamily: "'Abril Extra Bold', sans-serif"
+    fontFamily: "'Inter', sans-serif",
   },
   itemSize: {
-    fontSize: window.innerWidth <= 768 ? '0.95rem' : '0.85rem',
+    fontSize: '0.85rem',
     color: '#9ca3af',
-    marginBottom: '10px',
-    fontFamily: "'Louvette Semi Bold', sans-serif"
+    marginBottom: '4px',
+    fontFamily: "'Inter', sans-serif",
   },
   qtyRow: {
     display: 'flex',
     alignItems: 'center',
-    gap: '12px',
-    color: 'white',
-    marginBottom: '10px',
-    justifyContent: window.innerWidth <= 768 ? 'center' : 'flex-start',
-    fontFamily: "'Louvette Semi Bold', sans-serif"
+    gap: '8px',
+    marginBottom: '4px',
+  },
+  qtyLabel: {
+    fontSize: '0.85rem',
+    color: '#9ca3af',
+    fontFamily: "'Inter', sans-serif",
   },
   qtyInput: {
-    width: window.innerWidth <= 768 ? '80px' : '64px',
-    padding: window.innerWidth <= 768 ? '10px' : '8px',
-    borderRadius: '8px',
+    width: '48px',
+    padding: '6px',
+    borderRadius: '4px',
     border: '1px solid #3f3f3f',
-    backgroundColor: '#1f1f1f',
+    backgroundColor: '#2d2d2d',
     color: '#ffffff',
-    fontSize: window.innerWidth <= 768 ? '0.95rem' : '0.9rem',
+    fontSize: '0.85rem',
     textAlign: 'center',
-    fontFamily: "'Louvette Semi Bold', sans-serif"
+    fontFamily: "'Inter', sans-serif",
   },
   itemPrice: {
-    fontSize: window.innerWidth <= 768 ? '1.25rem' : '1.1rem',
+    fontSize: '1rem',
     fontWeight: '600',
     color: '#ffffff',
-    fontFamily: "'Louvette Semi Bold', sans-serif"
+    fontFamily: "'Inter', sans-serif",
   },
   removeBtn: {
     backgroundColor: '#Ffa500',
     color: 'black',
-    padding: '12px 25px',
+    padding: '8px 16px',
     border: 'none',
-    fontFamily: "'Abril Extra Bold', sans-serif",
+    fontFamily: "'Inter', sans-serif",
     borderRadius: '50px',
-    fontWeight: 'bold',
+    fontWeight: '600',
     cursor: 'pointer',
-    zIndex: 1001,
     transition: 'background-color 0.2s ease',
-    fontSize: '15px',
+    fontSize: '0.85rem',
   },
   clearCartBtn: {
     backgroundColor: 'white',
@@ -445,7 +447,6 @@ const styles = {
     borderRadius: '50px',
     fontWeight: 'bold',
     cursor: 'pointer',
-    zIndex: 1001,
     transition: 'background-color 0.2s ease',
     fontSize: '15px',
   },
@@ -462,7 +463,7 @@ const styles = {
     marginBottom: '16px',
     color: '#Ffa500',
     textAlign: window.innerWidth <= 768 ? 'center' : 'left',
-    fontFamily: "'Abril Extra Bold', sans-serif"
+    fontFamily: "'Abril Extra Bold', sans-serif",
   },
   orderRow: {
     display: 'flex',
@@ -475,14 +476,14 @@ const styles = {
     fontWeight: '600',
     fontSize: window.innerWidth <= 768 ? '1.05rem' : '1rem',
     color: '#ffffff',
-    fontFamily: "'Abril Extra Bold', sans-serif"
+    fontFamily: "'Abril Extra Bold', sans-serif",
   },
   orderItemMeta: {
     color: '#9ca3af',
     marginLeft: window.innerWidth <= 768 ? '0' : '4px',
     marginTop: window.innerWidth <= 768 ? '4px' : '0',
     fontSize: window.innerWidth <= 768 ? '0.9rem' : '0.85rem',
-    fontFamily: "'Louvette Semi Bold', sans-serif"
+    fontFamily: "'Louvette Semi Bold', sans-serif",
   },
   promoCodeSection: {
     display: 'flex',
@@ -498,7 +499,7 @@ const styles = {
     backgroundColor: '#1f1f1f',
     color: '#ffffff',
     fontSize: '0.9rem',
-    fontFamily: "'Louvette Semi Bold', sans-serif"
+    fontFamily: "'Louvette Semi Bold', sans-serif",
   },
   applyPromoBtn: {
     backgroundColor: '#Ffa500',
@@ -556,7 +557,7 @@ const styles = {
     fontSize: window.innerWidth <= 768 ? '1.25rem' : '1.1rem',
     padding: window.innerWidth <= 768 ? '12px 0' : '8px 0',
     color: '#Ffa500',
-    fontFamily: "'Louvette Semi Bold', sans-serif"
+    fontFamily: "'Louvette Semi Bold', sans-serif",
   },
   placeOrderBtn: {
     backgroundColor: 'white',
@@ -567,7 +568,6 @@ const styles = {
     borderRadius: '50px',
     fontWeight: 'bold',
     cursor: 'pointer',
-    zIndex: 1001,
     transition: 'background-color 0.2s ease',
     fontSize: '15px',
     width: '100%',
@@ -580,7 +580,7 @@ const styles = {
     padding: window.innerWidth <= 768 ? '24px' : '16px',
     backgroundColor: '#2d2d2d',
     borderRadius: '12px',
-    fontFamily: "'Louvette Semi Bold', sans-serif"
+    fontFamily: "'Louvette Semi Bold', sans-serif",
   },
 };
 

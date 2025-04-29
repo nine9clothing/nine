@@ -741,7 +741,7 @@ const styles = {
     maxWidth: '300px',
     textAlign: 'center',
     fontFamily: "'Louvette Semi Bold', sans-serif",
-    color: 'fff',
+    color: '#fff',
     fontSize: '14px',
   },
   modalCloseButton: {
