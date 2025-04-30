@@ -7,6 +7,6 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
     auth: {
       autoRefreshToken: true,      // Automatically refresh tokens before they expire
       persistSession: true,        // Persist session in localStorage
-      detectSessionInUrl: true     // Detect session from URL (for OAuth/OTP flows)
     }
 });
+export default supabase; // Ensure this line is present

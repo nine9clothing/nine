@@ -2,6 +2,7 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { CartProvider } from './context/CartContext';
+import AuthProvider from './context/AuthContext';
 
 import Home from './pages/Home';
 import About from './pages/About';
@@ -42,6 +43,7 @@ import AdminViewPromoCode from './pages/admin/AdminViewPromoCode'
 
 const App = () => {
   return (
+    <AuthProvider>
     <BrowserRouter>
       <CartProvider>
         <Routes>
@@ -87,7 +89,8 @@ const App = () => {
           </Route>
         </Routes>
       </CartProvider>
-    </BrowserRouter>
+      </BrowserRouter>
+      </AuthProvider>
   );
 };
 
