@@ -488,7 +488,7 @@ const Login = () => {
   const [regPhone, setRegPhone] = useState('');
   const [loading, setLoading] = useState(false);
   const [toastMessage, setToastMessage] = useState(null);
-  const [showPassword, setShowPassword] = useState(false); // New state for password visibility
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
   const [hoveredLink, setHoveredLink] = useState(null);
 
@@ -625,6 +625,12 @@ const Login = () => {
           setLoading(false);
           return;
         } else {
+          const exists = await checkEmailExists(email);
+          if (!exists) {
+            setToastMessage({ message: "Email not found. Please register first.", type: "error" });
+            setLoading(false);
+            return;
+          }
           const { error } = await supabase.auth.signInWithPassword({ email, password });
           if (error) {
             setToastMessage({ message: error.message, type: "error" });
@@ -633,6 +639,12 @@ const Login = () => {
           }
         }
       } else {
+        const exists = await checkEmailExists(email);
+        if (exists) {
+          setToastMessage({ message: "Email already registered. Please login instead.", type: "error" });
+          setLoading(false);
+          return;
+        }
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
@@ -687,6 +699,13 @@ const Login = () => {
       setToastMessage({ message: 'Please enter your email address first.', type: "error" });
       return;
     }
+    
+    const exists = await checkEmailExists(email);
+    if (!exists) {
+      setToastMessage({ message: "Email not found. Please register first.", type: "error" });
+      return;
+    }
+
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: window.location.origin + '/resetpassword',
