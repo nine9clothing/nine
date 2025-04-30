@@ -2,9 +2,9 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Volume2, VolumeX, X, Play } from 'lucide-react';
 import { createClient } from '@supabase/supabase-js';
 
-// Constants - Added error checking
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'YOUR_SUPABASE_URL';
-const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || 'YOUR_SUPABASE_KEY';
+// Constants
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 const VIDEO_FORMATS = /\.(mp4|webm|ogg|mov)$/i;
 
@@ -288,7 +288,7 @@ const VideoPage = ({ video, onClose, allVideos }) => {
 const ReelsSection = ({ singleLine = true, isMobile = false }) => {
   const [videos, setVideos] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false); // Changed initial state to false
   const [error, setError] = useState(null);
   const [selectedVideo, setSelectedVideo] = useState(null);
   const [clickedCardIndex, setClickedCardIndex] = useState(null);
@@ -304,28 +304,18 @@ const ReelsSection = ({ singleLine = true, isMobile = false }) => {
 
   const fetchVideos = useCallback(async () => {
     try {
-      console.log('Fetching videos from Supabase...');
-      setLoading(true);
-      setError(null);
-
-      if (!SUPABASE_URL || !SUPABASE_KEY) {
-        throw new Error('Supabase configuration is missing');
+      // Only show loading spinner on desktop
+      if (!mobileView) {
+        setLoading(true);
       }
+      setError(null);
 
       const { data, error } = await supabase
         .from('videos')
         .select('id, media_url, title, description, category, tags, created_at, updated_at')
         .order('created_at', { ascending: false });
 
-      if (error) {
-        throw new Error(`Database error: ${error.message}`);
-      }
-
-      if (!data || data.length === 0) {
-        console.log('No videos found in database');
-        setVideos([]);
-        return;
-      }
+      if (error) throw new Error(`Database error: ${error.message}`);
 
       const videoData = data.map((video, index) => ({
         internalId: index,
@@ -339,15 +329,14 @@ const ReelsSection = ({ singleLine = true, isMobile = false }) => {
         updated_at: video.updated_at || new Date().toISOString(),
       }));
 
-      console.log('Videos fetched successfully:', videoData);
       setVideos(videoData);
     } catch (err) {
+      setError(err.message);
       console.error('Error fetching videos:', err);
-      setError(err.message || 'Failed to load videos');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [mobileView]);
 
   useEffect(() => {
     fetchVideos();
@@ -398,7 +387,6 @@ const ReelsSection = ({ singleLine = true, isMobile = false }) => {
 
   const startAutoScrollInterval = () => {
     clearAutoScrollInterval();
-    
     autoScrollIntervalRef.current = setInterval(() => {
       setCurrentIndex(prevIndex => {
         const nextIndex = prevIndex + 1;
@@ -617,7 +605,8 @@ const ReelsSection = ({ singleLine = true, isMobile = false }) => {
   const styles = getStyles();
 
   const renderContent = () => {
-    if (loading) {
+    // Only show loading on desktop
+    if (loading && !mobileView) {
       return (
         <div style={styles.loadingContainer}>
           <div style={styles.loadingSpinner}></div>
@@ -628,23 +617,24 @@ const ReelsSection = ({ singleLine = true, isMobile = false }) => {
 
     if (error) {
       return (
-        <div style={styles.errorText}>
-          <p>Error: {error}</p>
+        <p style={styles.errorText}>
+          Error: {error}
+          <br />
           <button 
             onClick={fetchVideos}
-            style={{ 
-              marginTop: '10px', 
-              padding: '5px 10px', 
-              backgroundColor: '#Ffa500', 
-              border: 'none', 
-              borderRadius: '5px',
+            style={{
+              marginTop: '10px',
+              padding: '5px 10px',
+              backgroundColor: '#Ffa500',
               color: '#fff',
+              border: 'none',
+              borderRadius: '4px',
               cursor: 'pointer'
             }}
           >
             Retry
           </button>
-        </div>
+        </p>
       );
     }
 
