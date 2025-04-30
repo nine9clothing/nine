@@ -239,6 +239,7 @@ const VideoPage = ({ video, onClose, allVideos }) => {
             autoPlay
             muted={isMuted}
             loop
+            playsInline
             onClick={togglePlayPause}
           />
         </div>
@@ -691,6 +692,7 @@ const ReelsSection = ({ singleLine = true, isMobile = false }) => {
                   style={styles.videoElement}
                   muted
                   loop
+                  playsInline
                 />
                 <div style={{
                   position: 'absolute',
