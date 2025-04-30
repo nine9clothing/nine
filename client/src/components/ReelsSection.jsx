@@ -6,7 +6,7 @@ import { createClient } from '@supabase/supabase-js';
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
-const VIDEO_FORMATS = /\.(mp4|webm|ogg|mov)$/i; // Retained from old code
+const VIDEO_FORMATS = /\.(mp4|webm|ogg|mov)$/i;
 
 // Custom Hook for Window Size
 const useWindowWidth = () => {
@@ -38,14 +38,14 @@ const VideoPage = ({ video, onClose, allVideos }) => {
   const handlePrevVideo = () => {
     if (currentVideoIndex > 0) {
       setCurrentVideoIndex(prev => prev - 1);
-      setIsPlaying(false); // Reset playing state when switching videos
+      setIsPlaying(false); // Reset playing state
     }
   };
 
   const handleNextVideo = () => {
     if (currentVideoIndex < allVideos.length - 1) {
       setCurrentVideoIndex(prev => prev + 1);
-      setIsPlaying(false); // Reset playing state when switching videos
+      setIsPlaying(false); // Reset playing state
     }
   };
 
@@ -67,10 +67,111 @@ const VideoPage = ({ video, onClose, allVideos }) => {
     }
   };
 
-  // Removed the useEffect that forces autoplay
-  // Playback will now only start when the user taps the video
+  const getStyles = () => {
+    return {
+      fullScreenContainer: {
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: '#000',
+        zIndex: 1000,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      },
+      closeButton: {
+        position: 'absolute',
+        top: isMobile ? '8px' : '16px',
+        left: isMobile ? '8px' : '16px',
+        zIndex: 1001,
+        color: '#fff',
+        background: 'none',
+        border: 'none',
+        padding: isMobile ? '4px' : '8px',
+        cursor: 'pointer'
+      },
+      videoContainer: {
+        width: '100%',
+        height: '100%',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        position: 'relative'
+      },
+      touchOverlay: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        zIndex: 30,
+        display: 'flex'
+      },
+      navigationButton: {
+        position: 'absolute',
+        right: isMobile ? '8px' : '16px',
+        zIndex: 40,
+        color: '#fff',
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        borderRadius: '50%',
+        padding: isMobile ? '6px' : '12px',
+        border: 'none',
+        cursor: 'pointer',
+        transition: 'transform 0.2s ease, opacity 0.2s ease'
+      },
+      videoWrapper: {
+        height: '100%',
+        width: isMobile ? '100%' : '50%',
+        maxWidth: isMobile ? 'none' : '500px',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center'
+      },
+      video: {
+        height: '100%',
+        width: '100%',
+        objectFit: 'contain'
+      },
+      indicator: {
+        height: '4px',
+        width: isMobile ? '12px' : '24px',
+        borderRadius: '9999px'
+      },
+      muteButton: {
+        position: 'absolute',
+        bottom: isMobile ? '40px' : '80px',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        borderRadius: '4px',
+        padding: isMobile ? '4px 8px' : '8px 16px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: isMobile ? '4px' : '8px',
+        color: '#fff',
+        zIndex: 40,
+        cursor: 'pointer',
+        fontSize: isMobile ? '12px' : '16px',
+        fontFamily: '"Louvette Semi Bold", sans-serif'
+      },
+      caption: {
+        position: 'absolute',
+        bottom: isMobile ? '80px' : '128px',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        color: '#fff',
+        fontSize: isMobile ? '14px' : '24px',
+        fontWeight: 'bold',
+        textAlign: 'center',
+        maxWidth: '80%',
+        zIndex: 40,
+        fontFamily: '"Abril Extra Bold", sans-serif'
+      }
+    };
+  };
 
-  const getStyles = () => { /* ... unchanged ... */ };
   const styles = getStyles();
 
   return (
@@ -90,16 +191,27 @@ const VideoPage = ({ video, onClose, allVideos }) => {
             <button 
               onClick={handlePrevVideo}
               disabled={currentVideoIndex === 0}
-              style={{ /* ... unchanged ... */ }}
+              style={{
+                ...styles.navigationButton,
+                top: '33%',
+                opacity: currentVideoIndex === 0 ? 0.5 : 1,
+                cursor: currentVideoIndex === 0 ? 'not-allowed' : 'pointer'
+              }}
             >
-              <ChevronUp size={isMobile ? 14 : 24} />
+              <ChevronUp size={isMobile ? 14 : 24} style={{ transition: 'transform 0.2s ease' }} />
             </button>
+            
             <button 
               onClick={handleNextVideo}
               disabled={currentVideoIndex === allVideos.length - 1}
-              style={{ /* ... unchanged ... */ }}
+              style={{
+                ...styles.navigationButton,
+                bottom: '33%',
+                opacity: currentVideoIndex === allVideos.length - 1 ? 0.5 : 1,
+                cursor: currentVideoIndex === allVideos.length - 1 ? 'not-allowed' : 'pointer'
+              }}
             >
-              <ChevronDown size={isMobile ? 14 : 24} />
+              <ChevronDown size={isMobile ? 14 : 24} style={{ transition: 'transform 0.2s ease' }} />
             </button>
           </>
         )}
@@ -126,7 +238,39 @@ const VideoPage = ({ video, onClose, allVideos }) => {
           )}
         </div>
 
-        {/* ... rest of the JSX unchanged ... */}
+        {allVideos.length > 1 && (
+          <div style={{
+            position: 'absolute',
+            top: isMobile ? '36px' : '56px',
+            left: 0,
+            right: 0,
+            display: 'flex',
+            justifyContent: 'center',
+            gap: '4px',
+            zIndex: 40
+          }}>
+            {allVideos.map((_, idx) => (
+              <div 
+                key={idx} 
+                style={{
+                  ...styles.indicator,
+                  backgroundColor: idx === currentVideoIndex ? '#fff' : 'rgba(255, 255, 255, 0.5)'
+                }}
+              ></div>
+            ))}
+          </div>
+        )}
+        
+        <div style={styles.muteButton} onClick={toggleMute}>
+          {isMuted ? <VolumeX size={isMobile ? 12 : 16} /> : <Volume2 size={isMobile ? 12 : 16} />}
+          <span>Tap to {isMuted ? 'unmute' : 'mute'}</span>
+        </div>
+        
+        {allVideos[currentVideoIndex].caption && (
+          <div style={styles.caption}>
+            {allVideos[currentVideoIndex].caption}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -139,28 +283,21 @@ const ReelsSection = ({ singleLine = true, isMobile = false }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedVideo, setSelectedVideo] = useState(null);
-  const [clickedCardIndex, setClickedCardIndex] = useState(null);
+  const [playingIndex, setPlayingIndex] = useState(null); // Track inline playing video
   const windowWidth = useWindowWidth();
   const videoRefs = useRef([]);
   const carouselRef = useRef(null);
   const autoScrollIntervalRef = useRef(null);
-  
-  // Define mobile breakpoint
-  const mobileView = isMobile || windowWidth < 768;
 
-  // Calculate card width based on mobile/desktop view
-  const cardWidth = mobileView ? 160 : 280; // Reduced card width for mobile
-  // Add gap between cards
-  const gapWidth = mobileView ? 8 : 20; // Reduced gap for mobile
-  // Total width of one card including its gap
+  const mobileView = isMobile || windowWidth < 768;
+  const cardWidth = mobileView ? 160 : 280;
+  const gapWidth = mobileView ? 8 : 20;
   const totalCardWidth = cardWidth + gapWidth;
 
   const fetchVideos = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-
-      // Fetch videos directly from the 'videos' table with updated columns
       const { data, error } = await supabase
         .from('videos')
         .select('id, media_url, title, description, category, tags, created_at, updated_at')
@@ -193,45 +330,33 @@ const ReelsSection = ({ singleLine = true, isMobile = false }) => {
     fetchVideos();
   }, [fetchVideos]);
 
-  // Scroll to specific index/card smoothly
   const scrollToIndex = (index) => {
     if (carouselRef.current) {
       const position = index * totalCardWidth;
-      
-      carouselRef.current.scrollTo({
-        left: position,
-        behavior: 'smooth'
-      });
+      carouselRef.current.scrollTo({ left: position, behavior: 'smooth' });
     }
   };
 
-  // Handle manual navigation via previous button
   const handlePrev = () => {
     if (currentIndex > 0) {
       clearAutoScrollInterval();
-      
       const newIndex = currentIndex - 1;
       setCurrentIndex(newIndex);
       scrollToIndex(newIndex);
-      
       restartAutoScrollInterval();
     }
   };
 
-  // Handle manual navigation via next button
   const handleNext = () => {
     if (currentIndex < videos.length - 1) {
       clearAutoScrollInterval();
-      
       const newIndex = currentIndex + 1;
       setCurrentIndex(newIndex);
       scrollToIndex(newIndex);
-      
       restartAutoScrollInterval();
     }
   };
 
-  // Clear the auto-scroll interval
   const clearAutoScrollInterval = () => {
     if (autoScrollIntervalRef.current) {
       clearInterval(autoScrollIntervalRef.current);
@@ -239,7 +364,6 @@ const ReelsSection = ({ singleLine = true, isMobile = false }) => {
     }
   };
 
-  // Restart auto-scrolling after manual navigation
   const restartAutoScrollInterval = () => {
     setTimeout(() => {
       startAutoScrollInterval();
@@ -248,17 +372,14 @@ const ReelsSection = ({ singleLine = true, isMobile = false }) => {
 
   const startAutoScrollInterval = () => {
     clearAutoScrollInterval();
-    
     autoScrollIntervalRef.current = setInterval(() => {
       setCurrentIndex(prevIndex => {
         const nextIndex = prevIndex + 1;
-        
         if (nextIndex >= videos.length) {
           const newIndex = 0;
           scrollToIndex(newIndex);
           return newIndex;
         }
-        
         scrollToIndex(nextIndex);
         return nextIndex;
       });
@@ -267,9 +388,7 @@ const ReelsSection = ({ singleLine = true, isMobile = false }) => {
 
   useEffect(() => {
     if (videos.length <= 1) return;
-    
     startAutoScrollInterval();
-    
     return () => clearAutoScrollInterval();
   }, [videos.length]);
 
@@ -278,9 +397,9 @@ const ReelsSection = ({ singleLine = true, isMobile = false }) => {
       (entries) => {
         entries.forEach(entry => {
           const videoElement = entry.target;
-          if (entry.isIntersecting) {
+          if (entry.isIntersecting && playingIndex === null) {
             videoElement.play().catch(error => console.log('Autoplay prevented:', error));
-          } else {
+          } else if (playingIndex !== videoRefs.current.indexOf(videoElement)) {
             videoElement.pause();
             videoElement.currentTime = 0;
           }
@@ -305,13 +424,12 @@ const ReelsSection = ({ singleLine = true, isMobile = false }) => {
         if (ref) observer.unobserve(ref);
       });
     };
-  }, [videos]);
+  }, [videos, playingIndex]);
 
   const handleScroll = useCallback(() => {
     if (carouselRef.current) {
       const scrollPosition = carouselRef.current.scrollLeft;
       const calculatedIndex = Math.round(scrollPosition / totalCardWidth);
-      
       if (calculatedIndex !== currentIndex && calculatedIndex >= 0 && calculatedIndex < videos.length) {
         setCurrentIndex(calculatedIndex);
       }
@@ -328,20 +446,27 @@ const ReelsSection = ({ singleLine = true, isMobile = false }) => {
 
   const handleCardClick = (video, index) => {
     clearAutoScrollInterval();
-    
-    setClickedCardIndex(index);
-    setTimeout(() => {
-      setSelectedVideo(video);
-      setClickedCardIndex(null);
-    }, 300);
+    if (playingIndex === index) {
+      videoRefs.current[index]?.pause();
+      setPlayingIndex(null);
+    } else {
+      if (playingIndex !== null) {
+        videoRefs.current[playingIndex]?.pause();
+      }
+      videoRefs.current[index]?.play().catch(error => console.log('Playback error:', error));
+      setPlayingIndex(index);
+    }
+  };
+
+  const handleFullScreen = (video) => {
+    clearAutoScrollInterval();
+    setSelectedVideo(video);
   };
 
   const handleDotClick = (index) => {
     clearAutoScrollInterval();
-    
     setCurrentIndex(index);
     scrollToIndex(index);
-    
     restartAutoScrollInterval();
   };
 
@@ -352,7 +477,7 @@ const ReelsSection = ({ singleLine = true, isMobile = false }) => {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: mobileView ? '20px 0' : '40px 0' 
+        padding: mobileView ? '20px 0' : '40px 0'
       },
       loadingSpinner: {
         width: mobileView ? '28px' : '48px',
@@ -365,20 +490,20 @@ const ReelsSection = ({ singleLine = true, isMobile = false }) => {
       loadingText: {
         marginTop: '12px',
         color: '#Ffa500',
-        fontSize: mobileView ? '0.9rem' : '1.2rem', 
+        fontSize: mobileView ? '0.9rem' : '1.2rem',
         fontFamily: '"Louvette Semi Bold", sans-serif'
       },
       errorText: {
         textAlign: 'center',
         color: '#Ffa500',
         fontSize: mobileView ? '1rem' : '1.5rem',
-        padding: mobileView ? '20px 0' : '40px 0', 
+        padding: mobileView ? '20px 0' : '40px 0',
         fontFamily: '"Louvette Semi Bold", sans-serif'
       },
       sectionContainer: {
         position: 'relative',
         width: '100%',
-        padding: mobileView ? '0 5px' : '0 20px' 
+        padding: mobileView ? '0 5px' : '0 20px'
       },
       navButton: {
         position: 'absolute',
@@ -387,7 +512,7 @@ const ReelsSection = ({ singleLine = true, isMobile = false }) => {
         backgroundColor: 'rgba(255, 255, 255, 0.2)',
         color: '#fff',
         borderRadius: '50%',
-        width: mobileView ? '28px' : '40px', 
+        width: mobileView ? '28px' : '40px',
         height: mobileView ? '28px' : '40px',
         display: 'flex',
         alignItems: 'center',
@@ -409,15 +534,15 @@ const ReelsSection = ({ singleLine = true, isMobile = false }) => {
         display: 'flex',
         flexWrap: 'nowrap',
         gap: `${gapWidth}px`,
-        padding: '8px 0', 
+        padding: '8px 0',
       },
       videoCard: {
         width: `${cardWidth}px`,
         minWidth: `${cardWidth}px`,
-        height: mobileView ? '240px' : '410px', 
+        height: mobileView ? '240px' : '410px',
         position: 'relative',
         overflow: 'hidden',
-        borderRadius: '3px', 
+        borderRadius: '3px',
         cursor: 'pointer',
         flexShrink: 0,
         scrollSnapAlign: 'center',
@@ -436,7 +561,7 @@ const ReelsSection = ({ singleLine = true, isMobile = false }) => {
       playIcon: {
         backgroundColor: 'rgba(0, 0, 0, 0.4)',
         borderRadius: '50%',
-        padding: mobileView ? '4px' : '10px', 
+        padding: mobileView ? '4px' : '10px',
         transition: 'transform 0.2s ease, opacity 0.2s ease'
       },
       caption: {
@@ -445,7 +570,7 @@ const ReelsSection = ({ singleLine = true, isMobile = false }) => {
         left: '50%',
         transform: 'translateX(-50%)',
         backgroundColor: 'rgba(0, 0, 0, 0.6)',
-        padding: '4px 8px', 
+        padding: '4px 8px',
         borderRadius: '4px',
         color: '#Ffa500',
         fontWeight: 500,
@@ -455,7 +580,7 @@ const ReelsSection = ({ singleLine = true, isMobile = false }) => {
         fontFamily: '"Abril Extra Bold", sans-serif'
       },
       paginationDot: {
-        height: mobileView ? '5px' : '8px', 
+        height: mobileView ? '5px' : '8px',
         borderRadius: '9999px',
         transition: 'all 0.3s ease-out',
         cursor: 'pointer'
@@ -468,6 +593,18 @@ const ReelsSection = ({ singleLine = true, isMobile = false }) => {
         fontFamily: '"Abril Extra Bold", sans-serif',
         marginBottom: mobileView ? "10px" : "20px",
         letterSpacing: "1px"
+      },
+      fullScreenButton: {
+        position: 'absolute',
+        top: '8px',
+        right: '8px',
+        backgroundColor: 'rgba(0, 0, 0, 0.6)',
+        borderRadius: '50%',
+        padding: mobileView ? '4px' : '6px',
+        color: '#fff',
+        border: 'none',
+        cursor: 'pointer',
+        zIndex: 3,
       }
     };
   };
@@ -500,7 +637,7 @@ const ReelsSection = ({ singleLine = true, isMobile = false }) => {
             disabled={currentIndex === 0}
             style={{
               ...styles.navButton,
-              left: mobileView ? '2px' : '8px', 
+              left: mobileView ? '2px' : '8px',
               cursor: currentIndex === 0 ? 'not-allowed' : 'pointer',
               opacity: currentIndex === 0 ? 0.5 : 1
             }}
@@ -509,28 +646,12 @@ const ReelsSection = ({ singleLine = true, isMobile = false }) => {
           </button>
         )}
         
-        <div 
-          ref={carouselRef} 
-          style={{
-            ...styles.carousel,
-            scrollSnapType: 'x mandatory',
-          }}
-        >
-          <div 
-            style={{
-              ...styles.carouselInner,
-              paddingLeft: mobileView ? '5px' : '20px', 
-              paddingRight: mobileView ? '5px' : '20px'
-            }}
-          >
+        <div ref={carouselRef} style={{ ...styles.carousel, scrollSnapType: 'x mandatory' }}>
+          <div style={{ ...styles.carouselInner, paddingLeft: mobileView ? '5px' : '20px', paddingRight: mobileView ? '5px' : '20px' }}>
             {videos.map((video, index) => (
               <div 
                 key={video.internalId} 
-                style={{
-                  ...styles.videoCard,
-                  transform: clickedCardIndex === index ? 'scale(1.1)' : 'scale(1)',
-                  zIndex: clickedCardIndex === index ? 5 : 1
-                }}
+                style={styles.videoCard}
                 onClick={() => handleCardClick(video, index)}
               >
                 <video
@@ -540,36 +661,34 @@ const ReelsSection = ({ singleLine = true, isMobile = false }) => {
                   muted
                   loop
                 />
-                <div style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: '0',
-                  display: 'flex',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  zIndex: 2,
-                }}>
-                  <Play 
-                    size={mobileView ? 28 : 48} 
-                    color="#fff" 
-                    style={styles.playIcon}
-                  />
-                </div>
-                <div style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  backgroundColor: 'rgba(0, 0, 0, 0.2)'
-                }}></div>
-                {video.caption && (
-                  <div style={styles.caption}>
-                    {video.caption}
+                {playingIndex !== index && (
+                  <div style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: '0',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    zIndex: 2,
+                  }}>
+                    <Play size={mobileView ? 28 : 48} color="#fff" style={styles.playIcon} />
                   </div>
                 )}
+                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0, 0, 0, 0.2)' }}></div>
+                {video.caption && <div style={styles.caption}>{video.caption}</div>}
+                <button 
+                  style={styles.fullScreenButton}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleFullScreen(video);
+                  }}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M8 3H5a2 2 0 00-2 2v3m18 0V5a2 2 0 00-2-2h-3m0 18h3a2 2 0 002-2v-3M3 16v3a2 2 0 002 2h3" />
+                  </svg>
+                </button>
               </div>
             ))}
           </div>
@@ -581,7 +700,7 @@ const ReelsSection = ({ singleLine = true, isMobile = false }) => {
             disabled={currentIndex >= videos.length - 1}
             style={{
               ...styles.navButton,
-              right: mobileView ? '2px' : '8px', 
+              right: mobileView ? '2px' : '8px',
               cursor: currentIndex >= videos.length - 1 ? 'not-allowed' : 'pointer',
               opacity: currentIndex >= videos.length - 1 ? 0.5 : 1
             }}
@@ -589,42 +708,24 @@ const ReelsSection = ({ singleLine = true, isMobile = false }) => {
             <ChevronRight size={mobileView ? 14 : 20} style={{ transition: 'transform 0.2s ease' }} />
           </button>
         )}
-        {/* <div style={{
-          display: 'flex',
-          justifyContent: 'center',
-          marginTop: mobileView ? '12px' : '20px',
-          gap: mobileView ? '6px' : '8px'
-        }}>
-          {videos.map((_, idx) => (
-            <div 
-              key={idx} 
-              style={{
-                ...styles.paginationDot,
-                width: idx === currentIndex ? (mobileView ? '24px' : '32px') : (mobileView ? '6px' : '8px'),
-                backgroundColor: idx === currentIndex ? '#Ffa500' : 'rgba(255, 165, 0, 0.5)'
-              }}
-              onClick={() => handleDotClick(idx)}
-            ></div>
-          ))}
-        </div> */}
+        
         <div style={{
           display: 'flex',
           justifyContent: 'center',
-          marginTop: mobileView ? '8px' : '20px', 
-          gap: mobileView ? '4px' : '8px' 
+          marginTop: mobileView ? '8px' : '20px',
+          gap: mobileView ? '4px' : '8px'
         }}>
           {(() => {
             const dots = [];
             const startIndex = Math.max(0, currentIndex - 1);
             const endIndex = Math.min(videos.length - 1, currentIndex + 1);
-
             for (let idx = startIndex; idx <= endIndex; idx++) {
               dots.push(
                 <div 
                   key={idx} 
                   style={{
                     ...styles.paginationDot,
-                    width: idx === currentIndex ? (mobileView ? '20px' : '32px') : (mobileView ? '5px' : '8px'), // Smaller dots
+                    width: idx === currentIndex ? (mobileView ? '20px' : '32px') : (mobileView ? '5px' : '8px'),
                     backgroundColor: idx === currentIndex ? '#Ffa500' : 'rgba(255, 165, 0, 0.5)'
                   }}
                   onClick={() => handleDotClick(idx)}
@@ -661,11 +762,7 @@ const ReelsSection = ({ singleLine = true, isMobile = false }) => {
           }
         `}
       </style>
-      <section style={{
-        padding: mobileView ? "20px 0" : "40px 0", 
-        background: "#000",
-        overflow: "hidden"
-      }}>
+      <section style={{ padding: mobileView ? "20px 0" : "40px 0", background: "#000", overflow: "hidden" }}>
         <h2 style={styles.sectionTitle}>Trending Reels</h2>
         {renderContent()}
       </section>
