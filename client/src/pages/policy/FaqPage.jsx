@@ -12,7 +12,7 @@ const faqs = [
   {
     question: "What’s your return or exchange policy?",
     answer:
-      "No returns—only exchanges, and only if the fit isn’t it. We accept exchanges within 7 days of delivery, but only if the product is unused, unwashed, and still rocking its original tags. Worn it out already? Sorry, we can’t take it back. Treat it like a first date—keep it fresh if you want a second chance.",
+      "No returns—only exchanges, and only if the fit isn’t it. We accept exchanges within 5 days of delivery, but only if the product is unused, unwashed, and still rocking its original tags. Worn it out already? Sorry, we can’t take it back. Treat it like a first date, keep it fresh if you want a second chance.",
   },
   {
     question: "Can I model for Nine9?",
@@ -42,12 +42,12 @@ const faqs = [
   {
     question: "Do you ship across India? How long does it take?",
     answer:
-      "Yup, we deliver pan-India—whether you're in Mumbai’s chaos or a sleepy Himachal town. Orders usually show up in 5–10 working days, depending on where you are. Style is en route.",
+      "Yup, we deliver pan-India— whether you're in Mumbai’s chaos or a sleepy Himachal town. Orders usually show up in 5–10 working days, depending on where you are. Style is en route.",
   },
   {
     question: "How do I take care of my Nine9 pieces?",
     answer:
-      "Good clothes deserve good care. Most of our pieces are low-maintenance—no machine, cold wash, air dry, no bleach, no drama. Think of it like this: if you wouldn’t do it to your own skin, don’t do it to your clothes.",
+      "Good clothes deserve good care. Most of our pieces are low-maintenance— no machine, cold wash, air dry, no bleach, no drama. Think of it like this: if you wouldn’t do it to your own skin, don’t do it to your clothes.",
   },
 ];
 

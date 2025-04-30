@@ -2,11 +2,10 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Volume2, VolumeX, X, Play } from 'lucide-react';
 import { createClient } from '@supabase/supabase-js';
 
-// Constants
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
-const VIDEO_FORMATS = /\.(mp4|webm|ogg|mov)$/i; // Retained from old code
+const VIDEO_FORMATS = /\.(mp4|webm|ogg|mov)$/i; 
 
 // Custom Hook for Window Size
 const useWindowWidth = () => {
@@ -778,7 +777,7 @@ const ReelsSection = ({ singleLine = true, isMobile = false }) => {
                   key={idx} 
                   style={{
                     ...styles.paginationDot,
-                    width: idx === currentIndex ? (mobileView ? '20px' : '32px') : (mobileView ? '5px' : '8px'), // Smaller dots
+                    width: idx === currentIndex ? (mobileView ? '20px' : '32px') : (mobileView ? '5px' : '8px'), 
                     backgroundColor: idx === currentIndex ? '#Ffa500' : 'rgba(255, 165, 0, 0.5)'
                   }}
                   onClick={() => handleDotClick(idx)}

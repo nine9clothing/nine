@@ -4,7 +4,7 @@ import Navbar from "../components/Navbar";
 import ProductGrid from "../components/ProductGrid";
 import ReelsSection from "../components/ReelsSection";
 import logo from "../assets/nine9_logo.png";
-import { FaArrowLeft, FaArrowRight, FaBoxOpen, FaSyncAlt, FaShieldAlt } from "react-icons/fa";
+import { FaArrowLeft, FaArrowRight, FaBoxOpen, FaSyncAlt, FaShieldAlt, FaComments, FaHandsHelping, FaLightbulb } from "react-icons/fa";
 import Footer from "../pages/Footer";
 
 const supabase = createClient(
@@ -22,8 +22,11 @@ const Home = () => {
   const [email, setEmail] = useState("");
   const [subscribeStatus, setSubscribeStatus] = useState({ message: "", type: "" });
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
-  const words = ["Talk 🗨️", "Collaborate 🫂", "Create  🧠"];
-
+  const words = [
+    <span>Talk <FaComments style={{ marginLeft: '5px', verticalAlign: 'middle' }} /></span>,
+    <span>Collaborate <FaHandsHelping style={{ marginLeft: '5px', verticalAlign: 'middle' }} /></span>,
+    <span>Create <FaLightbulb style={{ marginLeft: '5px', verticalAlign: 'middle' }} /></span>
+  ];
   useEffect(() => {
     const handleResize = () => setWindowWidth(window.innerWidth);
     window.addEventListener("resize", handleResize);

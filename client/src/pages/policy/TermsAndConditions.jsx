@@ -282,7 +282,7 @@ function PrivacyPolicy() {
 
             <header className="policy-header">
                 {/* Header content */}
-                <h1>Privacy Policy & Terms – Nine9</h1>
+                <h1>Privacy Policy – Nine9</h1>
             </header>
              <p className="tagline">Because Trust is Part of the Fit</p>
 
@@ -357,7 +357,7 @@ function PrivacyPolicy() {
             <p>
                 We don’t do returns. But if the product is{' '}
                 <strong>unused, unworn, unwashed</strong>, and not what you expected
-                size-wise, you can exchange it within <strong>7 days</strong> of delivery.
+                size-wise, you can exchange it within <strong>5 days</strong> of delivery.
                 Keep the tags intact and hit us up at:{' '}
                 {/* --- Replace placeholder below with actual contact info/link --- */}
                 <a href="mailto:your-exchange-email@nine9.co.in" className="contact-link">

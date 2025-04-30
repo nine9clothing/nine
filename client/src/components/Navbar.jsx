@@ -209,7 +209,7 @@ const Navbar = ({ showLogo }) => {
       flex: 1,
       position: 'relative',
       zIndex: 1050,
-      marginLeft: isMobile ? '0' : '35%',
+      marginLeft: isMobile ? '0' : '33%',
       justifyContent: 'isMobile ? center : flex-start',
     },
     logo: {
@@ -233,7 +233,7 @@ const Navbar = ({ showLogo }) => {
       fontWeight: '500',
       textTransform: 'uppercase',
       letterSpacing: '1px',
-      fontFamily: '"Abril Extra Bold", sans-serif', // Applied to headings
+      fontFamily: '"Abril Extra Bold", sans-serif', 
     },
     mobileMenu: {
       display: isMobile && menuOpen ? 'flex' : 'none',
@@ -256,7 +256,7 @@ const Navbar = ({ showLogo }) => {
       borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
       width: '100%',
       textTransform: 'uppercase',
-      fontFamily: '"Abril Extra Bold", sans-serif', // Applied to headings
+      fontFamily: '"Abril Extra Bold", sans-serif', 
     },
     iconWrapper: {
       position: 'relative',
@@ -276,7 +276,7 @@ const Navbar = ({ showLogo }) => {
       top: '-8px',
       right: '-10px',
       lineHeight: 1,
-      fontFamily: '"Abril Extra Bold", sans-serif', // Applied to headings
+      fontFamily: '"Abril Extra Bold", sans-serif',
     },
     userBtn: {
       background: 'transparent',
@@ -305,7 +305,7 @@ const Navbar = ({ showLogo }) => {
       color: 'black',
       fontWeight: 'bold',
       borderBottom: '1px solid rgba(0, 0, 0, 0.1)',
-      fontFamily: '"Abril Extra Bold", sans-serif', // Applied to headings
+      fontFamily: '"Abril Extra Bold", sans-serif', 
     },
     floatingCart: {
       position: 'fixed',
@@ -348,7 +348,7 @@ const Navbar = ({ showLogo }) => {
       border: 'none',
       borderRadius: '4px',
       backgroundColor: 'rgba(255, 255, 255, 0.9)',
-      fontFamily: '"Louvette Semi Bold", sans-serif', // Applied to descriptions
+      fontFamily: '"Louvette Semi Bold", sans-serif', 
     },
     searchCloseBtn: {
       position: 'absolute',
@@ -364,7 +364,6 @@ const Navbar = ({ showLogo }) => {
       alignItems: 'center',
       justifyContent: 'center',
     },
-    // Updated search results styles for vertical list
     searchResults: {
       position: 'absolute',
       top: '70px',
@@ -396,7 +395,7 @@ const Navbar = ({ showLogo }) => {
       color: '#fff',
       fontSize: '14px',
       fontWeight: '500',
-      fontFamily: '"Abril Extra Bold", sans-serif', // Applied to headings
+      fontFamily: '"Abril Extra Bold", sans-serif', 
     },
     noResults: {
       color: '#ccc',
@@ -404,7 +403,7 @@ const Navbar = ({ showLogo }) => {
       textAlign: 'center',
       padding: '20px 0',
       width: '100%',
-      fontFamily: '"Louvette Semi Bold", sans-serif', // Applied to descriptions
+      fontFamily: '"Louvette Semi Bold", sans-serif', 
     },
     errorMessage: {
       color: '#ff6666',
@@ -412,7 +411,7 @@ const Navbar = ({ showLogo }) => {
       textAlign: 'center',
       padding: '20px 0',
       width: '100%',
-      fontFamily: '"Louvette Semi Bold", sans-serif', // Applied to descriptions
+      fontFamily: '"Louvette Semi Bold", sans-serif', 
     },
     loadingMessage: {
       color: '#ccc',
@@ -420,12 +419,12 @@ const Navbar = ({ showLogo }) => {
       textAlign: 'center',
       padding: '20px 0',
       width: '100%',
-      fontFamily: '"Louvette Semi Bold", sans-serif', // Applied to descriptions
+      fontFamily: '"Louvette Semi Bold", sans-serif', 
     },
     searchHighlight: {
       color: '#f8d52a',
       fontWeight: 'bold',
-      fontFamily: '"Abril Extra Bold", sans-serif', // Applied to headings
+      fontFamily: '"Abril Extra Bold", sans-serif', 
     },
   };
 
