@@ -470,10 +470,11 @@
 
 // export default Login;
 
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
-import { supabase } from '../lib/supabase.js'; // Ensure this is the single instance
+import { supabase } from '../lib/supabase.js';
 import ToastMessage from '../ToastMessage';
 import Footer from "../pages/Footer";      
 
@@ -486,74 +487,53 @@ const Login = () => {
   const [birthday, setBirthday] = useState('');
   const [regPhone, setRegPhone] = useState('');
   const [loading, setLoading] = useState(false);
-  const [sessionLoading, setSessionLoading] = useState(true);
   const [toastMessage, setToastMessage] = useState(null);
-  const [showPassword, setShowPassword] = useState(false);
+  const [showPassword, setShowPassword] = useState(false); // New state for password visibility
   const navigate = useNavigate();
   const [hoveredLink, setHoveredLink] = useState(null);
 
+  // Check and restore session on mount, and set up real-time auth listener
   useEffect(() => {
-    let mounted = true;
-
-    const restoreSession = async () => {
-      try {
-        setSessionLoading(true);
-        const { data: { session }, error } = await supabase.auth.getSession();
-        if (error) throw error;
-
-        if (mounted && session?.user) {
-          const { data: isAdmin, error: adminError } = await supabase
-            .from('admins')
-            .select('*')
-            .eq('id', session.user.id)
-            .single();
-          if (adminError && adminError.code !== 'PGRST116') throw adminError; // Handle no rows found
-
-          if (isAdmin) {
-            navigate('/admin/dashboard', { replace: true });
-          } else {
-            navigate('/', { replace: true });
-          }
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        const { data: isAdmin } = await supabase
+          .from('admins')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
+        
+        if (isAdmin) {
+          navigate('/admin/dashboard');
+        } else {
+          navigate('/');
         }
-      } catch (error) {
-        console.error('Session restoration error:', error.message);
-      } finally {
-        if (mounted) setSessionLoading(false);
       }
     };
-
-    restoreSession();
+    
+    checkSession();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (!mounted) return;
-
       if (event === 'SIGNED_IN' && session?.user) {
-        try {
-          const { data: isAdmin, error } = await supabase
-            .from('admins')
-            .select('*')
-            .eq('id', session.user.id)
-            .single();
-          if (error && error.code !== 'PGRST116') throw error;
-
-          if (isAdmin) {
-            setToastMessage({ message: "Welcome, Admin!", type: "success" });
-            navigate('/admin/dashboard', { replace: true });
-          } else {
-            setToastMessage({ message: "Logged in successfully!", type: "success" });
-            navigate('/', { replace: true });
-          }
-        } catch (error) {
-          setToastMessage({ message: `Auth error: ${error.message}`, type: "error" });
+        const { data: isAdmin } = await supabase
+          .from('admins')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
+        
+        if (isAdmin) {
+          setToastMessage({ message: "Welcome, Admin!", type: "success" });
+          navigate('/admin/dashboard');
+        } else {
+          setToastMessage({ message: "Logged in successfully!", type: "success" });
+          navigate('/');
         }
       } else if (event === 'SIGNED_OUT') {
-        setToastMessage({ message: "Logged out successfully.", type: "info" });
-        navigate('/login', { replace: true });
+        navigate('/login');
       }
     });
 
     return () => {
-      mounted = false;
       subscription.unsubscribe();
     };
   }, [navigate]);
@@ -565,8 +545,7 @@ const Login = () => {
         .select('*')
         .eq('email', email)
         .single();
-      if (error && error.code !== 'PGRST116') throw error;
-      return !!data;
+      return !!data && !error;
     } catch {
       return false;
     }
@@ -635,16 +614,23 @@ const Login = () => {
               emailRedirectTo: window.location.origin,
             },
           });
-          if (error) throw error;
-          setToastMessage({
-            message: "OTP link sent to your email. Please click the link to complete login.",
-            type: "success",
-          });
+          if (error) {
+            setToastMessage({ message: error.message, type: "error" });
+          } else {
+            setToastMessage({
+              message: "OTP link sent to your email. Please click the link to complete login.",
+              type: "success",
+            });
+          }
           setLoading(false);
           return;
         } else {
           const { error } = await supabase.auth.signInWithPassword({ email, password });
-          if (error) throw error;
+          if (error) {
+            setToastMessage({ message: error.message, type: "error" });
+            setLoading(false);
+            return;
+          }
         }
       } else {
         const { data, error } = await supabase.auth.signUp({
@@ -658,7 +644,11 @@ const Login = () => {
             },
           },
         });
-        if (error) throw error;
+        if (error) {
+          setToastMessage({ message: "SignUp Error: " + error.message, type: "error" });
+          setLoading(false);
+          return;
+        }
 
         const userId = data.user?.id;
         if (!userId) {
@@ -676,11 +666,14 @@ const Login = () => {
             birthday,
           },
         ]);
-        if (insertError) throw insertError;
-        setToastMessage({
-          message: "Registration successful! Please verify your email before logging in.",
-          type: "success",
-        });
+        if (insertError) {
+          setToastMessage({ message: "Failed to store registration details.", type: "error" });
+        } else {
+          setToastMessage({
+            message: "Registration successful! Please verify your email before logging in.",
+            type: "success",
+          });
+        }
       }
     } catch (err) {
       setToastMessage({ message: err.message, type: "error" });
@@ -698,20 +691,15 @@ const Login = () => {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: window.location.origin + '/resetpassword',
       });
-      if (error) throw error;
-      setToastMessage({ message: 'Password reset email sent!', type: "success" });
+      if (error) {
+        setToastMessage({ message: error.message, type: "error" });
+      } else {
+        setToastMessage({ message: 'Password reset email sent!', type: "success" });
+      }
     } catch (err) {
       setToastMessage({ message: err.message, type: "error" });
     }
   };
-
-  if (sessionLoading) {
-    return (
-      <div style={{ ...containerStyle, color: 'white' }}>
-        Loading...
-      </div>
-    );
-  }
 
   return (
     <div style={{ fontFamily: "'Roboto', sans-serif" }}>
