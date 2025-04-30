@@ -5,6 +5,8 @@ import logo from '../assets/nine9_logo.png';
 import { FaShoppingCart, FaHeart, FaSearch, FaUser, FaTimes } from 'react-icons/fa';
 import { CartContext } from '../context/CartContext.jsx';
 import { useWishlist } from '../context/WishlistContext.jsx';
+import { useNavigate } from 'react-router-dom';
+import ToastMessage from '../ToastMessage'; 
 
 const Navbar = ({ showLogo }) => {
   const [user, setUser] = useState(null);
@@ -20,10 +22,10 @@ const Navbar = ({ showLogo }) => {
   const dropdownRef = useRef();
   const searchInputRef = useRef();
   const location = useLocation();
-
+  const navigate = useNavigate(); 
   const { cartItems } = useContext(CartContext);
   const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
-
+  const [toastMessage, setToastMessage] = useState(null);
   const { wishlist } = useWishlist();
   const wishlistCount = wishlist.length;
 
@@ -85,15 +87,35 @@ const Navbar = ({ showLogo }) => {
     }
   }, [showSearch]);
 
+  // const handleLogout = async () => {
+  //   const { error } = await supabase.auth.signOut();
+  //   if (!error) {
+  //     setUser(null);
+  //     setFullName('');
+  //     setDropdownOpen(false);
+  //     setMenuOpen(false);
+  //   }
+  //   window.location.replace('/');
+  // };
   const handleLogout = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (!error) {
+    try {
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        console.error('Logout error:', error.message);
+        return;
+      }
+  
       setUser(null);
       setFullName('');
       setDropdownOpen(false);
       setMenuOpen(false);
+
+      setToastMessage({ message: "Logged out successfully!", type: "success" });
+      navigate('/'); 
+    } catch (err) {
+      console.error('Unexpected logout error:', err.message);
     }
-    window.location.replace('/');
   };
 
   const handleSearchClick = (e) => {
@@ -678,9 +700,16 @@ const Navbar = ({ showLogo }) => {
             </span>
           )}
         </Link>
+        
       )}
-      
-      {/* Add CSS animation keyframes */}
+     {toastMessage && (
+        <ToastMessage
+          message={toastMessage.message}
+          type={toastMessage.type}
+          onClose={() => setToastMessage(null)}
+        />
+      )}
+
       <style>
         {`
           @keyframes fadeIn {

@@ -448,7 +448,7 @@ const styles = {
     minHeight: '100vh',
     backgroundColor: "black",
     position: 'relative',
-    fontFamily: "'Roboto', sans-serif", // Base font
+    fontFamily: "'Roboto', sans-serif", 
   },
   section: {
     padding: '20px',
@@ -462,7 +462,7 @@ const styles = {
     marginTop: '10px',
     textAlign: 'center',
     color: "#Ffa500",
-    fontFamily: "'Abril Extra Bold', sans-serif", // Applied to headings
+    fontFamily: "'Abril Extra Bold', sans-serif", 
     marginBottom: '30px',
   },
   buttonContainer: {
@@ -475,7 +475,7 @@ const styles = {
     color: 'black',
     padding: '8px 16px',
     border: 'none',
-    fontFamily: "'Abril Extra Bold', sans-serif", // Applied to headings
+    fontFamily: "'Abril Extra Bold', sans-serif", 
     borderRadius: '50px',
     fontWeight: 'bold',
     cursor: 'pointer',

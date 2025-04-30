@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase.js';
 import Navbar from '../components/Navbar';
 import Footer from '../pages/Footer';
+import ToastMessage from '../ToastMessage'; 
 
 const Rewards = () => {
     const [points, setPoints] = useState(0);
@@ -12,6 +13,7 @@ const Rewards = () => {
     const [flippedCards, setFlippedCards] = useState({});
     const [showTransactions, setShowTransactions] = useState(true);
     const navigate = useNavigate();
+    const [toastMessage, setToastMessage] = useState(null);
 
     const loyaltyInfo = [
         {
@@ -171,7 +173,7 @@ const Rewards = () => {
                 setPoints(netPoints);
             } catch (error) {
                 console.error('Error fetching user, orders, or redemptions:', error.message);
-                alert('Error loading rewards: ' + error.message);
+                // alert('Error loading rewards: ' + error.message);
             } finally {
                 setLoading(false);
             }
@@ -201,7 +203,7 @@ const Rewards = () => {
                         color: '#fff',
                         background: 'rgba(255, 255, 255, 0.05)',
                         padding: '10px 20px',
-                        marginTop: '10px',
+                        marginTop: '70px',
                         borderRadius: '8px',
                         display: 'inline-block'
                     }}>Loading rewards...</p>
@@ -458,7 +460,6 @@ const Rewards = () => {
                         }}>Tap any card to learn more about our loyalty program</p>
                     </div>
 
-                    {/* Flip Cards */}
                     <div className="loyalty-cards-container" style={{
                         maxWidth: '1200px',
                         margin: '0 auto 40px',
@@ -488,7 +489,6 @@ const Rewards = () => {
                                     transformStyle: 'preserve-3d',
                                     transform: flippedCards[index] ? 'rotateY(180deg)' : 'rotateY(0deg)'
                                 }}>
-                                    {/* Front Side of Card */}
                                     <div style={{
                                         position: 'absolute',
                                         width: '100%',
@@ -559,8 +559,14 @@ const Rewards = () => {
                         ))}
                     </div>
                 </section>
+                {toastMessage && (
+                    <ToastMessage
+                    message={toastMessage.message}
+                    type={toastMessage.type}
+                    onClose={() => setToastMessage(null)}
+                    />
+                )}
 
-                {/* CSS for Responsive Design */}
                 <style>
                     {`
                         @keyframes fadeIn {

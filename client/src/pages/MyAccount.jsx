@@ -232,15 +232,15 @@ const MyAccount = () => {
       }}>
         <div style={{
           backgroundColor: 'black',
-          padding: '2rem',
+          padding: '1.5rem',
           borderRadius: '12px',
           boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
         }}>
           <h1 style={{
-            fontSize: '1.5rem',
+            fontSize: 'calc(1rem + 0.5vw)',
             fontWeight: '600',
             color: 'white',
-            fontFamily: "'Abril Extra Bold', sans-serif" // Applied to headings
+            fontFamily: "'Abril Extra Bold', sans-serif",
           }}>Loading...</h1>
         </div>
       </div>
@@ -253,30 +253,32 @@ const MyAccount = () => {
       backgroundColor: '#000000',
       display: 'flex',
       flexDirection: 'column',
-      fontFamily: "'Roboto', sans-serif" // Base font
+      fontFamily: "'Roboto', sans-serif",
     }}>
       <Navbar showLogo={true} />
       <div style={{
         flex: '1',
-        padding: '2rem',
-        marginTop: '8rem',
-        marginBottom: '3rem',
+        padding: '1rem',
+        marginTop: '6rem',
+        marginBottom: '2rem',
       }}>
         <div style={{
-          maxWidth: '32rem',
+          maxWidth: 'min(90vw, 32rem)',
           margin: '0 auto',
           backgroundColor: '#ffffff',
+          marginTop:"50px",
+          marginBottom:"20px",
           borderRadius: '12px',
           boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-          padding: '1.5rem',
+          padding: '1rem',
         }}>
           <h1 style={{
-            fontSize: '2.25rem',
+            fontSize: 'calc(1.5rem + 0.75vw)',
             fontWeight: '700',
             color: '#000000',
-            marginBottom: '2rem',
+            marginBottom: '1.5rem',
             textAlign: 'center',
-            fontFamily: "'Abril Extra Bold', sans-serif" // Applied to headings
+            fontFamily: "'Abril Extra Bold', sans-serif",
           }}>Profile</h1>
 
           {toast.show && (
@@ -290,22 +292,24 @@ const MyAccount = () => {
           <div style={{
             backgroundColor: '#ffffff',
             borderRadius: '12px',
-            padding: '1.5rem',
+            padding: '1rem',
           }}>
             <div style={{
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
-              marginBottom: '1.5rem',
-              paddingBottom: '1rem',
+              marginBottom: '1rem',
+              paddingBottom: '0.75rem',
               borderBottom: '1px solid #dee2e6',
+              flexDirection: window.innerWidth < 640 ? 'column' : 'row',
+              gap: '0.5rem',
             }}>
               <h2 style={{
-                fontSize: '1.5rem',
+                fontSize: 'calc(1.2rem + 0.3vw)',
                 fontWeight: '600',
                 color: '#000000',
                 margin: 0,
-                fontFamily: "'Abril Extra Bold', sans-serif" // Applied to headings
+                fontFamily: "'Abril Extra Bold', sans-serif",
               }}>Account Details</h2>
               {!editing && (
                 <button
@@ -313,14 +317,16 @@ const MyAccount = () => {
                   style={{
                     backgroundColor: '#000000',
                     color: '#ffffff',
-                    padding: '0.5rem 1.5rem',
+                    padding: '0.5rem 1rem',
                     borderRadius: '20px',
                     border: 'none',
                     cursor: 'pointer',
-                    fontSize: '0.9rem',
+                    fontSize: '0.85rem',
                     fontWeight: '500',
                     transition: 'background-color 0.2s',
-                    fontFamily: "'Abril Extra Bold', sans-serif" // Applied to headings
+                    fontFamily: "'Abril Extra Bold', sans-serif",
+                    width: window.innerWidth < 640 ? '100%' : 'auto',
+                    minHeight: '2.5rem',
                   }}
                   onMouseOver={e => e.target.style.backgroundColor = '#333333'}
                   onMouseOut={e => e.target.style.backgroundColor = '#000000'}
@@ -332,14 +338,14 @@ const MyAccount = () => {
 
             {editing ? (
               <div>
-                <div style={{ marginBottom: '1.5rem' }}>
+                <div style={{ marginBottom: '1rem' }}>
                   <label style={{
                     display: 'block',
-                    fontSize: '0.9rem',
+                    fontSize: '0.85rem',
                     fontWeight: '500',
                     color: '#6c757d',
                     marginBottom: '0.5rem',
-                    fontFamily: "'Louvette Semi Bold', sans-serif" // Applied to descriptions
+                    fontFamily: "'Louvette Semi Bold', sans-serif",
                   }}>Full Name</label>
                   <input
                     type="text"
@@ -348,28 +354,29 @@ const MyAccount = () => {
                     onChange={handleChange}
                     style={{
                       width: '100%',
-                      padding: '0.75rem',
+                      padding: '0.5rem',
                       borderRadius: '6px',
                       border: '1px solid #ced4da',
-                      fontSize: '1rem',
+                      fontSize: '0.9rem',
                       color: '#000000',
                       backgroundColor: '#ffffff',
                       transition: 'border-color 0.2s',
-                      fontFamily: "'Louvette Semi Bold', sans-serif" // Applied to descriptions
+                      fontFamily: "'Louvette Semi Bold', sans-serif",
+                      minHeight: '2.5rem',
                     }}
                     onFocus={e => e.target.style.borderColor = '#80bdff'}
                     onBlur={e => e.target.style.borderColor = '#ced4da'}
                   />
                 </div>
 
-                <div style={{ marginBottom: '1.5rem' }}>
+                <div style={{ marginBottom: '1rem' }}>
                   <label style={{
                     display: 'block',
-                    fontSize: '0.9rem',
+                    fontSize: '0.85rem',
                     fontWeight: '500',
                     color: '#6c757d',
                     marginBottom: '0.5rem',
-                    fontFamily: "'Louvette Semi Bold', sans-serif" // Applied to descriptions
+                    fontFamily: "'Louvette Semi Bold', sans-serif",
                   }}>Email</label>
                   <input
                     type="email"
@@ -378,32 +385,33 @@ const MyAccount = () => {
                     readOnly
                     style={{
                       width: '100%',
-                      padding: '0.75rem',
+                      padding: '0.5rem',
                       borderRadius: '6px',
                       border: '1px solid #ced4da',
                       backgroundColor: '#e9ecef',
-                      fontSize: '1rem',
+                      fontSize: '0.9rem',
                       color: '#6c757d',
-                      fontFamily: "'Louvette Semi Bold', sans-serif" // Applied to descriptions
+                      fontFamily: "'Louvette Semi Bold', sans-serif",
+                      minHeight: '2.5rem',
                     }}
                   />
                   <span style={{
-                    fontSize: '0.75rem',
+                    fontSize: '0.7rem',
                     color: '#6c757d',
                     marginTop: '0.25rem',
                     display: 'block',
-                    fontFamily: "'Louvette Semi Bold', sans-serif" // Applied to descriptions
+                    fontFamily: "'Louvette Semi Bold', sans-serif",
                   }}>Email cannot be changed</span>
                 </div>
 
-                <div style={{ marginBottom: '1.5rem' }}>
+                <div style={{ marginBottom: '1rem' }}>
                   <label style={{
                     display: 'block',
-                    fontSize: '0.9rem',
+                    fontSize: '0.85rem',
                     fontWeight: '500',
                     color: '#6c757d',
                     marginBottom: '0.5rem',
-                    fontFamily: "'Louvette Semi Bold', sans-serif" // Applied to descriptions
+                    fontFamily: "'Louvette Semi Bold', sans-serif",
                   }}>Phone</label>
                   <input
                     type="tel"
@@ -412,32 +420,33 @@ const MyAccount = () => {
                     readOnly
                     style={{
                       width: '100%',
-                      padding: '0.75rem',
+                      padding: '0.5rem',
                       borderRadius: '6px',
                       border: '1px solid #ced4da',
                       backgroundColor: '#e9ecef',
-                      fontSize: '1rem',
+                      fontSize: '0.9rem',
                       color: '#6c757d',
-                      fontFamily: "'Louvette Semi Bold', sans-serif" // Applied to descriptions
+                      fontFamily: "'Louvette Semi Bold', sans-serif",
+                      minHeight: '2.5rem',
                     }}
                   />
                   <span style={{
-                    fontSize: '0.75rem',
+                    fontSize: '0.7rem',
                     color: '#6c757d',
                     marginTop: '0.25rem',
                     display: 'block',
-                    fontFamily: "'Louvette Semi Bold', sans-serif" // Applied to descriptions
+                    fontFamily: "'Louvette Semi Bold', sans-serif",
                   }}>Phone cannot be changed</span>
                 </div>
 
-                <div style={{ marginBottom: '1.5rem' }}>
+                <div style={{ marginBottom: '1rem' }}>
                   <label style={{
                     display: 'block',
-                    fontSize: '0.9rem',
+                    fontSize: '0.85rem',
                     fontWeight: '500',
                     color: '#6c757d',
                     marginBottom: '0.5rem',
-                    fontFamily: "'Louvette Semi Bold', sans-serif" // Applied to descriptions
+                    fontFamily: "'Louvette Semi Bold', sans-serif",
                   }}>Birthday</label>
                   <input
                     type="date"
@@ -446,29 +455,31 @@ const MyAccount = () => {
                     readOnly
                     style={{
                       width: '100%',
-                      padding: '0.75rem',
+                      padding: '0.5rem',
                       borderRadius: '6px',
                       border: '1px solid #ced4da',
                       backgroundColor: '#e9ecef',
-                      fontSize: '1rem',
+                      fontSize: '0.9rem',
                       color: '#6c757d',
-                      fontFamily: "'Louvette Semi Bold', sans-serif" // Applied to descriptions
+                      fontFamily: "'Louvette Semi Bold', sans-serif",
+                      minHeight: '2.5rem',
                     }}
                   />
                   <span style={{
-                    fontSize: '0.75rem',
+                    fontSize: '0.7rem',
                     color: '#6c757d',
                     marginTop: '0.25rem',
                     display: 'block',
-                    fontFamily: "'Louvette Semi Bold', sans-serif" // Applied to descriptions
+                    fontFamily: "'Louvette Semi Bold', sans-serif",
                   }}>Birthday cannot be changed</span>
                 </div>
 
                 <div style={{
                   display: 'flex',
-                  gap: '1rem',
+                  gap: '0.5rem',
                   justifyContent: 'flex-end',
-                  marginTop: '2rem',
+                  marginTop: '1.5rem',
+                  flexDirection: window.innerWidth < 640 ? 'column' : 'row',
                 }}>
                   <button
                     type="button"
@@ -476,14 +487,16 @@ const MyAccount = () => {
                     style={{
                       backgroundColor: '#ffffff',
                       color: '#000000',
-                      padding: '0.75rem 1.5rem',
+                      padding: '0.5rem 1rem',
                       borderRadius: '6px',
                       border: '1px solid #000000',
                       cursor: 'pointer',
-                      fontSize: '0.9rem',
+                      fontSize: '0.85rem',
                       fontWeight: '500',
                       transition: 'all 0.2s',
-                      fontFamily: "'Abril Extra Bold', sans-serif" // Applied to headings
+                      fontFamily: "'Abril Extra Bold', sans-serif",
+                      width: window.innerWidth < 640 ? '100%' : 'auto',
+                      minHeight: '2.5rem',
                     }}
                     onMouseOver={e => {
                       e.target.style.backgroundColor = '#000000';
@@ -501,14 +514,16 @@ const MyAccount = () => {
                     style={{
                       backgroundColor: '#000000',
                       color: '#ffffff',
-                      padding: '0.75rem 1.5rem',
+                      padding: '0.5rem 1rem',
                       borderRadius: '20px',
                       border: 'none',
                       cursor: 'pointer',
-                      fontSize: '0.9rem',
+                      fontSize: '0.85rem',
                       fontWeight: '500',
                       transition: 'background-color 0.2s',
-                      fontFamily: "'Abril Extra Bold', sans-serif" // Applied to headings
+                      fontFamily: "'Abril Extra Bold', sans-serif",
+                      width: window.innerWidth < 640 ? '100%' : 'auto',
+                      minHeight: '2.5rem',
                     }}
                     onMouseOver={e => e.target.style.backgroundColor = '#333333'}
                     onMouseOut={e => e.target.style.backgroundColor = '#000000'}
@@ -520,89 +535,103 @@ const MyAccount = () => {
             ) : (
               <div>
                 <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: '120px 1fr',
-                  gap: '1rem',
-                  padding: '0.75rem 0',
+                  display: window.innerWidth < 640 ? 'flex' : 'grid',
+                  flexDirection: window.innerWidth < 640 ? 'column' : 'unset',
+                  gridTemplateColumns: window.innerWidth < 640 ? 'none' : '120px 1fr',
+                  gap: '0.5rem',
+                  padding: '0.5rem 0',
                   borderBottom: '1px solid #dee2e6',
                 }}>
                   <span style={{ 
                     fontWeight: '500', 
                     color: '#6c757d',
-                    fontFamily: "'Louvette Semi Bold', sans-serif" // Applied to descriptions
+                    fontFamily: "'Louvette Semi Bold', sans-serif",
+                    fontSize: '0.85rem',
                   }}>Name:</span>
                   <span style={{ 
                     color: '#000000',
-                    fontFamily: "'Louvette Semi Bold', sans-serif" // Applied to descriptions
+                    fontFamily: "'Louvette Semi Bold', sans-serif",
+                    fontSize: '0.9rem',
                   }}>{userDetails.full_name || 'Not provided'}</span>
                 </div>
                 
                 <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: '120px 1fr',
-                  gap: '1rem',
-                  padding: '0.75rem 0',
+                  display: window.innerWidth < 640 ? 'flex' : 'grid',
+                  flexDirection: window.innerWidth < 640 ? 'column' : 'unset',
+                  gridTemplateColumns: window.innerWidth < 640 ? 'none' : '120px 1fr',
+                  gap: '0.5rem',
+                  padding: '0.5rem 0',
                   borderBottom: '1px solid #dee2e6',
                 }}>
                   <span style={{ 
                     fontWeight: '500', 
                     color: '#6c757d',
-                    fontFamily: "'Louvette Semi Bold', sans-serif" // Applied to descriptions
+                    fontFamily: "'Louvette Semi Bold', sans-serif",
+                    fontSize: '0.85rem',
                   }}>Email:</span>
                   <span style={{ 
                     color: '#000000',
-                    fontFamily: "'Louvette Semi Bold', sans-serif" // Applied to descriptions
+                    fontFamily: "'Louvette Semi Bold', sans-serif",
+                    fontSize: '0.9rem',
                   }}>{userDetails.email}</span>
                 </div>
                 
                 <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: '120px 1fr',
-                  gap: '1rem',
-                  padding: '0.75rem 0',
+                  display: window.innerWidth < 640 ? 'flex' : 'grid',
+                  flexDirection: window.innerWidth < 640 ? 'column' : 'unset',
+                  gridTemplateColumns: window.innerWidth < 640 ? 'none' : '120px 1fr',
+                  gap: '0.5rem',
+                  padding: '0.5rem 0',
                   borderBottom: '1px solid #dee2e6',
                 }}>
                   <span style={{ 
                     fontWeight: '500', 
                     color: '#6c757d',
-                    fontFamily: "'Louvette Semi Bold', sans-serif" // Applied to descriptions
+                    fontFamily: "'Louvette Semi Bold', sans-serif",
+                    fontSize: '0.85rem',
                   }}>Phone:</span>
                   <span style={{ 
                     color: '#000000',
-                    fontFamily: "'Louvette Semi Bold', sans-serif" // Applied to descriptions
+                    fontFamily: "'Louvette Semi Bold', sans-serif",
+                    fontSize: '0.9rem',
                   }}>{userDetails.phone || 'Not provided'}</span>
                 </div>
                 
                 <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: '120px 1fr',
-                  gap: '1rem',
-                  padding: '0.75rem 0',
+                  display: window.innerWidth < 640 ? 'flex' : 'grid',
+                  flexDirection: window.innerWidth < 640 ? 'column' : 'unset',
+                  gridTemplateColumns: window.innerWidth < 640 ? 'none' : '120px 1fr',
+                  gap: '0.5rem',
+                  padding: '0.5rem 0',
                   borderBottom: '1px solid #dee2e6',
                 }}>
                   <span style={{ 
                     fontWeight: '500', 
                     color: '#6c757d',
-                    fontFamily: "'Louvette Semi Bold', sans-serif" // Applied to descriptions
+                    fontFamily: "'Louvette Semi Bold', sans-serif",
+                    fontSize: '0.85rem',
                   }}>Birthday:</span>
                   <span style={{ 
                     color: '#000000',
-                    fontFamily: "'Louvette Semi Bold', sans-serif" // Applied to descriptions
+                    fontFamily: "'Louvette Semi Bold', sans-serif",
+                    fontSize: '0.9rem',
                   }}>
                     {userDetails.birthday ? new Date(userDetails.birthday).toLocaleDateString() : 'Not provided'}
                   </span>
                 </div>
 
                 <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: '120px 1fr',
-                  gap: '1rem',
-                  padding: '0.75rem 0',
+                  display: window.innerWidth < 640 ? 'flex' : 'grid',
+                  flexDirection: window.innerWidth < 640 ? 'column' : 'unset',
+                  gridTemplateColumns: window.innerWidth < 640 ? 'none' : '120px 1fr',
+                  gap: '0.5rem',
+                  padding: '0.5rem 0',
                 }}>
                   <span style={{ 
                     fontWeight: '500', 
                     color: '#6c757d',
-                    fontFamily: "'Louvette Semi Bold', sans-serif" // Applied to descriptions
+                    fontFamily: "'Louvette Semi Bold', sans-serif",
+                    fontSize: '0.85rem',
                   }}>Password:</span>
                   <button
                     type="button"
@@ -614,10 +643,11 @@ const MyAccount = () => {
                       borderRadius: '20px',
                       border: 'none',
                       cursor: 'pointer',
-                      fontSize: '0.9rem',
-                      width: 'fit-content',
+                      fontSize: '0.85rem',
+                      width: window.innerWidth < 640 ? '100%' : 'fit-content',
                       transition: 'background-color 0.2s',
-                      fontFamily: "'Abril Extra Bold', sans-serif" // Applied to headings
+                      fontFamily: "'Abril Extra Bold', sans-serif",
+                      minHeight: '2.5rem',
                     }}
                     onMouseOver={e => e.target.style.backgroundColor = '#333333'}
                     onMouseOut={e => e.target.style.backgroundColor = '#000000'}

@@ -10,28 +10,25 @@ import Footer from '../pages/Footer';
 const WishlistPage = () => {
   const { wishlist = [], user, toggleWishlist } = useWishlist();
   const [products, setProducts] = useState([]);
-  const [isLoading, setIsLoading] = useState(true); // Start as true for immediate feedback
+  const [isLoading, setIsLoading] = useState(true); 
   const [toast, setToast] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
     const fetchWishlistProducts = async () => {
-      // --- Guard Clause: Exit if user is not logged in ---
       if (!user) {
         setProducts([]);
         setIsLoading(false);
         return;
       }
 
-      // --- Guard Clause: Exit if wishlist is empty ---
       if (wishlist.length === 0) {
         setProducts([]);
         setIsLoading(false);
         return;
       }
 
-      // --- Fetch products ---
-      setIsLoading(true); // Already true, but ensures consistency
+      setIsLoading(true); 
       try {
         const { data, error } = await supabase
           .from('products')
@@ -60,17 +57,15 @@ const WishlistPage = () => {
     };
 
     fetchWishlistProducts();
-  }, [wishlist, user]); // Re-run effect if wishlist array or user object changes
+  }, [wishlist, user]); 
 
   const handleRemove = (productId, productName) => {
     if (!user) return;
     toggleWishlist(productId);
     setToast({ message: `${productName} removed from wishlist.`, type: 'success' });
-    // Immediately update products state to reflect removal
     setProducts(prevProducts => prevProducts.filter(product => product.id !== productId));
   };
 
-  // Handler to navigate to login page
   const handleLoginRedirect = () => {
     navigate('/login');
   };
@@ -114,7 +109,7 @@ const WishlistPage = () => {
           message={toast.message}
           type={toast.type}
           onClose={() => setToast(null)}
-          duration={3000} // Example duration
+          duration={3000} 
         />
       )}
     </div>
@@ -136,7 +131,7 @@ const styles = {
   },
   pageTitle: {
     fontWeight: '700',
-    fontFamily: "'Abril Extra Bold', sans-serif", // Applied to headings
+    fontFamily: "'Abril Extra Bold', sans-serif", 
     fontSize: window.innerWidth <= 768 ? '2rem' : '2.2rem',
     marginBottom: '30px',
     color: '#Ffa500',
@@ -147,7 +142,7 @@ const styles = {
     fontSize: '1rem',
     color: '#ffffff',
     textAlign: 'center',
-    fontFamily: "'Louvette Semi Bold', sans-serif", // Applied to descriptions
+    fontFamily: "'Louvette Semi Bold', sans-serif", 
     marginBottom: '300px',
     marginTop: '30px',
   },
@@ -155,7 +150,7 @@ const styles = {
     fontSize: '1rem',
     color: '#ffffff',
     marginBottom: '300px',
-    fontFamily: "'Louvette Semi Bold', sans-serif", // Applied to descriptions
+    fontFamily: "'Louvette Semi Bold', sans-serif", 
     textAlign: 'center',
     marginTop: '30px',
   },
@@ -163,7 +158,7 @@ const styles = {
     textAlign: 'center',
     padding: '40px 30px',
     marginTop: '120px',
-    fontFamily: "'Louvette Semi Bold', sans-serif", // Applied to descriptions
+    fontFamily: "'Louvette Semi Bold', sans-serif", 
     marginBottom: '90px',
     backgroundColor: '#f8f9fa',
     borderRadius: '8px',
@@ -175,7 +170,7 @@ const styles = {
   loginPromptText: {
     fontSize: '1.1rem',
     color: '#495057',
-    fontFamily: "'Louvette Semi Bold', sans-serif", // Applied to descriptions
+    fontFamily: "'Louvette Semi Bold', sans-serif",
     marginBottom: '30px',
     lineHeight: '1.6',
   },
@@ -189,13 +184,13 @@ const styles = {
     border: 'none',
     borderRadius: '50px',
     cursor: 'pointer',
-    fontFamily: "'Louvette Semi Bold', sans-serif", // Applied to descriptions
+    fontFamily: "'Louvette Semi Bold', sans-serif", 
     textDecoration: 'none',
     transition: 'background-color 0.2s ease-in-out, box-shadow 0.2s ease',
     outline: 'none',
     marginTop: '30px',
     marginBottom: '50px',
-    boxShadow: '0 2px 6px rgba(0,0,0,0.1)', // soft shadow to match
+    boxShadow: '0 2px 6px rgba(0,0,0,0.1)' 
   },
   loginButtonHover: {
     backgroundColor: '#Ffa500',
