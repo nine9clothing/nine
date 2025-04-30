@@ -31,21 +31,21 @@ const VideoPage = ({ video, onClose, allVideos }) => {
   );
   const videoRef = useRef(null);
   const [isMuted, setIsMuted] = useState(true);
-  const [isPlaying, setIsPlaying] = useState(false); // Changed to false to prevent auto-play
+  const [isPlaying, setIsPlaying] = useState(false);
   const windowWidth = useWindowWidth();
   const isMobile = windowWidth < 768;
 
   const handlePrevVideo = () => {
     if (currentVideoIndex > 0) {
       setCurrentVideoIndex(prev => prev - 1);
-      setIsPlaying(false); // Reset playing state
+      setIsPlaying(false);
     }
   };
 
   const handleNextVideo = () => {
     if (currentVideoIndex < allVideos.length - 1) {
       setCurrentVideoIndex(prev => prev + 1);
-      setIsPlaying(false); // Reset playing state
+      setIsPlaying(false);
     }
   };
 
@@ -283,7 +283,7 @@ const ReelsSection = ({ singleLine = true, isMobile = false }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedVideo, setSelectedVideo] = useState(null);
-  const [playingIndex, setPlayingIndex] = useState(null); // Track inline playing video
+  const [playingIndex, setPlayingIndex] = useState(null);
   const windowWidth = useWindowWidth();
   const videoRefs = useRef([]);
   const carouselRef = useRef(null);
@@ -397,9 +397,10 @@ const ReelsSection = ({ singleLine = true, isMobile = false }) => {
       (entries) => {
         entries.forEach(entry => {
           const videoElement = entry.target;
+          const index = videoRefs.current.indexOf(videoElement);
           if (entry.isIntersecting && playingIndex === null) {
             videoElement.play().catch(error => console.log('Autoplay prevented:', error));
-          } else if (playingIndex !== videoRefs.current.indexOf(videoElement)) {
+          } else if (playingIndex !== index) {
             videoElement.pause();
             videoElement.currentTime = 0;
           }
@@ -445,6 +446,7 @@ const ReelsSection = ({ singleLine = true, isMobile = false }) => {
   }, [handleScroll]);
 
   const handleCardClick = (video, index) => {
+    console.log('Card clicked:', { videoId: video.internalId, index }); // Debug log
     clearAutoScrollInterval();
     if (playingIndex === index) {
       videoRefs.current[index]?.pause();
@@ -458,7 +460,9 @@ const ReelsSection = ({ singleLine = true, isMobile = false }) => {
     }
   };
 
-  const handleFullScreen = (video) => {
+  const handleFullScreen = (video, e) => {
+    console.log('Full screen clicked:', { videoId: video.internalId }); // Debug log
+    e.stopPropagation();
     clearAutoScrollInterval();
     setSelectedVideo(video);
   };
@@ -546,7 +550,6 @@ const ReelsSection = ({ singleLine = true, isMobile = false }) => {
         cursor: 'pointer',
         flexShrink: 0,
         scrollSnapAlign: 'center',
-        transition: 'transform 0.3s ease-out',
         backgroundColor: '#000',
         display: 'flex',
         justifyContent: 'center',
@@ -652,7 +655,6 @@ const ReelsSection = ({ singleLine = true, isMobile = false }) => {
               <div 
                 key={video.internalId} 
                 style={styles.videoCard}
-                onClick={() => handleCardClick(video, index)}
               >
                 <video
                   ref={el => videoRefs.current[index] = el}
@@ -660,6 +662,10 @@ const ReelsSection = ({ singleLine = true, isMobile = false }) => {
                   style={styles.videoElement}
                   muted
                   loop
+                  onClick={(e) => {
+                    e.stopPropagation(); // Ensure video click doesn't bubble up
+                    handleCardClick(video, index);
+                  }}
                 />
                 {playingIndex !== index && (
                   <div style={{
@@ -680,10 +686,7 @@ const ReelsSection = ({ singleLine = true, isMobile = false }) => {
                 {video.caption && <div style={styles.caption}>{video.caption}</div>}
                 <button 
                   style={styles.fullScreenButton}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleFullScreen(video);
-                  }}
+                  onClick={(e) => handleFullScreen(video, e)}
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M8 3H5a2 2 0 00-2 2v3m18 0V5a2 2 0 00-2-2h-3m0 18h3a2 2 0 002-2v-3M3 16v3a2 2 0 002 2h3" />
