@@ -13,14 +13,14 @@ export const CartProvider = ({ children }) => {
   const [isCartLoaded, setIsCartLoaded] = useState(false);
 
   useEffect(() => {
-    if (authLoading) return; // Wait for auth to load
+    if (authLoading) return;
 
     const loadCart = async () => {
       const localCart = localStorage.getItem('cart');
       if (localCart) {
         const parsedCart = JSON.parse(localCart);
         console.log('Restored cart from local storage:', parsedCart);
-        setCartItems(parsedCart); // Start with local data
+        setCartItems(parsedCart); 
       }
 
       if (user && user.id) {
@@ -137,7 +137,7 @@ export const CartProvider = ({ children }) => {
   const clearCart = () => setCartItems([]);
 
   if (!isCartLoaded || authLoading) {
-    return <div style={{ padding: '20px', textAlign: 'center' }}>Loading cart...</div>;
+    return <div style={{ padding: '20px', textAlign: 'center' }}>Loading cart... Please Refresh </div>;
   }
 
   return (

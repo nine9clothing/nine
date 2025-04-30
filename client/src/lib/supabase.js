@@ -9,4 +9,4 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
       persistSession: true,        // Persist session in localStorage
     }
 });
-export default supabase; // Ensure this line is present
+export default supabase; 
