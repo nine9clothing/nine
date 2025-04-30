@@ -1,8 +1,11 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Volume2, VolumeX, X, Play } from 'lucide-react';
-import { supabase } from '../lib/supabase.js'; // Use the single imported instance
+import { createClient } from '@supabase/supabase-js';
 
 // Constants
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 const VIDEO_FORMATS = /\.(mp4|webm|ogg|mov)$/i; // Retained from old code
 
 // Custom Hook for Window Size
@@ -738,6 +741,24 @@ const ReelsSection = ({ singleLine = true, isMobile = false }) => {
             <ChevronRight size={mobileView ? 14 : 20} style={{ transition: 'transform 0.2s ease' }} />
           </button>
         )}
+        {/* <div style={{
+          display: 'flex',
+          justifyContent: 'center',
+          marginTop: mobileView ? '12px' : '20px',
+          gap: mobileView ? '6px' : '8px'
+        }}>
+          {videos.map((_, idx) => (
+            <div 
+              key={idx} 
+              style={{
+                ...styles.paginationDot,
+                width: idx === currentIndex ? (mobileView ? '24px' : '32px') : (mobileView ? '6px' : '8px'),
+                backgroundColor: idx === currentIndex ? '#Ffa500' : 'rgba(255, 165, 0, 0.5)'
+              }}
+              onClick={() => handleDotClick(idx)}
+            ></div>
+          ))}
+        </div> */}
         <div style={{
           display: 'flex',
           justifyContent: 'center',
