@@ -137,7 +137,7 @@ export const CartProvider = ({ children }) => {
   const clearCart = () => setCartItems([]);
 
   if (!isCartLoaded || authLoading) {
-    return <div style={{ padding: '20px', textAlign: 'center' }}>Loading cart... Please Refresh </div>;
+    return <div style={{ padding: '20px', textAlign: 'center' }}>Loading ... Please Refresh </div>;
   }
 
   return (

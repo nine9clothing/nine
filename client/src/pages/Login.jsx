@@ -469,7 +469,6 @@
 // };
 
 // export default Login;
-
 import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
@@ -489,7 +488,6 @@ const Login = () => {
   const [regPhone, setRegPhone] = useState('');
   const [loadingAuth, setLoadingAuth] = useState(false);
   const [toastMessage, setToastMessage] = useState(null);
-  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
   const [hoveredLink, setHoveredLink] = useState(null);
 
@@ -768,15 +766,6 @@ const Login = () => {
     marginBottom: '15px',
   };
 
-  const eyeIconStyle = {
-    position: 'absolute',
-    right: '15px',
-    top: '40%',
-    transform: 'translateY(10%)',
-    cursor: 'pointer',
-    fontSize: '1.2rem',
-  };
-
   return (
     <div style={{ fontFamily: "'Roboto', sans-serif" }}>
       <Navbar showLogo={true} />
@@ -797,25 +786,19 @@ const Login = () => {
             />
 
             {isLogin && !useOtp && (
-              <div style={{ position: 'relative' }}>
+              <>
                 <label htmlFor="password" style={labelStyle}>
                   Password
                 </label>
                 <input
                   id="password"
-                  type={showPassword ? 'text' : 'password'}
+                  type="password"
                   placeholder="e.g. Enter your password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   style={inputStyle}
                 />
-                <span
-                  onClick={() => setShowPassword(!showPassword)}
-                  style={eyeIconStyle}
-                >
-                  {showPassword ? '🙈' : '🙉'}
-                </span>
-              </div>
+              </>
             )}
 
             {!isLogin && (
@@ -856,25 +839,17 @@ const Login = () => {
                   style={inputStyle}
                 />
 
-                <div style={{ position: 'relative' }}>
-                  <label htmlFor="regPassword" style={labelStyle}>
-                    Set Password
-                  </label>
-                  <input
-                    id="regPassword"
-                    type={showPassword ? 'text' : 'password'}
-                    placeholder="e.g. Abc123!@#"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    style={inputStyle}
-                  />
-                  <span
-                    onClick={() => setShowPassword(!showPassword)}
-                    style={eyeIconStyle}
-                  >
-                    {showPassword ? '🙈' : '🙉'}
-                  </span>
-                </div>
+                <label htmlFor="regPassword" style={labelStyle}>
+                  Set Password
+                </label>
+                <input
+                  id="regPassword"
+                  type="password"
+                  placeholder="e.g. Abc123!@#"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  style={inputStyle}
+                />
               </>
             )}
 
