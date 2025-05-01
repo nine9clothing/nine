@@ -186,7 +186,7 @@ const Navbar = ({ showLogo }) => {
 
   const styles = {
     navbar: {
-      backgroundColor: 'transparent',
+      backgroundColor: 'black',
       color: '#fff',
       padding: '15px 20px',
       display: 'flex',
@@ -196,6 +196,7 @@ const Navbar = ({ showLogo }) => {
       zIndex: 1000,
       position: 'absolute',
       top: 0,
+      height:'70px',
       left: 0,
       right: 0,
     },
@@ -213,7 +214,7 @@ const Navbar = ({ showLogo }) => {
       justifyContent: 'isMobile ? center : flex-start',
     },
     logo: {
-      height: '60px',
+      height: '65px',
       opacity: showLogo ? 1 : 0,
       transition: 'opacity 0.5s ease',
     },
