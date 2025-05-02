@@ -202,7 +202,7 @@ import orderRoutes from './routes/orderRoutes.js';
 import crypto from 'crypto';
 dotenv.config();
 
-const Razorpay = require('razorpay');
+import Razorpay from 'razorpay';
 const app = express();
 app.use(cors());
 app.use(express.json());
