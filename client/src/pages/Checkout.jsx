@@ -236,7 +236,6 @@ const Checkout = () => {
         throw new Error('Razorpay SDK not loaded. Please try again.');
       }
 
-      // Validate totalWithShipping before making the request
       console.log('Total with shipping before Razorpay request:', totalWithShipping);
       if (totalWithShipping <= 0) {
         throw new Error('Invalid amount: Total must be greater than zero.');
@@ -305,14 +304,11 @@ const Checkout = () => {
       console.error('Razorpay payment error:', error);
       let errorMessage = 'Failed to initiate payment';
       if (error.response) {
-        // Server responded with an error (e.g., 500)
         errorMessage += `: ${error.response.status} - ${error.response.data?.error || error.response.statusText}`;
         console.error('Server error details:', error.response.data);
       } else if (error.request) {
-        // No response from server
         errorMessage += ': No response from server. Please check your network connection.';
       } else {
-        // Other errors (e.g., SDK not loaded, invalid request)
         errorMessage += `: ${error.message}`;
       }
       setToastMessage({ message: errorMessage, type: 'error' });
@@ -537,6 +533,8 @@ const Checkout = () => {
     }
   };
 
+  console.log('Rendering mainColumn with cartItems:', cartItems, 'addresses:', addresses, 'selectedShippingOption:', selectedShippingOption);
+
   return (
     <div style={styles.pageWrapper}>
       <Navbar showLogo={true} />
@@ -556,6 +554,16 @@ const Checkout = () => {
                 <span style={styles.orderItemMeta}>
                   Size: {item.selectedSize} | Qty: {item.quantity} 
                 </span>
+                {/* Add image with fallback */}
+                <img
+                  src={item.image || 'https://placehold.co/300x500?text=No+Image'}
+                  alt={item.name}
+                  style={styles.orderItemImage}
+                  onError={(e) => {
+                    console.log('Image failed to load:', item.image);
+                    e.target.src = 'https://placehold.co/300x500?text=No+Image';
+                  }}
+                />
               </div>
             ))}
             <hr style={{ margin: '20px 0', borderColor: '#eee' }} />
@@ -857,6 +865,13 @@ const styles = {
     fontSize: window.innerWidth <= 768 ? '0.8rem' : '0.85rem',
     width: window.innerWidth <= 768 ? '100%' : '30%',
     textAlign: window.innerWidth <= 768 ? 'left' : 'right',
+  },
+  orderItemImage: {
+    width: '100px',
+    height: '150px',
+    objectFit: 'cover',
+    borderRadius: '8px',
+    marginTop: window.innerWidth <= 768 ? '10px' : '0',
   },
   totalRow: {
     display: 'flex',
