@@ -22,7 +22,6 @@ import TermsAndConditions from './pages/policy/TermsAndConditions';
 import Exchange from './pages/policy/Exchange';
 import MyAccount from './pages/MyAccount';
 import Rewards from './pages/Rewards';
-import ComingSoon from './pages/ComingSoon';
 
 import AdminLayout from './components/AdminLayout';
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -49,11 +48,8 @@ const App = () => {
       <CartProvider>
         <Routes>
 
-            {/* Public Routes */}
-            <Route path="/" element={<ComingSoon />} />
-            {/* <Route path="/" element={<Home />} /> */}
-{/* 
-
+          {/* Public Routes */}
+          <Route path="/" element={<Home />} />
           <Route path="/about" element={<About />} />
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/cart" element={<Cart />} />
@@ -70,12 +66,12 @@ const App = () => {
           <Route path="/t&c" element={<TermsAndConditions />} />
           <Route path="/exchange" element={<Exchange />} />
           <Route path="/my-account" element={<MyAccount />} />
-          <Route path="/rewards" element={<Rewards />} /> */}
+          <Route path="/rewards" element={<Rewards />} />
 
           
           {/* Admin Routes (with custom layout) */}
           <Route path="/admin" element={<AdminLayout />}>
-            {/* <Route path="dashboard" element={<AdminDashboard />} />
+            <Route path="dashboard" element={<AdminDashboard />} />
             <Route path="products" element={<AdminAddProduct />} />
             <Route path="viewproducts" element={<AdminViewProduct />} />
             <Route path="messages" element={<AdminMessages />} />
@@ -88,7 +84,7 @@ const App = () => {
             <Route path="subscription" element={<AdminNewsletter />} />
             <Route path="cartleftover" element={<AdminCartLeftOver/>} />
             <Route path="promocode" element={<AdminPromoCode/>} />
-            <Route path="viewpromocode" element={<AdminViewPromoCode/>} /> */}
+            <Route path="viewpromocode" element={<AdminViewPromoCode/>} />
 
           </Route>
         </Routes>

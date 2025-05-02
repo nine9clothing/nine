@@ -202,6 +202,7 @@ import orderRoutes from './routes/orderRoutes.js';
 
 dotenv.config();
 
+const Razorpay = require('razorpay');
 const app = express();
 app.use(cors());
 app.use(express.json());
@@ -426,6 +427,54 @@ app.post('/api/shiprocket/order', async (req, res) => {
     } else {
       res.status(500).json({ error: 'Failed to process order', details: error.message });
     }
+  }
+});
+
+
+
+
+// Initialize Razorpay with API keys from .env
+const razorpay = new Razorpay({
+  key_id: process.env.RAZORPAY_KEY_ID,
+  key_secret: process.env.RAZORPAY_KEY_SECRET,
+});
+
+// Create an order endpoint for Razorpay
+app.post('/api/razorpay/create-order', async (req, res) => {
+  const { amount, currency = 'INR', receipt } = req.body;
+
+  const options = {
+    amount: amount * 100, // Razorpay expects amount in paise (multiply by 100)
+    currency,
+    receipt: receipt || `receipt_${Date.now()}`,
+  };
+
+  try {
+    const order = await razorpay.orders.create(options);
+    res.json({
+      id: order.id,
+      currency: order.currency,
+      amount: order.amount,
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Payment verification endpoint for Razorpay
+app.post('/api/razorpay/verify-payment', (req, res) => {
+  const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+
+  const body = razorpay_order_id + '|' + razorpay_payment_id;
+  const expectedSignature = crypto
+    .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
+    .update(body.toString())
+    .digest('hex');
+
+  if (expectedSignature === razorpay_signature) {
+    res.json({ status: 'success' });
+  } else {
+    res.status(400).json({ status: 'failure', message: 'Invalid signature' });
   }
 });
 
