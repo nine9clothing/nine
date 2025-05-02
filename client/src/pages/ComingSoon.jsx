@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { FaWhatsapp, FaInstagram, FaYoutube } from 'react-icons/fa';
+import logo from '../assets/nine9_logo.png';
 
 const ComingSoon = () => {
   const [hoveredIcon, setHoveredIcon] = useState(null);
@@ -30,8 +31,8 @@ const ComingSoon = () => {
         textAlign: 'left',
         zIndex: 1
       }}>
-        <img 
-          src="/src/assets/nine9_logo.png" 
+       <img 
+          src={logo} 
           alt="Nine9 Logo" 
           style={{
             height: '80px',
