@@ -244,12 +244,7 @@ const Checkout = () => {
   
           const verifyResult = verifyResponse.data;
           if (verifyResult.status === 'success') {
-            // Pass all Razorpay payment details to completeOrder
-            await completeOrder({
-              payment_id: response.razorpay_payment_id,
-              razorpay_order_id: response.razorpay_order_id,
-              razorpay_signature: response.razorpay_signature
-            });
+            await completeOrder(response.razorpay_payment_id);
           } else {
             setToastMessage({ message: 'Payment verification failed: ' + verifyResult.message, type: 'error' });
             setLoadingOrder(false);
@@ -273,8 +268,7 @@ const Checkout = () => {
       setLoadingOrder(false);
     }
   };
-
-  const completeOrder = async (paymentDetails = {}) => {
+  const completeOrder = async (paymentId = null) => {
     if (cartItems.length === 0) {
       setToastMessage({ message: 'Your cart is empty.', type: 'error' });
       return;
@@ -348,8 +342,7 @@ const Checkout = () => {
         headers: { 'Content-Type': 'application/json' },
       });
 
-      // Prepare order data for Supabase, including Razorpay payment details if available
-      const orderData = {
+      const { data, error } = await supabase.from('orders').insert([{
         user_id: user.id,
         order_id,
         total: totalWithShipping,
@@ -370,13 +363,8 @@ const Checkout = () => {
         courier_name: selectedShippingOption.courier_name,
         estimated_delivery: selectedShippingOption.estimated_delivery_days,
         payment_method: paymentMethod,
-        payment_id: paymentDetails.payment_id || null,
-        razorpay_order_id: paymentDetails.razorpay_order_id || null,
-        razorpay_payment_id: paymentDetails.payment_id || null,
-        razorpay_signature: paymentDetails.razorpay_signature || null
-      };
-
-      const { data, error } = await supabase.from('orders').insert([orderData]).select();
+        payment_id: paymentId, // Store the Razorpay payment ID if available
+      }]).select();
 
       if (error) {
         console.error('Supabase insert error:', error);
@@ -447,7 +435,7 @@ const Checkout = () => {
         errorMessage += `: ${error.response.status} - ${error.response.data.error || error.response.statusText}`;
         console.error('Error response:', error.response.data);
         if (error.response.data.error === 'Failed to process order') {
-          const orderData = {
+          const { data, error: supabaseError } = await supabase.from('orders').insert([{
             user_id: user.id,
             order_id,
             total: totalWithShipping,
@@ -462,12 +450,8 @@ const Checkout = () => {
             shipping_pincode: selectedAddress.pincode,
             shipping_details: { error: error.response.data.error },
             payment_method: paymentMethod,
-            payment_id: paymentDetails.payment_id || null,
-            razorpay_order_id: paymentDetails.razorpay_order_id || null,
-            razorpay_payment_id: paymentDetails.payment_id || null,
-            razorpay_signature: paymentDetails.razorpay_signature || null
-          };
-          const { data, error: supabaseError } = await supabase.from('orders').insert([orderData]).select();
+            payment_id: paymentId,
+          }]).select();
           if (supabaseError) {
             console.error('Supabase fallback insert error:', supabaseError);
             errorMessage += ` (Fallback failed: ${supabaseError.message})`;
