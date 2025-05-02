@@ -84,6 +84,21 @@ const Checkout = () => {
     };
 
     getUser();
+
+    // Load Razorpay SDK dynamically
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.async = true;
+    script.onload = () => console.log('Razorpay SDK loaded successfully');
+    script.onerror = () => {
+      console.error('Failed to load Razorpay SDK');
+      setToastMessage({ message: 'Failed to load payment gateway. Please try again.', type: 'error' });
+    };
+    document.body.appendChild(script);
+
+    return () => {
+      document.body.removeChild(script);
+    };
   }, [navigate, cartItems.length]);
 
   const checkShippingOptions = async (pincode) => {
@@ -216,13 +231,17 @@ const Checkout = () => {
       if (!selectedAddress) {
         throw new Error('Selected address not found.');
       }
+
+      if (!window.Razorpay) {
+        throw new Error('Razorpay SDK not loaded. Please try again.');
+      }
   
       const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/razorpay/create-order`, {
         amount: totalWithShipping,
         currency: 'INR',
-        receipt: `order_rcptid_${Date.now()}`,
+        receipt: `order_rcptid_${Date.now()}`
       });
-  
+
       const order = response.data;
       if (order.error) {
         throw new Error('Error creating Razorpay order: ' + order.error);
@@ -236,20 +255,26 @@ const Checkout = () => {
         description: 'Purchase of Clothing Items',
         order_id: order.id,
         handler: async function (response) {
-          const verifyResponse = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/razorpay/verify-payment`, {
-            razorpay_order_id: response.razorpay_order_id,
-            razorpay_payment_id: response.razorpay_payment_id,
-            razorpay_signature: response.razorpay_signature,
-          });
-  
-          const verifyResult = verifyResponse.data;
-          if (verifyResult.status === 'success') {
-            await completeOrder({
-              payment_id: response.razorpay_payment_id,
-              payment_method: 'razorpay'
+          try {
+            const verifyResponse = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/razorpay/verify-payment`, {
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
             });
-          } else {
-            setToastMessage({ message: 'Payment verification failed: ' + verifyResult.message, type: 'error' });
+  
+            const verifyResult = verifyResponse.data;
+            if (verifyResult.status === 'success') {
+              await completeOrder({
+                payment_id: response.razorpay_payment_id,
+                payment_method: 'razorpay'
+              });
+            } else {
+              setToastMessage({ message: 'Payment verification failed: ' + verifyResult.message, type: 'error' });
+              setLoadingOrder(false);
+            }
+          } catch (verifyError) {
+            console.error('Error verifying Razorpay payment:', verifyError);
+            setToastMessage({ message: 'Failed to verify payment: ' + (verifyError.response?.data?.error || verifyError.message), type: 'error' });
             setLoadingOrder(false);
           }
         },
@@ -264,10 +289,27 @@ const Checkout = () => {
       };
   
       const rzp = new window.Razorpay(options);
+      rzp.on('payment.failed', function (response) {
+        console.error('Razorpay payment failed:', response.error);
+        setToastMessage({ message: `Payment failed: ${response.error.description}`, type: 'error' });
+        setLoadingOrder(false);
+      });
       rzp.open();
     } catch (error) {
       console.error('Razorpay payment error:', error);
-      setToastMessage({ message: 'Failed to initiate payment: ' + error.message, type: 'error' });
+      let errorMessage = 'Failed to initiate payment';
+      if (error.response) {
+        // Server responded with an error (e.g., 500)
+        errorMessage += `: ${error.response.status} - ${error.response.data?.error || error.response.statusText}`;
+        console.error('Server error details:', error.response.data);
+      } else if (error.request) {
+        // No response from server
+        errorMessage += ': No response from server. Please check your network connection.';
+      } else {
+        // Other errors (e.g., SDK not loaded, invalid request)
+        errorMessage += `: ${error.message}`;
+      }
+      setToastMessage({ message: errorMessage, type: 'error' });
       setLoadingOrder(false);
     }
   };
