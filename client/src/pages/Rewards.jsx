@@ -185,11 +185,11 @@ const Rewards = () => {
     if (loading) {
         return (
             <div style={{
-                display: 'flex',
-                flexDirection: 'column',
-                minHeight: '100vh',
-                background: 'linear-gradient(135deg, #000, #1a1a1a)',
-                fontFamily: "'Roboto', sans-serif"
+                // display: 'flex',
+                // flexDirection: 'column',
+                // minHeight: '100vh',
+                // background: 'linear-gradient(135deg, #000, #1a1a1a)',
+                // fontFamily: "'Roboto', sans-serif"
             }}>
                 <Navbar showLogo={true} />
                 <div style={{
