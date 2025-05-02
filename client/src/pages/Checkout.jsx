@@ -371,7 +371,7 @@ const Checkout = () => {
         courier_id: selectedShippingOption.courier_company_id,
         courier_name: selectedShippingOption.courier_name,
         estimated_delivery: selectedShippingOption.estimated_delivery_days,
-        payment_method: paymentMethod, // Stores 'COD' or 'Online'
+        payment_method: paymentMethod, // Stores 'Cash on Delivery' or 'Paid Online'
         payment_id: paymentId,
       }]).select();
 
@@ -458,7 +458,7 @@ const Checkout = () => {
             shipping_city: selectedAddress.city,
             shipping_pincode: selectedAddress.pincode,
             shipping_details: { error: error.response.data.error },
-            payment_method: paymentMethod, // Stores 'COD' or 'Online'
+            payment_method: paymentMethod, // Stores 'Cash on Delivery' or 'Paid Online'
             payment_id: paymentId,
           }]).select();
           if (supabaseError) {
@@ -488,7 +488,7 @@ const Checkout = () => {
       setToastMessage({ message: 'Please select a payment method.', type: 'error' });
       return;
     }
-    if (paymentMethod === 'Online') {
+    if (paymentMethod === 'Paid Online') {
       await handleOnlinePayment();
     } else {
       await completeOrder(null);
@@ -670,26 +670,26 @@ const Checkout = () => {
               <div style={styles.paymentOption}>
                 <input 
                   type="checkbox" 
-                  id="cod" 
+                  id="cashOnDelivery" 
                   name="payment" 
-                  value="COD"
-                  checked={paymentMethod === 'COD'}
-                  onChange={() => setPaymentMethod('COD')}
+                  value="Cash on Delivery"
+                  checked={paymentMethod === 'Cash on Delivery'}
+                  onChange={() => setPaymentMethod('Cash on Delivery')}
                   disabled={loadingOrder}
                 />
-                <label htmlFor="cod" style={styles.paymentLabel}>Cash on Delivery</label>
+                <label htmlFor="cashOnDelivery" style={styles.paymentLabel}>Cash on Delivery</label>
               </div>
               <div style={styles.paymentOption}>
                 <input 
                   type="checkbox" 
-                  id="online" 
+                  id="paidOnline" 
                   name="payment" 
-                  value="Online"
-                  checked={paymentMethod === 'Online'}
-                  onChange={() => setPaymentMethod('Online')}
+                  value="Paid Online"
+                  checked={paymentMethod === 'Paid Online'}
+                  onChange={() => setPaymentMethod('Paid Online')}
                   disabled={loadingOrder}
                 />
-                <label htmlFor="online" style={styles.paymentLabel}>Online Payment (UPI, Cards, Wallets, NetBanking)</label>
+                <label htmlFor="paidOnline" style={styles.paymentLabel}>Paid Online (UPI, Cards, Wallets, NetBanking)</label>
               </div>
             </div>
           </div>
