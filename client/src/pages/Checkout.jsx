@@ -30,8 +30,8 @@ const Checkout = () => {
   const [shippingError, setShippingError] = useState(null);
   const [warehousePincode, setWarehousePincode] = useState('400001');
 
-  // Payment method state
-  const [paymentMethod, setPaymentMethod] = useState('cod');
+  // Payment method state (no default selection)
+  const [paymentMethod, setPaymentMethod] = useState('');
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -301,6 +301,10 @@ const Checkout = () => {
       setToastMessage({ message: 'No shipping method available for this address.', type: 'error' });
       return;
     }
+    if (!paymentMethod) {
+      setToastMessage({ message: 'Please select a payment method.', type: 'error' });
+      return;
+    }
     const selectedAddress = addresses.find(addr => addr.id.toString() === selectedAddressId);
     if (!selectedAddress) {
       setToastMessage({ message: 'Selected address not found.', type: 'error' });
@@ -491,6 +495,10 @@ const Checkout = () => {
   };
 
   const handleConfirmOrder = async () => {
+    if (!paymentMethod) {
+      setToastMessage({ message: 'Please select a payment method.', type: 'error' });
+      return;
+    }
     if (paymentMethod === 'razorpay') {
       await handleRazorpayPayment();
     } else {
@@ -676,7 +684,7 @@ const Checkout = () => {
                   name="payment" 
                   value="cod"
                   checked={paymentMethod === 'cod'}
-                  onChange={() => setPaymentMethod(paymentMethod === 'cod' ? '' : 'cod')}
+                  onChange={() => setPaymentMethod('cod')}
                   disabled={loadingOrder}
                 />
                 <label htmlFor="cod" style={styles.paymentLabel}>Cash on Delivery</label>
@@ -688,7 +696,7 @@ const Checkout = () => {
                   name="payment" 
                   value="razorpay"
                   checked={paymentMethod === 'razorpay'}
-                  onChange={() => setPaymentMethod(paymentMethod === 'razorpay' ? '' : 'razorpay')}
+                  onChange={() => setPaymentMethod('razorpay')}
                   disabled={loadingOrder}
                 />
                 <label htmlFor="razorpay" style={styles.paymentLabel}>Razorpay Secure (UPI, Cards, Wallets, NetBanking)</label>
@@ -698,10 +706,10 @@ const Checkout = () => {
 
           <button 
             onClick={handleConfirmOrder} 
-            disabled={loadingOrder || !selectedAddressId || !selectedShippingOption} 
+            disabled={loadingOrder || !selectedAddressId || !selectedShippingOption || !paymentMethod} 
             style={{
               ...styles.confirmOrderBtn,
-              opacity: (!selectedAddressId || !selectedShippingOption || loadingOrder) ? 0.6 : 1
+              opacity: (!selectedAddressId || !selectedShippingOption || !paymentMethod || loadingOrder) ? 0.6 : 1
             }}
           >
             {loadingOrder ? 'Processing...' : `Confirm Order - ₹${totalWithShipping.toFixed(2)}`}
@@ -730,6 +738,7 @@ const Checkout = () => {
   );
 };
 
+// Styles remain unchanged
 const styles = {
   pageWrapper: {
     display: 'flex',
