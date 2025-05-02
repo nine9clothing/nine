@@ -193,7 +193,7 @@ const Rewards = () => {
             }}>
                 <Navbar showLogo={true} />
                 <div style={{
-                    padding: '0px',
+                  
                 }}>
                     <p style={{
                         fontSize: '1rem',
@@ -221,7 +221,6 @@ const Rewards = () => {
         }}>
             <Navbar showLogo={true} />
             <div style={{
-                flex: '1 0 auto'
             }}>
                 <section style={{
                     padding: '30px 15px',
