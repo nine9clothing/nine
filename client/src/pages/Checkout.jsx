@@ -70,14 +70,7 @@ const Checkout = () => {
       if (!error) {
         console.log('Fetched addresses:', data);
         setAddresses(data);
-        if (data.length > 0 && !selectedAddressId) {
-          setSelectedAddressId(data[0].id.toString());
-          console.log('Set initial selectedAddressId:', data[0].id);
-          const selectedAddress = data[0];
-          if (selectedAddress && selectedAddress.pincode) {
-            checkShippingOptions(selectedAddress.pincode);
-          }
-        }
+        // Removed automatic selection of the first address
       } else {
         console.error('Error fetching addresses:', error.message);
       }
@@ -186,9 +179,7 @@ const Checkout = () => {
       if (!error) {
         console.log('Updated addresses:', updatedAddresses);
         setAddresses(updatedAddresses);
-        setSelectedAddressId(data[0].id.toString());
-        console.log('Set selectedAddressId to new address:', data[0].id);
-        checkShippingOptions(data[0].pincode);
+        // After adding a new address, we don't set it as selected by default
       } else {
         console.error('Error fetching updated addresses:', error.message);
       }
@@ -197,7 +188,7 @@ const Checkout = () => {
     await fetchAddresses();
     setShowAddAddressForm(false);
     setNewAddress({ name: '', address: '', city: '', pincode: '', phone: '' });
-    setToastMessage({ message: 'Address added successfully!', type: 'success' });
+    setToastMessage({ message: 'Address added successfully! Please select it from the dropdown.', type: 'success' });
   };
 
   const handleAddressChange = (e) => {
@@ -567,6 +558,7 @@ const Checkout = () => {
                     style={styles.input}
                     disabled={loadingOrder}
                   >
+                    <option value="">Select an address</option>
                     {addresses.map(addr => (
                       <option key={addr.id} value={addr.id.toString()}>
                         {addr.name} - {addr.address}, {addr.city} ({addr.pincode})
@@ -738,7 +730,7 @@ const Checkout = () => {
   );
 };
 
-// Styles remain unchanged
+// Styles (with one minor tweak for consistency)
 const styles = {
   pageWrapper: {
     display: 'flex',
