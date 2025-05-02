@@ -268,6 +268,7 @@ const Checkout = () => {
       setLoadingOrder(false);
     }
   };
+
   const completeOrder = async (paymentId = null) => {
     if (cartItems.length === 0) {
       setToastMessage({ message: 'Your cart is empty.', type: 'error' });
@@ -363,7 +364,7 @@ const Checkout = () => {
         courier_name: selectedShippingOption.courier_name,
         estimated_delivery: selectedShippingOption.estimated_delivery_days,
         payment_method: paymentMethod,
-        payment_id: paymentId, // Store the Razorpay payment ID if available
+        payment_id: paymentId, // Store the payment ID for both COD (null) and Razorpay
       }]).select();
 
       if (error) {
@@ -478,7 +479,7 @@ const Checkout = () => {
     if (paymentMethod === 'razorpay') {
       await handleRazorpayPayment();
     } else {
-      await completeOrder();
+      await completeOrder(null); // Pass null for COD payment_id
     }
   };
 
