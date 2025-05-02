@@ -1,5 +1,6 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { CartContext } from '../context/CartContext.jsx';
+import { AuthContext } from '../context/AuthContext.jsx';
 import { supabase } from '../lib/supabase';
 import Navbar from '../components/Navbar';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -9,7 +10,7 @@ import axios from 'axios';
 
 const Checkout = () => {
   const { cartItems, clearCart } = useContext(CartContext);
-  const [user, setUser] = useState(null);
+  const { user } = useContext(AuthContext);
   const [addresses, setAddresses] = useState([]);
   const [selectedAddressId, setSelectedAddressId] = useState('');
   const [loadingOrder, setLoadingOrder] = useState(false);
@@ -51,16 +52,10 @@ const Checkout = () => {
       return;
     }
 
-    const getUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      const currentUser = session?.user;
-      if (currentUser) {
-        setUser(currentUser);
-        await fetchAddresses(currentUser.id);
-      } else {
-        navigate('/login');
-      }
-    };
+    if (!user) {
+      navigate('/login');
+      return;
+    }
 
     const fetchAddresses = async (userId) => {
       const { data, error } = await supabase
@@ -75,8 +70,8 @@ const Checkout = () => {
       }
     };
 
-    getUser();
-  }, [navigate, cartItems.length]);
+    fetchAddresses(user.id);
+  }, [navigate, cartItems.length, user]);
 
   const checkShippingOptions = async (pincode) => {
     if (!pincode) return;
@@ -371,7 +366,7 @@ const Checkout = () => {
         courier_id: selectedShippingOption.courier_company_id,
         courier_name: selectedShippingOption.courier_name,
         estimated_delivery: selectedShippingOption.estimated_delivery_days,
-        payment_method: paymentMethod, // Stores 'Cash on Delivery' or 'Paid Online'
+        payment_method: paymentMethod,
         payment_id: paymentId,
       }]).select();
 
@@ -458,7 +453,7 @@ const Checkout = () => {
             shipping_city: selectedAddress.city,
             shipping_pincode: selectedAddress.pincode,
             shipping_details: { error: error.response.data.error },
-            payment_method: paymentMethod, // Stores 'Cash on Delivery' or 'Paid Online'
+            payment_method: paymentMethod,
             payment_id: paymentId,
           }]).select();
           if (supabaseError) {
