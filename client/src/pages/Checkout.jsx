@@ -563,13 +563,6 @@ const Checkout = () => {
                       </option>
                     ))}
                   </select>
-                  <button
-                    onClick={() => setShowAddAddressForm(!showAddAddressForm)}
-                    style={styles.addAddressBtn}
-                    disabled={loadingOrder}
-                  >
-                    {showAddAddressForm ? 'Cancel' : 'Add New Address'}
-                  </button>
                   
                   {selectedAddressId && (
                     <div style={styles.selectedAddressBox}>
@@ -586,61 +579,69 @@ const Checkout = () => {
                       })()}
                     </div>
                   )}
-
-                  {showAddAddressForm && (
-                    <div style={styles.addressForm}>
-                      <input
-                        type="text"
-                        placeholder="Full Name"
-                        value={newAddress.name}
-                        onChange={(e) => setNewAddress({ ...newAddress, name: e.target.value })}
-                        style={styles.input}
-                        disabled={loadingOrder}
-                      />
-                      <input
-                        type="text"
-                        placeholder="Address"
-                        value={newAddress.address}
-                        onChange={(e) => setNewAddress({ ...newAddress, address: e.target.value })}
-                        style={styles.input}
-                        disabled={loadingOrder}
-                      />
-                      <input
-                        type="text"
-                        placeholder="City"
-                        value={newAddress.city}
-                        onChange={(e) => setNewAddress({ ...newAddress, city: e.target.value })}
-                        style={styles.input}
-                        disabled={loadingOrder}
-                      />
-                      <input
-                        type="text"
-                        placeholder="Pincode"
-                        value={newAddress.pincode}
-                        onChange={(e) => setNewAddress({ ...newAddress, pincode: e.target.value })}
-                        style={styles.input}
-                        disabled={loadingOrder}
-                      />
-                      <input
-                        type="text"
-                        placeholder="Phone Number"
-                        value={newAddress.phone}
-                        onChange={(e) => setNewAddress({ ...newAddress, phone: e.target.value })}
-                        style={styles.input}
-                        disabled={loadingOrder}
-                      />
-                      <button
-                        onClick={handleAddAddress}
-                        style={styles.saveAddressBtn}
-                        disabled={loadingOrder}
-                      >
-                        Save Address
-                      </button>
-                    </div>
-                  )}
                 </div>
               ) : (
                 <p style={styles.emptyText}>No saved addresses found.</p>
+              )}
+              
+              <button
+                onClick={() => setShowAddAddressForm(!showAddAddressForm)}
+                style={styles.addAddressBtn}
+                disabled={loadingOrder}
+              >
+                {showAddAddressForm ? 'Cancel' : 'Add New Address'}
+              </button>
+
+              {showAddAddressForm && (
+                <div style={styles.addressForm}>
+                  <input
+                    type="text"
+                    placeholder="Full Name"
+                    value={newAddress.name}
+                    onChange={(e) => setNewAddress({ ...newAddress, name: e.target.value })}
+                    style={styles.input}
+                    disabled={loadingOrder}
+                  />
+                  <input
+                    type="text"
+                    placeholder="Address"
+                    value={newAddress.address}
+                    onChange={(e) => setNewAddress({ ...newAddress, address: e.target.value })}
+                    style={styles.input}
+                    disabled={loadingOrder}
+                  />
+                  <input
+                    type="text"
+                    placeholder="City"
+                    value={newAddress.city}
+                    onChange={(e) => setNewAddress({ ...newAddress, city: e.target.value })}
+                    style={styles.input}
+                    disabled={loadingOrder}
+                  />
+                  <input
+                    type="text"
+                    placeholder="Pincode"
+                    value={newAddress.pincode}
+                    onChange={(e) => setNewAddress({ ...newAddress, pincode: e.target.value })}
+                    style={styles.input}
+                    disabled={loadingOrder}
+                  />
+                  <input
+                    type="text"
+                    placeholder="Phone Number"
+                    value={newAddress.phone}
+                    onChange={(e) => setNewAddress({ ...newAddress, phone: e.target.value })}
+                    style={styles.input}
+                    disabled={loadingOrder}
+                  />
+                  <button
+                    onClick={handleAddAddress}
+                    style={styles.saveAddressBtn}
+                    disabled={loadingOrder}
+                  >
+                    Save Address
+                  </button>
+                </div>
               )}
             </div>
           )}
@@ -916,23 +917,18 @@ const styles = {
     borderRadius: '10px',
   },
   addAddressBtn: {
-    width: 'auto', // Reduced width to fit inline
-    padding: window.innerWidth <= 768 ? '8px 12px' : '8px 12px', // Adjusted padding for compactness
-    backgroundColor: '#e5e5e5', // Slightly darker for better contrast
+    width: '100%',
+    padding: window.innerWidth <= 768 ? '8px' : '8px', // Reduced padding
+    backgroundColor: 'white',
     color: 'black',
     borderRadius: '8px',
     border: 'none',
     fontFamily: "'Louvette Semi Bold', sans-serif",
     cursor: 'pointer',
     fontWeight: '600',
-    fontSize: window.innerWidth <= 768 ? '0.8rem' : '0.85rem',
+    fontSize: window.innerWidth <= 768 ? '0.8rem' : '0.85rem', // Reduced font size
     marginTop: '10px',
-    marginLeft: '10px', // Space from dropdown
-    transition: 'background-color 0.25s ease-in-out, transform 0.2s ease-in-out',
-    ':hover': {
-      backgroundColor: '#d1d1d1', // Hover effect
-      transform: 'scale(1.05)',
-    },
+    transition: 'background-color 0.25s ease-in-out',
   },
   addressForm: {
     marginTop: '20px',
