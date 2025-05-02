@@ -103,7 +103,7 @@ const Contact = () => {
             margin: '0 auto',
             borderRadius: '8px',
             textAlign: 'left',
-            fontFamily: "'Roboto', sans-serif" // Ensure form uses Roboto
+            fontFamily: "'Roboto', sans-serif" 
           }} noValidate>
             <div style={{
               marginBottom: '20px'
