@@ -209,23 +209,25 @@ const Checkout = () => {
   const handleRazorpayPayment = async () => {
     setLoadingOrder(true);
     try {
-      // Define selectedAddress by finding the address with the selectedAddressId
+      console.log('handleRazorpayPayment - addresses:', addresses);
+      console.log('handleRazorpayPayment - selectedAddressId:', selectedAddressId);
       const selectedAddress = addresses.find(addr => addr.id.toString() === selectedAddressId);
+      console.log('handleRazorpayPayment - selectedAddress:', selectedAddress);
       if (!selectedAddress) {
         throw new Error('Selected address not found.');
       }
-
+  
       const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/razorpay/create-order`, {
         amount: totalWithShipping,
         currency: 'INR',
         receipt: `order_rcptid_${Date.now()}`,
       });
-
+  
       const order = response.data;
       if (order.error) {
         throw new Error('Error creating Razorpay order: ' + order.error);
       }
-
+  
       const options = {
         key: import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_xxx',
         amount: order.amount,
@@ -239,7 +241,7 @@ const Checkout = () => {
             razorpay_payment_id: response.razorpay_payment_id,
             razorpay_signature: response.razorpay_signature,
           });
-
+  
           const verifyResult = verifyResponse.data;
           if (verifyResult.status === 'success') {
             await completeOrder(response.razorpay_payment_id);
@@ -257,7 +259,7 @@ const Checkout = () => {
           color: '#Ffa500',
         },
       };
-
+  
       const rzp = new window.Razorpay(options);
       rzp.open();
     } catch (error) {
@@ -266,7 +268,6 @@ const Checkout = () => {
       setLoadingOrder(false);
     }
   };
-
   const completeOrder = async (paymentId = null) => {
     if (cartItems.length === 0) {
       setToastMessage({ message: 'Your cart is empty.', type: 'error' });
