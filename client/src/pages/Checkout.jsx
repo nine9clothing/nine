@@ -13,6 +13,7 @@ const Checkout = () => {
   const [addresses, setAddresses] = useState([]);
   const [selectedAddressId, setSelectedAddressId] = useState('');
   const [loadingOrder, setLoadingOrder] = useState(false);
+  const [loading, setLoading] = useState(true); // New loading state
   const [toastMessage, setToastMessage] = useState(null);
   const [showAddAddressForm, setShowAddAddressForm] = useState(false);
   const [newAddress, setNewAddress] = useState({
@@ -36,22 +37,55 @@ const Checkout = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const subtotal = location.state?.subtotal || cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
-  const discount = location.state?.discount || 0;
-  const pointsToRedeem = location.state?.pointsToRedeem || 0;
-  const pointsDiscount = location.state?.pointsDiscount || 0;
-  const totalAfterDiscount = location.state?.total || subtotal - (discount + pointsDiscount);
-  const appliedPromo = location.state?.appliedPromo || null;
+  // Load checkout data from localStorage if location.state is null
+  const getCheckoutData = () => {
+    const storedData = localStorage.getItem('checkoutData');
+    if (storedData) {
+      return JSON.parse(storedData);
+    }
+    return {
+      subtotal: cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0),
+      discount: 0,
+      pointsToRedeem: 0,
+      pointsDiscount: 0,
+      total: null,
+      appliedPromo: null
+    };
+  };
+
+  // Initialize checkout data
+  const checkoutData = location.state || getCheckoutData();
+  const subtotal = checkoutData.subtotal;
+  const discount = checkoutData.discount;
+  const pointsToRedeem = checkoutData.pointsToRedeem;
+  const pointsDiscount = checkoutData.pointsDiscount;
+  const totalAfterDiscount = checkoutData.total || subtotal - (discount + pointsDiscount);
+  const appliedPromo = checkoutData.appliedPromo;
 
   const totalWithShipping = totalAfterDiscount + (selectedShippingOption?.rate || 0);
 
+  // Save checkout data to localStorage when location.state is available
   useEffect(() => {
-    if (cartItems.length === 0 && !location.state) {
+    if (location.state) {
+      localStorage.setItem('checkoutData', JSON.stringify({
+        subtotal: location.state.subtotal,
+        discount: location.state.discount,
+        pointsToRedeem: location.state.pointsToRedeem,
+        pointsDiscount: location.state.pointsDiscount,
+        total: location.state.total,
+        appliedPromo: location.state.appliedPromo
+      }));
+    }
+  }, [location.state]);
+
+  useEffect(() => {
+    if (cartItems.length === 0 && !subtotal) {
       navigate('/cart');
       return;
     }
 
     const getUser = async () => {
+      setLoading(true); // Set loading true at start
       const { data: { session } } = await supabase.auth.getSession();
       const currentUser = session?.user;
       if (currentUser) {
@@ -60,6 +94,7 @@ const Checkout = () => {
       } else {
         navigate('/login');
       }
+      setLoading(false); // Set loading false after fetching
     };
 
     const fetchAddresses = async (userId) => {
@@ -84,7 +119,7 @@ const Checkout = () => {
     };
 
     getUser();
-  }, [navigate, cartItems.length]);
+  }, [navigate, cartItems.length, subtotal, selectedAddressId]);
 
   const checkShippingOptions = async (pincode) => {
     if (!pincode) return;
@@ -441,6 +476,8 @@ const Checkout = () => {
         }
       }
       
+      // Clear checkout data from localStorage after successful order
+      localStorage.removeItem('checkoutData');
       clearCart();
       setToastMessage({ message: 'Order placed successfully! Check Shiprocket dashboard.', type: 'success' });
       navigate('/success');
@@ -473,6 +510,8 @@ const Checkout = () => {
             errorMessage += ` (Fallback failed: ${supabaseError.message})`;
           } else {
             console.log('Order saved to Supabase via fallback:', data);
+            // Clear checkout data from localStorage after successful fallback
+            localStorage.removeItem('checkoutData');
             clearCart();
             setToastMessage({ message: 'Order created in Shiprocket but failed to save initially. Check dashboard.', type: 'warning' });
             navigate('/success');
@@ -497,6 +536,24 @@ const Checkout = () => {
       await completeOrder(null);
     }
   };
+
+  // Render loading UI if loading is true
+  if (loading) {
+    return (
+      <div style={styles.pageWrapper}>
+        <Navbar showLogo={true} />
+        <div style={styles.container}>
+          <div style={styles.mainColumn}>
+            <div style={styles.loadingContainer}>
+              <div style={styles.loader}></div>
+              <p style={styles.loadingText}>Loading checkout...</p>
+            </div>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div style={styles.pageWrapper}>
@@ -952,6 +1009,37 @@ const styles = {
     marginTop: '10px',
     transition: 'background-color 0.25s ease-in-out',
   },
+  loadingContainer: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: '50vh',
+  },
+  loader: {
+    border: '4px solid #f3f3f3',
+    borderTop: '4px solid #Ffa500',
+    borderRadius: '50%',
+    width: '40px',
+    height: '40px',
+    animation: 'spin 1s linear infinite',
+  },
+  loadingText: {
+    marginTop: '16px',
+    fontSize: '1.2rem',
+    color: '#a1a1aa',
+    fontFamily: "'Louvette Semi Bold', sans-serif",
+  },
 };
+
+// Add keyframes for spinner animation
+const styleSheet = document.createElement('style');
+styleSheet.innerText = `
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+`;
+document.head.appendChild(styleSheet);
 
 export default Checkout;
