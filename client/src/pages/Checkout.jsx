@@ -84,21 +84,6 @@ const Checkout = () => {
     };
 
     getUser();
-
-    // Load Razorpay SDK dynamically
-    const script = document.createElement('script');
-    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-    script.async = true;
-    script.onload = () => console.log('Razorpay SDK loaded successfully');
-    script.onerror = () => {
-      console.error('Failed to load Razorpay SDK');
-      setToastMessage({ message: 'Failed to load payment gateway. Please try again.', type: 'error' });
-    };
-    document.body.appendChild(script);
-
-    return () => {
-      document.body.removeChild(script);
-    };
   }, [navigate, cartItems.length]);
 
   const checkShippingOptions = async (pincode) => {
@@ -231,22 +216,13 @@ const Checkout = () => {
       if (!selectedAddress) {
         throw new Error('Selected address not found.');
       }
-
-      if (!window.Razorpay) {
-        throw new Error('Razorpay SDK not loaded. Please try again.');
-      }
-
-      console.log('Total with shipping before Razorpay request:', totalWithShipping);
-      if (totalWithShipping <= 0) {
-        throw new Error('Invalid amount: Total must be greater than zero.');
-      }
   
       const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/razorpay/create-order`, {
         amount: totalWithShipping,
         currency: 'INR',
-        receipt: `order_rcptid_${Date.now()}`
+        receipt: `order_rcptid_${Date.now()}`,
       });
-
+  
       const order = response.data;
       if (order.error) {
         throw new Error('Error creating Razorpay order: ' + order.error);
@@ -260,26 +236,17 @@ const Checkout = () => {
         description: 'Purchase of Clothing Items',
         order_id: order.id,
         handler: async function (response) {
-          try {
-            const verifyResponse = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/razorpay/verify-payment`, {
-              razorpay_order_id: response.razorpay_order_id,
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature: response.razorpay_signature,
-            });
+          const verifyResponse = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/razorpay/verify-payment`, {
+            razorpay_order_id: response.razorpay_order_id,
+            razorpay_payment_id: response.razorpay_payment_id,
+            razorpay_signature: response.razorpay_signature,
+          });
   
-            const verifyResult = verifyResponse.data;
-            if (verifyResult.status === 'success') {
-              await completeOrder({
-                payment_id: response.razorpay_payment_id,
-                payment_method: 'razorpay'
-              });
-            } else {
-              setToastMessage({ message: 'Payment verification failed: ' + verifyResult.message, type: 'error' });
-              setLoadingOrder(false);
-            }
-          } catch (verifyError) {
-            console.error('Error verifying Razorpay payment:', verifyError);
-            setToastMessage({ message: 'Failed to verify payment: ' + (verifyError.response?.data?.error || verifyError.message), type: 'error' });
+          const verifyResult = verifyResponse.data;
+          if (verifyResult.status === 'success') {
+            await completeOrder(response.razorpay_payment_id);
+          } else {
+            setToastMessage({ message: 'Payment verification failed: ' + verifyResult.message, type: 'error' });
             setLoadingOrder(false);
           }
         },
@@ -294,29 +261,14 @@ const Checkout = () => {
       };
   
       const rzp = new window.Razorpay(options);
-      rzp.on('payment.failed', function (response) {
-        console.error('Razorpay payment failed:', response.error);
-        setToastMessage({ message: `Payment failed: ${response.error.description}`, type: 'error' });
-        setLoadingOrder(false);
-      });
       rzp.open();
     } catch (error) {
       console.error('Razorpay payment error:', error);
-      let errorMessage = 'Failed to initiate payment';
-      if (error.response) {
-        errorMessage += `: ${error.response.status} - ${error.response.data?.error || error.response.statusText}`;
-        console.error('Server error details:', error.response.data);
-      } else if (error.request) {
-        errorMessage += ': No response from server. Please check your network connection.';
-      } else {
-        errorMessage += `: ${error.message}`;
-      }
-      setToastMessage({ message: errorMessage, type: 'error' });
+      setToastMessage({ message: 'Failed to initiate payment: ' + error.message, type: 'error' });
       setLoadingOrder(false);
     }
   };
-
-  const completeOrder = async (paymentDetails = {}) => {
+  const completeOrder = async (paymentId = null) => {
     if (cartItems.length === 0) {
       setToastMessage({ message: 'Your cart is empty.', type: 'error' });
       return;
@@ -390,7 +342,7 @@ const Checkout = () => {
         headers: { 'Content-Type': 'application/json' },
       });
 
-      const orderData = {
+      const { data, error } = await supabase.from('orders').insert([{
         user_id: user.id,
         order_id,
         total: totalWithShipping,
@@ -410,11 +362,9 @@ const Checkout = () => {
         courier_id: selectedShippingOption.courier_company_id,
         courier_name: selectedShippingOption.courier_name,
         estimated_delivery: selectedShippingOption.estimated_delivery_days,
-        payment_method: paymentDetails.payment_method || paymentMethod,
-        payment_id: paymentDetails.payment_id || null
-      };
-
-      const { data, error } = await supabase.from('orders').insert([orderData]).select();
+        payment_method: paymentMethod,
+        payment_id: paymentId, // Store the Razorpay payment ID if available
+      }]).select();
 
       if (error) {
         console.error('Supabase insert error:', error);
@@ -485,7 +435,7 @@ const Checkout = () => {
         errorMessage += `: ${error.response.status} - ${error.response.data.error || error.response.statusText}`;
         console.error('Error response:', error.response.data);
         if (error.response.data.error === 'Failed to process order') {
-          const orderData = {
+          const { data, error: supabaseError } = await supabase.from('orders').insert([{
             user_id: user.id,
             order_id,
             total: totalWithShipping,
@@ -499,10 +449,9 @@ const Checkout = () => {
             shipping_city: selectedAddress.city,
             shipping_pincode: selectedAddress.pincode,
             shipping_details: { error: error.response.data.error },
-            payment_method: paymentDetails.payment_method || paymentMethod,
-            payment_id: paymentDetails.payment_id || null
-          };
-          const { data, error: supabaseError } = await supabase.from('orders').insert([orderData]).select();
+            payment_method: paymentMethod,
+            payment_id: paymentId,
+          }]).select();
           if (supabaseError) {
             console.error('Supabase fallback insert error:', supabaseError);
             errorMessage += ` (Fallback failed: ${supabaseError.message})`;
@@ -529,11 +478,9 @@ const Checkout = () => {
     if (paymentMethod === 'razorpay') {
       await handleRazorpayPayment();
     } else {
-      await completeOrder({ payment_method: 'cod' });
+      await completeOrder();
     }
   };
-
-  console.log('Rendering mainColumn with cartItems:', cartItems, 'addresses:', addresses, 'selectedShippingOption:', selectedShippingOption);
 
   return (
     <div style={styles.pageWrapper}>
@@ -554,16 +501,6 @@ const Checkout = () => {
                 <span style={styles.orderItemMeta}>
                   Size: {item.selectedSize} | Qty: {item.quantity} 
                 </span>
-                {/* Add image with fallback */}
-                <img
-                  src={item.image || 'https://placehold.co/300x500?text=No+Image'}
-                  alt={item.name}
-                  style={styles.orderItemImage}
-                  onError={(e) => {
-                    console.log('Image failed to load:', item.image);
-                    e.target.src = 'https://placehold.co/300x500?text=No+Image';
-                  }}
-                />
               </div>
             ))}
             <hr style={{ margin: '20px 0', borderColor: '#eee' }} />
@@ -865,13 +802,6 @@ const styles = {
     fontSize: window.innerWidth <= 768 ? '0.8rem' : '0.85rem',
     width: window.innerWidth <= 768 ? '100%' : '30%',
     textAlign: window.innerWidth <= 768 ? 'left' : 'right',
-  },
-  orderItemImage: {
-    width: '100px',
-    height: '150px',
-    objectFit: 'cover',
-    borderRadius: '8px',
-    marginTop: window.innerWidth <= 768 ? '10px' : '0',
   },
   totalRow: {
     display: 'flex',
