@@ -835,7 +835,7 @@ const styles = {
     fontFamily: "'Louvette Semi Bold', sans-serif",
     borderRadius: '10px',
     marginTop: '12px',
-    fontSize: window.innerWidth <= 768 ? '0.6rem' : '1rem',
+    fontSize: window.innerWidth <= 768 ? '0.8rem' : '1rem',
     fontWeight: '600',
     color: '#ffffff',
   },
