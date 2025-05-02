@@ -235,6 +235,12 @@ const Checkout = () => {
       if (!window.Razorpay) {
         throw new Error('Razorpay SDK not loaded. Please try again.');
       }
+
+      // Validate totalWithShipping before making the request
+      console.log('Total with shipping before Razorpay request:', totalWithShipping);
+      if (totalWithShipping <= 0) {
+        throw new Error('Invalid amount: Total must be greater than zero.');
+      }
   
       const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/razorpay/create-order`, {
         amount: totalWithShipping,
