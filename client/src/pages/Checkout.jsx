@@ -250,6 +250,21 @@ const Checkout = () => {
             setLoadingOrder(false);
           }
         },
+        modal: {
+          ondismiss: function() {
+            setLoadingOrder(false);
+            navigate('/checkout', {
+              state: {
+                subtotal,
+                discount,
+                pointsToRedeem,
+                pointsDiscount,
+                total: totalAfterDiscount,
+                appliedPromo
+              }
+            });
+          }
+        },
         prefill: {
           name: user?.user_metadata?.full_name || 'Customer Name',
           email: user?.email || 'customer@example.com',
@@ -364,7 +379,7 @@ const Checkout = () => {
         courier_name: selectedShippingOption.courier_name,
         estimated_delivery: selectedShippingOption.estimated_delivery_days,
         payment_method: paymentMethod,
-        payment_id: paymentId, // Store the payment ID for both COD (null) and Razorpay
+        payment_id: paymentId,
       }]).select();
 
       if (error) {
@@ -479,7 +494,7 @@ const Checkout = () => {
     if (paymentMethod === 'razorpay') {
       await handleRazorpayPayment();
     } else {
-      await completeOrder(null); // Pass null for COD payment_id
+      await completeOrder(null);
     }
   };
 
@@ -656,27 +671,27 @@ const Checkout = () => {
             <div style={styles.paymentOptions}>
               <div style={styles.paymentOption}>
                 <input 
-                  type="radio" 
+                  type="checkbox" 
                   id="cod" 
                   name="payment" 
                   value="cod"
                   checked={paymentMethod === 'cod'}
-                  onChange={() => setPaymentMethod('cod')}
+                  onChange={() => setPaymentMethod(paymentMethod === 'cod' ? '' : 'cod')}
                   disabled={loadingOrder}
                 />
                 <label htmlFor="cod" style={styles.paymentLabel}>Cash on Delivery</label>
               </div>
               <div style={styles.paymentOption}>
                 <input 
-                  type="radio" 
+                  type="checkbox" 
                   id="razorpay" 
                   name="payment" 
                   value="razorpay"
                   checked={paymentMethod === 'razorpay'}
-                  onChange={() => setPaymentMethod('razorpay')}
+                  onChange={() => setPaymentMethod(paymentMethod === 'razorpay' ? '' : 'razorpay')}
                   disabled={loadingOrder}
                 />
-                <label htmlFor="razorpay" style={styles.paymentLabel}>Pay with Razorpay</label>
+                <label htmlFor="razorpay" style={styles.paymentLabel}>Razorpay Secure (UPI, Cards, Wallets, NetBanking)</label>
               </div>
             </div>
           </div>
