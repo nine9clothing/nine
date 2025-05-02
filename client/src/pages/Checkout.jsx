@@ -209,6 +209,12 @@ const Checkout = () => {
   const handleRazorpayPayment = async () => {
     setLoadingOrder(true);
     try {
+      // Define selectedAddress by finding the address with the selectedAddressId
+      const selectedAddress = addresses.find(addr => addr.id.toString() === selectedAddressId);
+      if (!selectedAddress) {
+        throw new Error('Selected address not found.');
+      }
+
       const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/razorpay/create-order`, {
         amount: totalWithShipping,
         currency: 'INR',
@@ -245,7 +251,7 @@ const Checkout = () => {
         prefill: {
           name: user?.user_metadata?.full_name || 'Customer Name',
           email: user?.email || 'customer@example.com',
-          contact: selectedAddress?.phone || '9999999999',
+          contact: selectedAddress.phone || '9999999999',
         },
         theme: {
           color: '#Ffa500',
