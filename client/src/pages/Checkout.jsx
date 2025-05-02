@@ -195,13 +195,13 @@ const Checkout = () => {
     setSelectedAddressId(newId);
   };
 
-  const handleRazorpayPayment = async () => {
+  const handleOnlinePayment = async () => {
     setLoadingOrder(true);
     try {
-      console.log('handleRazorpayPayment - addresses:', addresses);
-      console.log('handleRazorpayPayment - selectedAddressId:', selectedAddressId);
+      console.log('handleOnlinePayment - addresses:', addresses);
+      console.log('handleOnlinePayment - selectedAddressId:', selectedAddressId);
       const selectedAddress = addresses.find(addr => addr.id.toString() === selectedAddressId);
-      console.log('handleRazorpayPayment - selectedAddress:', selectedAddress);
+      console.log('handleOnlinePayment - selectedAddress:', selectedAddress);
       if (!selectedAddress) {
         throw new Error('Selected address not found.');
       }
@@ -267,7 +267,7 @@ const Checkout = () => {
       const rzp = new window.Razorpay(options);
       rzp.open();
     } catch (error) {
-      console.error('Razorpay payment error:', error);
+      console.error('Online payment error:', error);
       setToastMessage({ message: 'Failed to initiate payment: ' + error.message, type: 'error' });
       setLoadingOrder(false);
     }
@@ -371,7 +371,7 @@ const Checkout = () => {
         courier_id: selectedShippingOption.courier_company_id,
         courier_name: selectedShippingOption.courier_name,
         estimated_delivery: selectedShippingOption.estimated_delivery_days,
-        payment_method: paymentMethod,
+        payment_method: paymentMethod, // Stores 'COD' or 'Online'
         payment_id: paymentId,
       }]).select();
 
@@ -458,7 +458,7 @@ const Checkout = () => {
             shipping_city: selectedAddress.city,
             shipping_pincode: selectedAddress.pincode,
             shipping_details: { error: error.response.data.error },
-            payment_method: paymentMethod,
+            payment_method: paymentMethod, // Stores 'COD' or 'Online'
             payment_id: paymentId,
           }]).select();
           if (supabaseError) {
@@ -488,8 +488,8 @@ const Checkout = () => {
       setToastMessage({ message: 'Please select a payment method.', type: 'error' });
       return;
     }
-    if (paymentMethod === 'razorpay') {
-      await handleRazorpayPayment();
+    if (paymentMethod === 'Online') {
+      await handleOnlinePayment();
     } else {
       await completeOrder(null);
     }
@@ -672,9 +672,9 @@ const Checkout = () => {
                   type="checkbox" 
                   id="cod" 
                   name="payment" 
-                  value="cod"
-                  checked={paymentMethod === 'cod'}
-                  onChange={() => setPaymentMethod('cod')}
+                  value="COD"
+                  checked={paymentMethod === 'COD'}
+                  onChange={() => setPaymentMethod('COD')}
                   disabled={loadingOrder}
                 />
                 <label htmlFor="cod" style={styles.paymentLabel}>Cash on Delivery</label>
@@ -682,14 +682,14 @@ const Checkout = () => {
               <div style={styles.paymentOption}>
                 <input 
                   type="checkbox" 
-                  id="razorpay" 
+                  id="online" 
                   name="payment" 
-                  value="razorpay"
-                  checked={paymentMethod === 'razorpay'}
-                  onChange={() => setPaymentMethod('razorpay')}
+                  value="Online"
+                  checked={paymentMethod === 'Online'}
+                  onChange={() => setPaymentMethod('Online')}
                   disabled={loadingOrder}
                 />
-                <label htmlFor="razorpay" style={styles.paymentLabel}>Razorpay Secure (UPI, Cards, Wallets, NetBanking)</label>
+                <label htmlFor="online" style={styles.paymentLabel}>Online Payment (UPI, Cards, Wallets, NetBanking)</label>
               </div>
             </div>
           </div>
@@ -728,7 +728,7 @@ const Checkout = () => {
   );
 };
 
-// Styles
+// Styles (unchanged)
 const styles = {
   pageWrapper: {
     display: 'flex',
@@ -918,7 +918,7 @@ const styles = {
   },
   addAddressBtn: {
     width: '100%',
-    padding: window.innerWidth <= 768 ? '8px' : '8px', // Reduced padding
+    padding: window.innerWidth <= 768 ? '8px' : '8px',
     backgroundColor: 'white',
     color: 'black',
     borderRadius: '8px',
@@ -926,7 +926,7 @@ const styles = {
     fontFamily: "'Louvette Semi Bold', sans-serif",
     cursor: 'pointer',
     fontWeight: '600',
-    fontSize: window.innerWidth <= 768 ? '0.8rem' : '0.85rem', // Reduced font size
+    fontSize: window.innerWidth <= 768 ? '0.8rem' : '0.85rem',
     marginTop: '10px',
     transition: 'background-color 0.25s ease-in-out',
   },
