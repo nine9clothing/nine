@@ -70,7 +70,6 @@ const Checkout = () => {
       if (!error) {
         console.log('Fetched addresses:', data);
         setAddresses(data);
-        // Removed automatic selection of the first address
       } else {
         console.error('Error fetching addresses:', error.message);
       }
@@ -179,7 +178,6 @@ const Checkout = () => {
       if (!error) {
         console.log('Updated addresses:', updatedAddresses);
         setAddresses(updatedAddresses);
-        // After adding a new address, we don't set it as selected by default
       } else {
         console.error('Error fetching updated addresses:', error.message);
       }
@@ -558,7 +556,7 @@ const Checkout = () => {
                     style={styles.input}
                     disabled={loadingOrder}
                   >
-                    <option value="">Select an address</option>
+                    {!selectedAddressId && <option value="">Select an address</option>}
                     {addresses.map(addr => (
                       <option key={addr.id} value={addr.id.toString()}>
                         {addr.name} - {addr.address}, {addr.city} ({addr.pincode})
@@ -730,7 +728,7 @@ const Checkout = () => {
   );
 };
 
-// Styles (with one minor tweak for consistency)
+// Styles
 const styles = {
   pageWrapper: {
     display: 'flex',
@@ -920,7 +918,7 @@ const styles = {
   },
   addAddressBtn: {
     width: '100%',
-    padding: '10px',
+    padding: window.innerWidth <= 768 ? '8px' : '8px', // Reduced padding
     backgroundColor: 'white',
     color: 'black',
     borderRadius: '8px',
@@ -928,7 +926,7 @@ const styles = {
     fontFamily: "'Louvette Semi Bold', sans-serif",
     cursor: 'pointer',
     fontWeight: '600',
-    fontSize: window.innerWidth <= 768 ? '0.85rem' : '0.9rem',
+    fontSize: window.innerWidth <= 768 ? '0.8rem' : '0.85rem', // Reduced font size
     marginTop: '10px',
     transition: 'background-color 0.25s ease-in-out',
   },
