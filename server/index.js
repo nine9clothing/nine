@@ -207,16 +207,13 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Add a root route handler
 app.get('/', (req, res) => {
   res.json({ message: 'Welcome to the Nine9 Backend API' });
 });
 
-// Use the product and order routes
 app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
 
-// Shiprocket Authentication
 async function getShiprocketToken() {
   try {
     console.log('Attempting Shiprocket login...');
@@ -236,7 +233,6 @@ async function getShiprocketToken() {
   }
 }
 
-// Get Shipping Charges from Shiprocket based on pincode
 app.post('/api/shiprocket/check-serviceability', async (req, res) => {
   try {
     const { pickup_postcode, delivery_postcode, weight, cod } = req.body;
@@ -263,9 +259,7 @@ app.post('/api/shiprocket/check-serviceability', async (req, res) => {
     
     console.log('Shiprocket serviceability response received');
     
-    // Get available courier services with rates
     if (response.data && response.data.data && response.data.data.available_courier_companies) {
-      // Find the cheapest courier option
       const availableCouriers = response.data.data.available_courier_companies;
       let cheapestCourier = null;
       let lowestRate = Infinity;
@@ -311,7 +305,6 @@ app.post('/api/shiprocket/check-serviceability', async (req, res) => {
   }
 });
 
-// Create Shiprocket Order
 app.post('/api/shiprocket/order', async (req, res) => {
   try {
     console.log('Received POST request:', JSON.stringify(req.body, null, 2));
@@ -324,7 +317,6 @@ app.post('/api/shiprocket/order', async (req, res) => {
 
     const token = await getShiprocketToken();
 
-    // Make Shiprocket API call
     console.log('Sending order to Shiprocket API with order_id:', order_id);
     const shiprocketResponse = await axios.post(
       'https://apiv2.shiprocket.in/v1/external/orders/create/adhoc',
@@ -349,7 +341,7 @@ app.post('/api/shiprocket/order', async (req, res) => {
         breadth: dimensions.breadth || 15,
         height: dimensions.height || 10,
         weight: dimensions.weight || 0.5,
-        courier_id: courier_id || '', // Include the selected courier_id if provided
+        courier_id: courier_id || '', 
       },
       {
         headers: { Authorization: `Bearer ${token}` },
@@ -364,7 +356,7 @@ app.post('/api/shiprocket/order', async (req, res) => {
       .eq('order_id', order_id)
       .single();
 
-    if (checkError && checkError.code !== 'PGRST116') { // PGRST116 means no rows found
+    if (checkError && checkError.code !== 'PGRST116') { 
       throw checkError;
     }
     if (existingOrder) {
@@ -380,7 +372,7 @@ app.post('/api/shiprocket/order', async (req, res) => {
         {
           user_id,
           order_id,
-          total: (sub_total || 0) + (shipping_charges || 0), // Include shipping charges in total
+          total: (sub_total || 0) + (shipping_charges || 0), 
           items: items || [],
           status: 'placed',
           shipping_name: `${billing.customer_name || 'Unknown'} ${billing.last_name || ''}`.trim(),
@@ -391,9 +383,9 @@ app.post('/api/shiprocket/order', async (req, res) => {
           shipping_details: shiprocketResponse.data || {},
           shipping_status: 'pending',
           display_order_id: order_id,
-          shipping_charges: shipping_charges || 0, // Add shipping charges field
-          courier_id: courier_id || null, // Add courier_id field
-          courier_name: shiprocketResponse.data?.courier_name || null, // Add courier name if available
+          shipping_charges: shipping_charges || 0, 
+          courier_id: courier_id || null, 
+          courier_name: shiprocketResponse.data?.courier_name || null, 
         },
       ])
       .select()
@@ -430,21 +422,16 @@ app.post('/api/shiprocket/order', async (req, res) => {
   }
 });
 
-
-
-
-// Initialize Razorpay with API keys from .env
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID,
   key_secret: process.env.RAZORPAY_KEY_SECRET,
 });
 
-// Create an order endpoint for Razorpay
 app.post('/api/razorpay/create-order', async (req, res) => {
   const { amount, currency = 'INR', receipt } = req.body;
 
   const options = {
-    amount: amount * 100, // Razorpay expects amount in paise (multiply by 100)
+    amount: amount * 100, 
     currency,
     receipt: receipt || `receipt_${Date.now()}`,
   };
@@ -461,7 +448,6 @@ app.post('/api/razorpay/create-order', async (req, res) => {
   }
 });
 
-// Payment verification endpoint for Razorpay
 app.post('/api/razorpay/verify-payment', (req, res) => {
   const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
 
