@@ -244,9 +244,11 @@ const Checkout = () => {
   
           const verifyResult = verifyResponse.data;
           if (verifyResult.status === 'success') {
+            // Pass all Razorpay payment details to completeOrder
             await completeOrder({
               payment_id: response.razorpay_payment_id,
-              payment_method: 'razorpay'
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_signature: response.razorpay_signature
             });
           } else {
             setToastMessage({ message: 'Payment verification failed: ' + verifyResult.message, type: 'error' });
@@ -346,6 +348,7 @@ const Checkout = () => {
         headers: { 'Content-Type': 'application/json' },
       });
 
+      // Prepare order data for Supabase, including Razorpay payment details if available
       const orderData = {
         user_id: user.id,
         order_id,
@@ -366,8 +369,11 @@ const Checkout = () => {
         courier_id: selectedShippingOption.courier_company_id,
         courier_name: selectedShippingOption.courier_name,
         estimated_delivery: selectedShippingOption.estimated_delivery_days,
-        payment_method: paymentDetails.payment_method || paymentMethod,
-        payment_id: paymentDetails.payment_id || null
+        payment_method: paymentMethod,
+        payment_id: paymentDetails.payment_id || null,
+        razorpay_order_id: paymentDetails.razorpay_order_id || null,
+        razorpay_payment_id: paymentDetails.payment_id || null,
+        razorpay_signature: paymentDetails.razorpay_signature || null
       };
 
       const { data, error } = await supabase.from('orders').insert([orderData]).select();
@@ -455,8 +461,11 @@ const Checkout = () => {
             shipping_city: selectedAddress.city,
             shipping_pincode: selectedAddress.pincode,
             shipping_details: { error: error.response.data.error },
-            payment_method: paymentDetails.payment_method || paymentMethod,
-            payment_id: paymentDetails.payment_id || null
+            payment_method: paymentMethod,
+            payment_id: paymentDetails.payment_id || null,
+            razorpay_order_id: paymentDetails.razorpay_order_id || null,
+            razorpay_payment_id: paymentDetails.payment_id || null,
+            razorpay_signature: paymentDetails.razorpay_signature || null
           };
           const { data, error: supabaseError } = await supabase.from('orders').insert([orderData]).select();
           if (supabaseError) {
@@ -485,7 +494,7 @@ const Checkout = () => {
     if (paymentMethod === 'razorpay') {
       await handleRazorpayPayment();
     } else {
-      await completeOrder({ payment_method: 'cod' });
+      await completeOrder();
     }
   };
 
