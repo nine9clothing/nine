@@ -636,7 +636,7 @@ const styles = {
     fontSize: "2rem",
     fontWeight: '700',
     textAlign: 'center',
-    marginTop: '40px',
+    marginTop: '50px',
     marginBottom: '30px',
     color: '#Ffa500',
   },

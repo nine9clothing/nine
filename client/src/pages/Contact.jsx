@@ -96,7 +96,7 @@ const Contact = () => {
             marginBottom: '30px',
             fontWeight: '700',
             color: '#Ffa500',
-            marginTop: '60px' 
+            marginTop: '50px' 
           }}>Contact Us</h2>
           <form onSubmit={handleSubmit} style={{
             maxWidth: '600px',

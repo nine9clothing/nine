@@ -137,11 +137,10 @@ const Rewards = () => {
 
                 let birthdayPoints = 0;
                 const today = new Date();
-                const todayMonthDay = `${today.getMonth() + 1}-${today.getDate()}`; // e.g., "4-28"
+                const todayMonthDay = `${today.getMonth() + 1}-${today.getDate()}`; 
                 const birthday = userData?.birthday ? new Date(userData.birthday) : null;
                 const birthdayMonthDay = birthday ? `${birthday.getMonth() + 1}-${birthday.getDate()}` : null;
 
-                // Check if today is the user's birthday
                 if (birthdayMonthDay && todayMonthDay === birthdayMonthDay) {
                     birthdayPoints = 50;
                     const birthdayActivity = {
@@ -152,7 +151,6 @@ const Rewards = () => {
                         date: today.toISOString(),
                         discount: 0
                     };
-                    // Add birthday activity only if not already present today
                     const hasBirthdayActivity = uniqueOrders.some(
                         act => act.type === 'birthday' && new Date(act.date).toDateString() === today.toDateString()
                     );
@@ -240,7 +238,6 @@ const Rewards = () => {
                         color: '#Ffa500'
                     }}>Your Rewards</h2>
 
-                    {/* Available Balance */}
                     <div style={{
                         maxWidth: '600px',
                         margin: '0 auto 30px',
@@ -349,7 +346,6 @@ const Rewards = () => {
                         </div>
                     </div>
 
-                    {/* Transactions Section */}
                     {showTransactions && (
                         <div style={{
                             maxWidth: '1200px',
@@ -439,7 +435,6 @@ const Rewards = () => {
                         </div>
                     )}
 
-                    {/* Loyalty Program Title */}
                     <div style={{
                         maxWidth: '1200px',
                         margin: '0 auto 20px',
@@ -527,7 +522,6 @@ const Rewards = () => {
                                         </h3>
                                     </div>
                                     
-                                    {/* Back Side of Card */}
                                     <div style={{
                                         position: 'absolute',
                                         width: '100%',
