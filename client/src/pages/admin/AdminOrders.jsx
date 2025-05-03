@@ -28,15 +28,15 @@ const fonts = {
 const AdminOrders = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
   const [toast, setToast] = useState(null);
 
   const fetchOrders = useCallback(async () => {
     setLoading(true);
     let query = supabase.from('orders').select('*, total, shipping_charges');
 
-    if (statusFilter !== 'all') {
-      query = query.eq('status', statusFilter);
+    if (searchQuery.trim()) {
+      query = query.eq('order_id', searchQuery.trim());
     }
 
     const { data, error } = await query.order('created_at', { ascending: false });
@@ -46,13 +46,17 @@ const AdminOrders = () => {
       setToast({ message: 'Failed to fetch orders.', type: 'error' });
       setOrders([]);
     } else {
-      // Filter orders to take only one row per order_id (latest based on created_at)
+      // Filter orders to take only one row per order_id (latest based on created_at) and with valid payment_method
       const filteredOrders = [];
       const orderMap = new Map();
 
       data.forEach((order) => {
-        // Only process rows where order_id equals display_order_id
-        if (order.order_id === order.display_order_id) {
+        // Only process rows where order_id equals display_order_id and payment_method is valid
+        if (
+          order.order_id === order.display_order_id &&
+          order.payment_method &&
+          order.payment_method !== 'N/A'
+        ) {
           // If order_id is not in the map or this row is newer, update the map
           if (!orderMap.has(order.order_id) || new Date(order.created_at) > new Date(orderMap.get(order.order_id).created_at)) {
             // Ensure each item has a unique identifier
@@ -75,26 +79,10 @@ const AdminOrders = () => {
     }
 
     setLoading(false);
-  }, [statusFilter]);
+  }, [searchQuery]);
 
   useEffect(() => {
     fetchOrders();
-  }, [fetchOrders]);
-
-  const handleStatusChange = useCallback(async (orderId, newStatus) => {
-    const { error } = await supabase
-      .from('orders')
-      .update({ status: newStatus })
-      .eq('id', orderId);
-
-    if (error) {
-      console.error('Error updating status:', error.message);
-      setToast({ message: 'Failed to update order status.', type: 'error' });
-      fetchOrders();
-    } else {
-      setToast({ message: 'Order status updated successfully!', type: 'success' });
-      fetchOrders();
-    }
   }, [fetchOrders]);
 
   const exportToCSV = () => {
@@ -103,7 +91,7 @@ const AdminOrders = () => {
       return;
     }
 
-    const headers = ['Order ID', 'User ID', 'Net Total', 'Status', 'Date', 'Name', 'Phone', 'Address', 'City', 'Pincode', 'Items'];
+    const headers = ['Order ID', 'User ID', 'Net Total', 'Shipping Status', 'Date', 'Name', 'Phone', 'Address', 'City', 'Pincode', 'Items', 'Payment Method'];
 
     const rows = orders.map(order => {
       let itemsString = '';
@@ -124,14 +112,15 @@ const AdminOrders = () => {
         safeGet(order.id),
         safeGet(order.user_id),
         netTotal,
-        safeGet(order.status),
+        safeGet(order.shipping_status),
         order.created_at ? new Date(order.created_at).toLocaleString() : '',
         safeGet(order.shipping_name),
         safeGet(order.shipping_phone),
         safeGet(order.shipping_address),
         safeGet(order.shipping_city),
         safeGet(order.shipping_pincode),
-        itemsString
+        itemsString,
+        safeGet(order.payment_method)
       ];
     });
 
@@ -153,7 +142,7 @@ const AdminOrders = () => {
     const link = document.createElement('a');
     link.setAttribute('href', url);
     const timestamp = new Date().toISOString().slice(0, 10);
-    link.setAttribute('download', `nine9_orders_${statusFilter}_${timestamp}.csv`);
+    link.setAttribute('download', `nine9_orders_${timestamp}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -171,19 +160,15 @@ const AdminOrders = () => {
 
       <div style={styles.controlsContainer}>
         <div style={styles.filterGroup}>
-          <label htmlFor="statusFilter" style={styles.label}>Filter by Status:</label>
-          <select
-            id="statusFilter"
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            style={styles.selectInput}
-          >
-            <option value="all">All</option>
-            <option value="placed">Placed</option>
-            <option value="shipped">Shipped</option>
-            <option value="delivered">Delivered</option>
-            <option value="cancelled">Cancelled</option>
-          </select>
+          <label htmlFor="searchQuery" style={styles.label}>Search by Order ID:</label>
+          <input
+            id="searchQuery"
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Enter Order ID"
+            style={styles.textInput}
+          />
         </div>
 
         <button
@@ -198,15 +183,20 @@ const AdminOrders = () => {
       {loading ? (
         <div style={styles.messageContainer}>Loading orders...</div>
       ) : orders.length === 0 ? (
-        <div style={styles.messageContainer}>No orders found {statusFilter !== 'all' ? `with status "${statusFilter}"` : ''}.</div>
+        <div style={styles.messageContainer}>
+          {searchQuery.trimtrading
+            ? `No orders found for Order ID "${searchQuery}".`
+            : 'No orders with a valid payment method found.'
+          }
+        </div>
       ) : (
         <div style={styles.ordersList}>
           {orders.map(order => (
             <div key={order.order_id} style={styles.orderCard}>
               <div style={styles.orderCardHeader}>
                 <h3 style={styles.orderId}>Order ID: <span style={styles.orderIdValue}>{order.display_order_id}</span></h3>
-                <span style={{ ...styles.statusBadge, ...styles.statusBadge[order.status] }}>
-                  {order.status ? order.status.charAt(0).toUpperCase() + order.status.slice(1) : 'Unknown'}
+                <span style={{ ...styles.statusBadge, ...styles.statusBadge[order.shipping_status] }}>
+                  {order.shipping_status ? order.shipping_status.charAt(0).toUpperCase() + order.shipping_status.slice(1) : 'Unknown'}
                 </span>
               </div>
 
@@ -214,6 +204,7 @@ const AdminOrders = () => {
                 <p style={styles.orderDetail}><strong style={styles.detailLabel}>User ID:</strong> {order.user_id || 'N/A'}</p>
                 <p style={styles.orderDetail}><strong style={styles.detailLabel}>Placed:</strong> {order.created_at ? new Date(order.created_at).toLocaleString() : 'N/A'}</p>
                 <p style={styles.orderDetail}><strong style={styles.detailLabel}>Net Total:</strong> {formatCurrency((order.total || 0) - (order.shipping_charges || 0))}</p>
+                <p style={styles.orderDetail}><strong style={styles.detailLabel}>Payment Method:</strong> {order.payment_method}</p>
               </div>
 
               <div style={styles.section}>
@@ -242,21 +233,6 @@ const AdminOrders = () => {
                 ) : (
                   <p style={styles.addressLine}>No items information available.</p>
                 )}
-              </div>
-
-              <div style={styles.statusUpdateContainer}>
-                <label htmlFor={`status-${order.id}`} style={styles.label}>Update Status:</label>
-                <select
-                  id={`status-${order.id}`}
-                  value={order.status || ''}
-                  onChange={(e) => handleStatusChange(order.id, e.target.value)}
-                  style={styles.selectInput}
-                >
-                  <option value="placed">Placed</option>
-                  <option value="shipped">Shipped</option>
-                  <option value="delivered">Delivered</option>
-                  <option value="cancelled">Cancelled</option>
-                </select>
               </div>
             </div>
           ))}
@@ -308,14 +284,13 @@ const styles = {
     color: colors.textSecondary,
     fontSize: '0.875rem',
   },
-  selectInput: {
+  textInput: {
     padding: '8px 12px',
     borderRadius: '8px',
     border: `1px solid ${colors.borderMedium}`,
     backgroundColor: colors.bgInput,
     fontSize: '0.9rem',
     color: colors.textPrimary,
-    cursor: 'pointer',
     minWidth: '150px',
     outline: 'none',
     transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
@@ -431,14 +406,6 @@ const styles = {
   itemDetails: {
     color: colors.textSecondary,
     marginLeft: '4px',
-  },
-  statusUpdateContainer: {
-    marginTop: '24px',
-    paddingTop: '16px',
-    borderTop: `1px solid ${colors.borderLight}`,
-    display: 'flex',
-    alignItems: 'center',
-    gap: '12px',
   },
   statusBadge: {
     display: 'inline-block',

@@ -72,10 +72,7 @@ const WishlistProductGrid = ({ products, onRemove }) => {
         }
       }
       @media (min-width: 769px) {
-        .productCard:hover {
-          transform: translateY(-5px);
-          box-shadow: 0 4px 15px rgba(255, 165, 0, 0.2);
-        }
+        
         .wishlistButton:hover {
           background-color: rgba(255, 255, 255, 1);
         }
@@ -168,6 +165,7 @@ const styles = {
     padding: '15px',
     textAlign: 'center',
     display: 'flex',
+    width:'320px',
     flexDirection: 'column',
     alignItems: 'center',
     height: '500px',

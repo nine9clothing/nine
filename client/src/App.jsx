@@ -22,7 +22,6 @@ import TermsAndConditions from './pages/policy/TermsAndConditions';
 import Exchange from './pages/policy/Exchange';
 import MyAccount from './pages/MyAccount';
 import Rewards from './pages/Rewards';
-import ComingSoom from './pages/ComingSoon';
 
 import AdminLayout from './components/AdminLayout';
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -50,8 +49,7 @@ const App = () => {
         <Routes>
 
           {/* Public Routes */}
-            <Route path="/" element={<ComingSoom />} />
-          {/* <Route path="/" element={<Home />} />
+          <Route path="/" element={<Home />} />
           <Route path="/about" element={<About />} />
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/cart" element={<Cart />} />
@@ -68,12 +66,11 @@ const App = () => {
           <Route path="/t&c" element={<TermsAndConditions />} />
           <Route path="/exchange" element={<Exchange />} />
           <Route path="/my-account" element={<MyAccount />} />
-          <Route path="/rewards" element={<Rewards />} /> */}
+          <Route path="/rewards" element={<Rewards />} />
 
           
-            {/* Admin Routes (with custom layout) */}
-            
-          {/* <Route path="/admin" element={<AdminLayout />}>
+          {/* Admin Routes (with custom layout) */}
+          <Route path="/admin" element={<AdminLayout />}>
             <Route path="dashboard" element={<AdminDashboard />} />
             <Route path="products" element={<AdminAddProduct />} />
             <Route path="viewproducts" element={<AdminViewProduct />} />
@@ -89,7 +86,7 @@ const App = () => {
             <Route path="promocode" element={<AdminPromoCode/>} />
             <Route path="viewpromocode" element={<AdminViewPromoCode/>} />
 
-          </Route> */}
+          </Route>
         </Routes>
       </CartProvider>
       </BrowserRouter>

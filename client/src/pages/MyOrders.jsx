@@ -28,7 +28,7 @@ const MyOrders = () => {
       setWindowWidth(window.innerWidth);
     };
 
-    if (typeof window !== 'undefined') {
+    if (typeof generation !== 'undefined') {
       window.addEventListener('resize', handleResize);
       return () => window.removeEventListener('resize', handleResize);
     }
@@ -57,9 +57,13 @@ const MyOrders = () => {
         const orderMap = new Map();
         const skus = new Set();
 
-        // Collect unique SKUs from all items
+        // Collect unique SKUs and filter orders with valid payment methods
         data.forEach((order) => {
-          if (order.order_id === order.display_order_id) {
+          if (
+            order.order_id === order.display_order_id &&
+            order.payment_method && // Ensure payment_method exists
+            order.payment_method !== 'N/A' // Exclude 'N/A'
+          ) {
             order.items.forEach(item => skus.add(item.sku));
             if (!orderMap.has(order.order_id) || new Date(order.created_at) > new Date(orderMap.get(order.order_id).created_at)) {
               const itemsWithUniqueIds = order.items.map((item, index) => ({
@@ -114,20 +118,20 @@ const MyOrders = () => {
     fetchOrders();
   }, []);
 
-  const canExchange = (createdAt, status) => {
+  const canExchange = (createdAt, shipping_status) => {
     const orderDate = new Date(createdAt);
     const currentDate = new Date();
     const diffTime = currentDate - orderDate;
     const diffDays = diffTime / (1000 * 60 * 60 * 24);
-    return status.toLowerCase() === 'delivered' && diffDays <= 5 && diffDays >= 0;
+    return shipping_status.toLowerCase() === 'delivered' && diffDays <= 5 && diffDays >= 0;
   };
 
-  const isExchangeTimelineExceeded = (createdAt, status) => {
+  const isExchangeTimelineExceeded = (createdAt, shipping_status) => {
     const orderDate = new Date(createdAt);
     const currentDate = new Date();
     const diffTime = currentDate - orderDate;
     const diffDays = diffTime / (1000 * 60 * 60 * 24);
-    return status.toLowerCase() === 'delivered' && diffDays > 5;
+    return shipping_status.toLowerCase() === 'delivered' && diffDays > 5;
   };
 
   const openExchangeModal = (orderId) => {
@@ -241,7 +245,7 @@ const MyOrders = () => {
         {loading ? (
           <p style={styles.message}>Loading your orders...</p>
         ) : orders.length === 0 ? (
-          <p style={styles.message}>No orders found.</p>
+          <p style={styles.message}>No orders with a valid payment method found.</p>
         ) : (
           orders.map((order) => (
             <div key={order.order_id} style={isMobile ? styles.orderCardMobile : styles.orderCard}>
@@ -252,20 +256,20 @@ const MyOrders = () => {
                     <span style={{
                       ...styles.orderStatusMobile,
                       backgroundColor:
-                        order.status.toLowerCase() === 'placed' ? '#28a745' :
-                        order.status.toLowerCase() === 'shipped' ? '#007bff' :
-                        order.status.toLowerCase() === 'delivered' ? '#17a2b8' :
-                        order.status.toLowerCase() === 'cancelled' ? '#dc3545' :
+                        order.shipping_status.toLowerCase() === 'placed' ? '#28a745' :
+                        order.shipping_status.toLowerCase() === 'shipped' ? '#007bff' :
+                        order.shipping_status.toLowerCase() === 'delivered' ? '#17a2b8' :
+                        order.shipping_status.toLowerCase() === 'cancelled' ? '#dc3545' :
                         '#6c757d'
                     }}>
-                      {order.status}
+                      {order.shipping_status}
                     </span>
                   </div>
 
                   <div style={styles.mobileMetaInfo}>
                     <p style={styles.metaMobile}><strong>Date:</strong> {new Date(order.created_at).toLocaleString()}</p>
                     <p style={styles.metaMobile}><strong>Total:</strong> ₹{(order.total - (order.shipping_charges || 0)).toFixed(2)}</p>
-                    <p style={styles.metaMobile}><strong>Payment Method:</strong> {order.payment_method || 'N/A'}</p>
+                    <p style={styles.metaMobile}><strong>Payment Method:</strong> {order.payment_method}</p>
                   </div>
 
                   <div style={styles.mobileSection}>
@@ -302,11 +306,11 @@ const MyOrders = () => {
                       </p>
                       <p style={styles.metaMobile}><strong>Reason:</strong> {order.exchange_reason}</p>
                     </div>
-                  ) : isExchangeTimelineExceeded(order.created_at, order.status) ? (
+                  ) : isExchangeTimelineExceeded(order.created_at, order.shipping_status) ? (
                     <p style={styles.exchangeTimelineExceededMobile}>
                       Exchange timeline exceeded. Products can only be exchanged within 5 days of delivery.
                     </p>
-                  ) : canExchange(order.created_at, order.status) && (
+                  ) : canExchange(order.created_at, order.shipping_status) && (
                     <button
                       style={styles.exchangeButtonMobile}
                       onClick={() => openExchangeModal(order.order_id)}
@@ -323,19 +327,19 @@ const MyOrders = () => {
                       <span style={{
                         ...styles.orderStatus,
                         backgroundColor:
-                          order.status.toLowerCase() === 'placed' ? '#28a745' :
-                          order.status.toLowerCase() === 'shipped' ? '#007bff' :
-                          order.status.toLowerCase() === 'delivered' ? '#17a2b8' :
-                          order.status.toLowerCase() === 'cancelled' ? '#dc3545' :
+                          order.shipping_status.toLowerCase() === 'placed' ? '#28a745' :
+                          order.shipping_status.toLowerCase() === 'shipped' ? '#007bff' :
+                          order.shipping_status.toLowerCase() === 'delivered' ? '#17a2b8' :
+                          order.shipping_status.toLowerCase() === 'cancelled' ? '#dc3545' :
                           '#6c757d'
                       }}>
-                        {order.status}
+                        {order.shipping_status}
                       </span>
                     </div>
 
                     <p style={styles.meta}><strong>Date:</strong> {new Date(order.created_at).toLocaleString()}</p>
                     <p style={styles.meta}><strong>Total:</strong> ₹{(order.total - (order.shipping_charges || 0)).toFixed(2)}</p>
-                    <p style={styles.meta}><strong>Payment Method:</strong> {order.payment_method || 'N/A'}</p>
+                    <p style={styles.meta}><strong>Payment Method:</strong> {order.payment_method}</p>
 
                     <div style={styles.section}>
                       <p style={styles.subTitle}>Shipping Address</p>
@@ -351,11 +355,11 @@ const MyOrders = () => {
                         </p>
                         <p style={styles.meta}><strong>Reason:</strong> {order.exchange_reason}</p>
                       </div>
-                    ) : isExchangeTimelineExceeded(order.created_at, order.status) ? (
+                    ) : isExchangeTimelineExceeded(order.created_at, order.shipping_status) ? (
                       <p style={styles.exchangeTimelineExceeded}>
                         Exchange timeline exceeded. Products can only be exchanged within 5 days of delivery.
                       </p>
-                    ) : canExchange(order.created_at, order.status) && (
+                    ) : canExchange(order.created_at, order.shipping_status) && (
                       <button
                         style={styles.exchangeButton}
                         onClick={() => openExchangeModal(order.order_id)}
@@ -471,7 +475,7 @@ const MyOrders = () => {
   );
 };
 
-// Styles remain the same
+// Styles remain unchanged
 const styles = {
   pageWrapper: {
     display: 'flex',
