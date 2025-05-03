@@ -1283,6 +1283,7 @@ const Checkout = () => {
         user_id: user.id,
         shipping_charges: selectedShippingOption.rate,
         cod_fee: codFee, 
+        payment_method: paymentMethod === 'Cash on Delivery' ? 'COD' : 'Prepaid',
         courier_id: selectedShippingOption.courier_company_id,
       };
 
