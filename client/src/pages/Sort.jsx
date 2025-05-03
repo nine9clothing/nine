@@ -17,7 +17,7 @@ const getImageUrl = (mediaUrls, index = 0) => {
 };
 
 const Sort = () => {
-  const [sortOption, setSortOption] = useState('Featured'); // Changed to 'Featured' as default
+  const [sortOption, setSortOption] = useState('Featured'); 
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategories, setSelectedCategories] = useState([]);
@@ -98,7 +98,7 @@ const Sort = () => {
           overflow: hidden !important;
           text-overflow: ellipsis !important;
           white-space: nowrap !important;
-          font-family: 'Louvette Semi Bold', sans-serif !important; // Applied to descriptions
+          font-family: 'Louvette Semi Bold', sans-serif !important; 
         }
         .productPrice {
           font-size: 14px !important;
@@ -107,7 +107,7 @@ const Sort = () => {
           text-align: left !important;
           margin-top: 2px !important;
           margin-bottom: 8px !important; 
-          font-family: 'Louvette Semi Bold', sans-serif !important; // Applied to descriptions
+          font-family: 'Louvette Semi Bold', sans-serif !important;
         }
         .wishlistButton {
           position: absolute !important;
@@ -132,7 +132,7 @@ const Sort = () => {
           width: 100% !important;
           margin-top: 6px !important;
           transition: background-color 0.2s ease !important;
-          font-family: 'Abril Extra Bold', sans-serif !important; // Applied to headings
+          font-family: 'Abril Extra Bold', sans-serif !important; 
         }
         .addToCartButton:hover {
           background-color: #e69500 !important;
@@ -252,7 +252,6 @@ const Sort = () => {
       setLoading(false);
       return;
     } 
-    // For 'Featured', we don't add any order clause - just fetch all products as they are
 
     if (selectedCategories.length > 0) {
       query = query.in('category', selectedCategories);
@@ -279,7 +278,6 @@ const Sort = () => {
 
   useEffect(() => {
     fetchProducts();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sortOption, selectedCategories, selectedGenders, selectedSizes]);
 
   const handleCheckboxChange = (value, state, setState) => {
@@ -526,11 +524,11 @@ const styles = {
     fontSize: '14px',
     cursor: 'pointer',
     color: 'white', 
-    fontFamily: "'Louvette Semi Bold', sans-serif", // Applied to descriptions
+    fontFamily: "'Louvette Semi Bold', sans-serif", 
   },
   checkboxText: {
     marginLeft: '10px', 
-    fontFamily: "'Louvette Semi Bold', sans-serif", // Applied to descriptions
+    fontFamily: "'Louvette Semi Bold', sans-serif", 
   },
   select: {
     width: '100%',
@@ -540,7 +538,7 @@ const styles = {
     fontSize: '14px',
     backgroundColor: 'white', 
     cursor: 'pointer',
-    fontFamily: "'Louvette Semi Bold', sans-serif", // Applied to descriptions
+    fontFamily: "'Louvette Semi Bold', sans-serif",
   },
   productGrid: {
     flex: 1,

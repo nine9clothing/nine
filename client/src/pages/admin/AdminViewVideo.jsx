@@ -4,6 +4,7 @@ import ToastMessage from '../../ToastMessage';
 
 const ViewVideos = () => {
   const [videos, setVideos] = useState([]);
+  const [filteredVideos, setFilteredVideos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editingVideoId, setEditingVideoId] = useState(null);
   const [editFormData, setEditFormData] = useState({});
@@ -11,6 +12,7 @@ const ViewVideos = () => {
   const [isUpdating, setIsUpdating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false); 
   const [confirmingDeleteId, setConfirmingDeleteId] = useState(null); 
+  const [searchTerm, setSearchTerm] = useState('');
 
   const fetchVideos = async () => {
     setLoading(true);
@@ -24,8 +26,10 @@ const ViewVideos = () => {
         console.error('Error loading videos:', error.message);
         setToast({ message: 'Failed to load videos.', type: 'error' });
         setVideos([]);
+        setFilteredVideos([]);
     } else {
         setVideos(data || []);
+        setFilteredVideos(data || []);
     }
     setLoading(false);
   };
@@ -33,6 +37,18 @@ const ViewVideos = () => {
   useEffect(() => {
     fetchVideos();
   }, []);
+
+  useEffect(() => {
+    const filtered = videos.filter(video => 
+      video.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      video.id.toString().includes(searchTerm)
+    );
+    setFilteredVideos(filtered);
+  }, [searchTerm, videos]);
+
+  const handleSearch = (e) => {
+    setSearchTerm(e.target.value);
+  };
 
   const handleDeleteRequest = (id, title) => {
     setToast(null); 
@@ -141,7 +157,7 @@ const ViewVideos = () => {
         setToast({ message: 'Video updated successfully!', type: 'success' });
         setEditingVideoId(null);
         setEditFormData({});
-        fetchVideos(); // Refresh the list
+        fetchVideos();
 
     } catch (error) {
         setToast({ message: error.message || 'An unexpected error occurred during update.', type: 'error' });
@@ -157,10 +173,33 @@ const ViewVideos = () => {
         View & Manage Videos
       </h2>
 
+      <div style={{ marginBottom: '20px' }}>
+        <input
+          type="text"
+          placeholder="Search by video title..."
+          value={searchTerm}
+          onChange={handleSearch}
+          style={{
+            padding: '8px 12px',
+            borderRadius: '8px',
+            border: '1px solid #d1d5db',
+            backgroundColor: '#ffffff',
+            fontSize: '0.9rem',
+            color: '#1f2937',
+            minWidth: '150px',
+            outline: 'none',
+            transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
+            width: '100%',
+            maxWidth: '400px',
+            boxSizing: 'border-box',
+          }}
+        />
+      </div>
+
       {loading ? <p>Loading videos...</p> : (
-        videos.length === 0 ? <p>No videos found.</p> : (
+        filteredVideos.length === 0 ? <p>No videos found.</p> : (
           <div style={gridStyle}>
-            {videos.map(video => (
+            {filteredVideos.map(video => (
               <div key={video.id} style={videoBox}>
                 {video.media_url && (
                   <div style={mediaContainerStyle}>
@@ -177,6 +216,13 @@ const ViewVideos = () => {
 
                 {editingVideoId === video.id ? (
                   <>
+                    <label style={labelStyleSmall}>Video ID</label>
+                    <input 
+                      value={editFormData.id || ''} 
+                      style={{...inputStyleSmall, backgroundColor: '#f0f0f0'}} 
+                      disabled 
+                    />
+
                     <label style={labelStyleSmall}>Title</label>
                     <input value={editFormData.title || ''} onChange={e => handleEditChange('title', e.target.value)} style={inputStyleSmall} />
 
@@ -198,6 +244,9 @@ const ViewVideos = () => {
                   </>
                 ) : (
                   <>
+                    {/* <p style={{ fontSize: '0.85rem', color: '#666', marginBottom: '5px' }}>
+                      ID: {video.id}
+                    </p> */}
                     <h4 style={{marginTop: '10px', marginBottom: '5px'}}>{video.title}</h4>
                     <p style={{ fontSize: '0.85rem', color: '#666', marginBottom: '15px' }}>
                       {video.description || 'No description provided'}

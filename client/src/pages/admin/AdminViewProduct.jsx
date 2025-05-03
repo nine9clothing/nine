@@ -8,6 +8,7 @@ const sizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'];
 
 const ViewProducts = () => {
   const [products, setProducts] = useState([]);
+  const [filteredProducts, setFilteredProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editingProductId, setEditingProductId] = useState(null);
   const [editFormData, setEditFormData] = useState({});
@@ -15,6 +16,7 @@ const ViewProducts = () => {
   const [isUpdating, setIsUpdating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false); 
   const [confirmingDeleteId, setConfirmingDeleteId] = useState(null); 
+  const [searchTerm, setSearchTerm] = useState('');
 
   const fetchProducts = async () => {
     setLoading(true);
@@ -28,8 +30,10 @@ const ViewProducts = () => {
         console.error('Error loading products:', error.message);
         setToast({ message: 'Failed to load products.', type: 'error' });
         setProducts([]);
+        setFilteredProducts([]);
     } else {
         setProducts(data || []);
+        setFilteredProducts(data || []);
     }
     setLoading(false);
   };
@@ -37,6 +41,18 @@ const ViewProducts = () => {
   useEffect(() => {
     fetchProducts();
   }, []);
+
+  useEffect(() => {
+    const filtered = products.filter(product => 
+      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.id.toString().includes(searchTerm)
+    );
+    setFilteredProducts(filtered);
+  }, [searchTerm, products]);
+
+  const handleSearch = (e) => {
+    setSearchTerm(e.target.value);
+  };
 
   const handleDeleteRequest = (id, name) => {
     setToast(null); 
@@ -95,7 +111,6 @@ const ViewProducts = () => {
             } else {
                  setToast({ message: 'Product record deleted successfully!', type: 'success' });
             }
-
         } else {
              setToast({ message: 'Product record deleted successfully!', type: 'success' });
         }
@@ -166,7 +181,7 @@ const ViewProducts = () => {
         setToast({ message: 'Product updated successfully!', type: 'success' });
         setEditingProductId(null);
         setEditFormData({});
-        fetchProducts(); // Refresh the list
+        fetchProducts();
 
     } catch (error) {
         setToast({ message: error.message || 'An unexpected error occurred during update.', type: 'error' });
@@ -195,10 +210,34 @@ const ViewProducts = () => {
       <h2 style={{ fontSize: window.innerWidth <= 768 ? '2.0rem' : '2.2rem', fontWeight: 500,
     fontFamily: "'Oswald', sans-serif", marginBottom: '20px' }}>View & Manage Products</h2>
 
+      <div style={{ marginBottom: '20px' }}>
+        <input
+        
+          type="text"
+          placeholder="Search by product name or ID..."
+          value={searchTerm}
+          onChange={handleSearch}
+          style={{
+            padding: '8px 12px',
+            borderRadius: '8px',
+            border: '1px solid #d1d5db',
+            backgroundColor: '#ffffff',
+            fontSize: '0.9rem',
+            color: '#1f2937',
+            minWidth: '150px',
+            outline: 'none',
+            transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
+            width: '100%',
+            maxWidth: '400px',
+            boxSizing: 'border-box',
+          }}
+        />
+      </div>
+
       {loading ? <p>Loading products...</p> : (
-        products.length === 0 ? <p>No products found.</p> : (
+        filteredProducts.length === 0 ? <p>No products found.</p> : (
           <div style={gridStyle}>
-            {products.map(product => (
+            {filteredProducts.map(product => (
               <div key={product.id} style={productBox}>
                  {Array.isArray(product.media_urls) && product.media_urls.length > 0 && (
                   <div style={mediaContainerStyle}>
@@ -211,11 +250,18 @@ const ViewProducts = () => {
 
                 {editingProductId === product.id ? (
                   <>
+                    <label style={labelStyleSmall}>Product ID</label>
+                    <input 
+                      value={editFormData.id || ''} 
+                      style={{...inputStyleSmall, backgroundColor: '#f0f0f0'}} 
+                      disabled 
+                    />
+
                     <label style={labelStyleSmall}>Name</label>
                     <input value={editFormData.name || ''} onChange={e => handleEditChange('name', e.target.value)} style={inputStyleSmall} />
 
                     <label style={labelStyleSmall}>Description</label>
-                     <textarea value={editFormData.description || ''} onChange={e => handleEditChange('description', e.target.value)} style={{...inputStyleSmall, height: '60px'}} />
+                    <textarea value={editFormData.description || ''} onChange={e => handleEditChange('description', e.target.value)} style={{...inputStyleSmall, height: '60px'}} />
 
                     <label style={labelStyleSmall}>Price</label>
                     <input value={editFormData.price || ''} type="number" min="0" step="0.01" onChange={e => handleEditChange('price', e.target.value)} style={inputStyleSmall} />
@@ -261,12 +307,15 @@ const ViewProducts = () => {
                   </>
                 ) : (
                   <>
+                    <p style={{ fontSize: '0.85rem', color: '#666', marginBottom: '5px' }}>
+                      ID: {product.id}
+                    </p>
                     <h4>{product.name}</h4>
                     <p style={{ margin: '5px 0', fontWeight: 'bold' }}>₹{product.price}</p>
                     <p style={{ fontSize: '0.9rem', color: '#555', marginBottom: '10px' }}>
                         {product.category} | {product.gender} | Sizes: {product.size}
                     </p>
-                     <p style={{ fontSize: '0.85rem', color: '#666', maxHeight: '40px', overflow: 'hidden', textOverflow: 'ellipsis', marginBottom: '15px' }}>
+                    <p style={{ fontSize: '0.85rem', color: '#666', maxHeight: '40px', overflow: 'hidden', textOverflow: 'ellipsis', marginBottom: '15px' }}>
                         {product.description}
                     </p>
 
@@ -377,6 +426,7 @@ const productBox = {
   display: 'flex',
   flexDirection: 'column',
   transition: 'box-shadow 0.2s ease-in-out',
+  maxWidth: '400px', // Added to cap the stretching
 };
 const mediaContainerStyle = {
     position: 'relative',

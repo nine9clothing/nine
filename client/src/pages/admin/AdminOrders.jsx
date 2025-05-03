@@ -109,7 +109,7 @@ const AdminOrders = () => {
       }
 
       const safeGet = (val) => val ?? '';
-      const netTotal = ((order.total || 0) - (order.shipping_charges || 0)).toFixed(2);
+      const netTotal = ((order.total || 0) - (order.shipping_charges || 0)- (order.cod_fee || 0)).toFixed(2);
 
       return [
         safeGet(order.id),
@@ -208,7 +208,7 @@ const AdminOrders = () => {
               <div style={styles.orderDetailsGrid}>
                 <p style={styles.orderDetail}><strong style={styles.detailLabel}>User ID:</strong> {order.user_id || 'N/A'}</p>
                 <p style={styles.orderDetail}><strong style={styles.detailLabel}>Placed:</strong> {order.created_at ? new Date(order.created_at).toLocaleString() : 'N/A'}</p>
-                <p style={styles.orderDetail}><strong style={styles.detailLabel}>Net Total:</strong> {formatCurrency((order.total || 0) - (order.shipping_charges || 0))}</p>
+                <p style={styles.orderDetail}><strong style={styles.detailLabel}>Net Total:</strong> {formatCurrency((order.total || 0) - (order.shipping_charges || 0)- (order.cod_fee || 0))}</p>
                 <div>
                   <p style={styles.orderDetail}><strong style={styles.detailLabel}>Courier:</strong> {order.courier_name || 'N/A'}</p>
                   {order.courier_name && order.courier_id && (
