@@ -1044,7 +1044,7 @@ const Checkout = () => {
     setShippingError(null);
     try {
       const totalWeight = cartItems.reduce((weight, item) => {
-        return weight + (0.2 * item.quantity);
+        return weight + (0.35 * item.quantity);
       }, 0);
 
       console.log('Checking shipping for pincode:', pincode, 'with weight:', totalWeight);
@@ -1258,7 +1258,7 @@ const Checkout = () => {
       }));
 
       const totalWeight = cartItems.reduce((weight, item) => {
-        return weight + (0.2 * item.quantity);
+        return weight + (0.35 * item.quantity);
       }, 0);
 
       const shiprocketPayload = {
