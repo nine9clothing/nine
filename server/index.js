@@ -308,13 +308,17 @@ app.post('/api/shiprocket/check-serviceability', async (req, res) => {
 app.post('/api/shiprocket/order', async (req, res) => {
   try {
     console.log('Received POST request:', JSON.stringify(req.body, null, 2));
-    const { order_id, order_date, pickup_location, billing, shipping, items, sub_total, dimensions, user_id, shipping_charges, courier_id } = req.body;
+    const { order_id, order_date, pickup_location, billing, shipping, items, sub_total, dimensions, user_id, shipping_charges, courier_id, payment_method} = req.body;
 
     if (!user_id || !/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(user_id)) {
       console.error('User ID validation failed:', user_id);
       throw new Error('Invalid or missing user_id');
     }
-
+    // Validate payment_method
+    if (!payment_method || !['Prepaid', 'COD'].includes(payment_method)) {
+      console.error('Invalid payment method:', payment_method);
+      throw new Error('Invalid or missing payment_method. Must be "Prepaid" or "COD".');
+    }
     const token = await getShiprocketToken();
 
     console.log('Sending order to Shiprocket API with order_id:', order_id);
@@ -335,7 +339,7 @@ app.post('/api/shiprocket/order', async (req, res) => {
         billing_phone: billing.phone || '',
         shipping_is_billing: shipping.is_billing,
         order_items: items || [],
-        payment_method: 'Prepaid',
+        payment_method: payment_method,
         sub_total: sub_total || 0,
         length: dimensions.length || 10,
         breadth: dimensions.breadth || 15,
@@ -386,6 +390,7 @@ app.post('/api/shiprocket/order', async (req, res) => {
           shipping_charges: shipping_charges || 0, 
           courier_id: courier_id || null, 
           courier_name: shiprocketResponse.data?.courier_name || null, 
+          payment_method: payment_method,
         },
       ])
       .select()
@@ -414,6 +419,8 @@ app.post('/api/shiprocket/order', async (req, res) => {
     });
     if (error.message === 'Failed to authenticate with Shiprocket') {
       res.status(401).json({ error: 'Authentication failed with Shiprocket' });
+    } else if (error.message.includes('payment_method')) {
+      res.status(400).json({ error: error.message });
     } else if (error.code === '23502' || error.code === '23503' || error.code === '23505') {
       res.status(400).json({ error: 'Invalid data or duplicate order', details: error.message });
     } else {
