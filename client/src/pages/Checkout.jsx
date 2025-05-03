@@ -1282,7 +1282,7 @@ const Checkout = () => {
         dimensions: { length: 10, breadth: 15, height: 10, weight: totalWeight },
         user_id: user.id,
         shipping_charges: selectedShippingOption.rate,
-        cod_fee: codFee, // Include COD fee in Shiprocket payload
+        cod_fee: codFee, 
         courier_id: selectedShippingOption.courier_company_id,
       };
 
@@ -1607,7 +1607,7 @@ const Checkout = () => {
                   onChange={() => setPaymentMethod('Cash on Delivery')}
                   disabled={loadingOrder}
                 />
-                <label htmlFor="cashOnDelivery" style={styles.paymentLabel}>Cash on Delivery (₹10 COD)</label>
+                <label htmlFor="cashOnDelivery" style={styles.paymentLabel}>Cash on Delivery (₹10 COD Fee)</label>
               </div>
               <div style={styles.paymentOption}>
                 <input 

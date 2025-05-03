@@ -33,7 +33,7 @@ const AdminOrders = () => {
 
   const fetchOrders = useCallback(async () => {
     setLoading(true);
-    let query = supabase.from('orders').select('*, total, shipping_charges');
+    let query = supabase.from('orders').select('*, total, shipping_charges, courier_name, courier_id');
 
     if (searchQuery.trim()) {
       query = query.eq('order_id', searchQuery.trim());
@@ -91,7 +91,7 @@ const AdminOrders = () => {
       return;
     }
 
-    const headers = ['Order ID', 'User ID', 'Net Total', 'Shipping Status', 'Date', 'Name', 'Phone', 'Address', 'City', 'Pincode', 'Items', 'Payment Method'];
+    const headers = ['Order ID', 'User ID', 'Net Total', 'Shipping Status', 'Date', 'Name', 'Phone', 'Address', 'City', 'Pincode', 'Items', 'Payment Method', 'Courier Name', 'Courier ID'];
 
     const rows = orders.map(order => {
       let itemsString = '';
@@ -100,6 +100,9 @@ const AdminOrders = () => {
           let itemDesc = `${item?.name || 'N/A'} x${item?.quantity || 0}`;
           if (item?.selectedSize) {
             itemDesc += ` (Size: ${item.selectedSize})`;
+          }
+          if (item?.units) {
+            itemDesc += ` (Units: ${item.units})`;
           }
           return itemDesc;
         }).join('; ');
@@ -120,7 +123,9 @@ const AdminOrders = () => {
         safeGet(order.shipping_city),
         safeGet(order.shipping_pincode),
         itemsString,
-        safeGet(order.payment_method)
+        safeGet(order.payment_method),
+        safeGet(order.courier_name),
+        safeGet(order.courier_id)
       ];
     });
 
@@ -184,7 +189,7 @@ const AdminOrders = () => {
         <div style={styles.messageContainer}>Loading orders...</div>
       ) : orders.length === 0 ? (
         <div style={styles.messageContainer}>
-          {searchQuery.trimtrading
+          {searchQuery.trim()
             ? `No orders found for Order ID "${searchQuery}".`
             : 'No orders with a valid payment method found.'
           }
@@ -204,7 +209,18 @@ const AdminOrders = () => {
                 <p style={styles.orderDetail}><strong style={styles.detailLabel}>User ID:</strong> {order.user_id || 'N/A'}</p>
                 <p style={styles.orderDetail}><strong style={styles.detailLabel}>Placed:</strong> {order.created_at ? new Date(order.created_at).toLocaleString() : 'N/A'}</p>
                 <p style={styles.orderDetail}><strong style={styles.detailLabel}>Net Total:</strong> {formatCurrency((order.total || 0) - (order.shipping_charges || 0))}</p>
-                <p style={styles.orderDetail}><strong style={styles.detailLabel}>Payment Method:</strong> {order.payment_method}</p>
+                <div>
+                  <p style={styles.orderDetail}><strong style={styles.detailLabel}>Courier:</strong> {order.courier_name || 'N/A'}</p>
+                  {order.courier_name && order.courier_id && (
+                    <p style={styles.orderDetail}><strong style={styles.detailLabel}>Courier ID:</strong> {order.courier_id}</p>
+                  )}
+                </div>
+                <div>
+                  <p style={styles.orderDetail}><strong style={styles.detailLabel}>Payment Method:</strong> {order.payment_method}</p>
+                  {order.payment_method === 'Paid Online' && order.payment_id && (
+                    <p style={styles.orderDetail}><strong style={styles.detailLabel}>Payment ID:</strong> {order.payment_id}</p>
+                  )}
+                </div>
               </div>
 
               <div style={styles.section}>
@@ -224,8 +240,9 @@ const AdminOrders = () => {
                       <li key={item.id || `${order.order_id}-item-${i}`} style={styles.itemListItem}>
                         <strong style={styles.itemName}>{item.name || 'N/A'}</strong>
                         <span style={styles.itemDetails}>
-                          {' — '} {formatCurrency(item.selling_price)} × {item.quantity || 0}
+                          {' — '} {formatCurrency(item.selling_price)}
                           {item.selectedSize && ` (Size: ${item.selectedSize})`}
+                          {item.units && ` (Units: ${item.units})`}
                         </span>
                       </li>
                     ))}
