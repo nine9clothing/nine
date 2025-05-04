@@ -498,7 +498,6 @@
 // };
 
 // export default AdminNotifySize;
-
 import React, { useEffect, useState, useCallback } from 'react';
 import { supabase } from '../../lib/supabase';
 import ToastMessage from '../../ToastMessage';
@@ -947,6 +946,7 @@ const AdminNotifySize = () => {
     },
     actionsContainer: {
       display: 'flex',
+      justifyContent: 'space-between',
       flexWrap: 'wrap',
       gap: '8px',
       marginTop: '16px',
@@ -1026,18 +1026,20 @@ const AdminNotifySize = () => {
                 )}
                 
                 <div style={styles.actionsContainer}>
-                  {/* {!notif.email_sent && (
-                    // <button
-                    //   onClick={() => sendAvailabilityEmail(notif)}
-                    //   disabled={sendingEmail[notif.id] || isDeleting}
-                    //   style={{
-                    //     ...styles.actionButton,
-                    //     ...(sendingEmail[notif.id] || isDeleting ? styles.actionButtonDisabled : {})
-                    //   }}
-                    // >
-                    //   {sendingEmail[notif.id] ? 'Sending...' : 'Send Availability Email'}
-                    // </button>
-                  )} */}
+                  <div>
+                    {!notif.email_sent && (
+                      <button
+                        onClick={() => sendAvailabilityEmail(notif)}
+                        disabled={sendingEmail[notif.id] || isDeleting}
+                        style={{
+                          ...styles.actionButton,
+                          ...(sendingEmail[notif.id] || isDeleting ? styles.actionButtonDisabled : {})
+                        }}
+                      >
+                        {sendingEmail[notif.id] ? 'Sending...' : 'Send Availability Email'}
+                      </button>
+                    )}
+                  </div>
                   <button
                     onClick={() => handleDeleteClick(notif.id)}
                     style={(loading || isDeleting) ? styles.deleteButtonDisabled : styles.deleteButton}
