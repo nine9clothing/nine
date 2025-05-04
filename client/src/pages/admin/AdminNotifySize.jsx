@@ -1027,7 +1027,7 @@ const AdminNotifySize = () => {
                 
                 <div style={styles.actionsContainer}>
                   <div>
-                    {!notif.email_sent && (
+                    {/* {!notif.email_sent && (
                       <button
                         onClick={() => sendAvailabilityEmail(notif)}
                         disabled={sendingEmail[notif.id] || isDeleting}
@@ -1038,7 +1038,7 @@ const AdminNotifySize = () => {
                       >
                         {sendingEmail[notif.id] ? 'Sending...' : 'Send Availability Email'}
                       </button>
-                    )}
+                    )} */}
                   </div>
                   <button
                     onClick={() => handleDeleteClick(notif.id)}
