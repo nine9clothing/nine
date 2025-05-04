@@ -499,7 +499,6 @@
 
 // export default AdminNotifySize;
 
-
 import React, { useEffect, useState, useCallback } from 'react';
 import { supabase } from '../../lib/supabase';
 import ToastMessage from '../../ToastMessage';
@@ -534,6 +533,8 @@ const AdminNotifySize = () => {
   const [sendingEmail, setSendingEmail] = useState({});
   const [userEmails, setUserEmails] = useState({});
   const [availabilityStatus, setAvailabilityStatus] = useState({});
+  const [confirmingDeleteId, setConfirmingDeleteId] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const fetchNotifications = useCallback(async () => {
     setLoading(true);
@@ -771,6 +772,42 @@ const AdminNotifySize = () => {
     URL.revokeObjectURL(url);
   };
 
+  const handleDeleteClick = (notificationId) => {
+    setConfirmingDeleteId(notificationId);
+    setToast(null);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!confirmingDeleteId) return;
+
+    setIsDeleting(true);
+    setToast(null);
+
+    try {
+      const { error: deleteError } = await supabase
+        .from('size_notifications')
+        .delete()
+        .eq('id', confirmingDeleteId);
+
+      if (deleteError) {
+        throw deleteError;
+      }
+
+      setNotifications(prev => prev.filter(notif => notif.id !== confirmingDeleteId));
+      setToast({ message: 'Notification deleted successfully!', type: 'success' });
+    } catch (err) {
+      console.error("Error deleting notification:", err);
+      setToast({ message: err.message || 'Failed to delete notification.', type: 'error' });
+    } finally {
+      setIsDeleting(false);
+      setConfirmingDeleteId(null);
+    }
+  };
+
+  const handleCancelDelete = () => {
+    setConfirmingDeleteId(null);
+  };
+
   const styles = {
     container: {
       padding: '24px 32px',
@@ -778,6 +815,7 @@ const AdminNotifySize = () => {
       minHeight: '100vh',
       fontFamily: fonts.primary,
       color: colors.textPrimary,
+      position: 'relative'
     },
     header: {
       fontSize: window.innerWidth <= 768 ? '2.0rem' : '2.2rem',
@@ -864,6 +902,27 @@ const AdminNotifySize = () => {
     actionButtonDisabled: {
       backgroundColor: colors.textMuted,
       cursor: 'not-allowed',
+    },
+    deleteButton: {
+      padding: '6px 12px',
+      backgroundColor: '#dc3545',
+      color: 'white',
+      border: 'none',
+      borderRadius: '4px',
+      cursor: 'pointer',
+      fontSize: '0.9em',
+      transition: 'background-color 0.2s ease, opacity 0.2s ease',
+      opacity: 1
+    },
+    deleteButtonDisabled: {
+      padding: '6px 12px',
+      backgroundColor: '#e9ecef',
+      color: '#6c757d',
+      border: 'none',
+      borderRadius: '4px',
+      fontSize: '0.9em',
+      opacity: 0.7,
+      cursor: 'not-allowed'
     },
     availableTag: {
       display: 'inline-block',
@@ -966,23 +1025,113 @@ const AdminNotifySize = () => {
                   </>
                 )}
                 
-                {!notif.email_sent && (
-                  <div style={styles.actionsContainer}>
-                    {/* <button
+                <div style={styles.actionsContainer}>
+                  {!notif.email_sent && (
+                    <button
                       onClick={() => sendAvailabilityEmail(notif)}
-                      disabled={sendingEmail[notif.id]}
+                      disabled={sendingEmail[notif.id] || isDeleting}
                       style={{
                         ...styles.actionButton,
-                        ...(sendingEmail[notif.id] ? styles.actionButtonDisabled : {})
+                        ...(sendingEmail[notif.id] || isDeleting ? styles.actionButtonDisabled : {})
                       }}
                     >
                       {sendingEmail[notif.id] ? 'Sending...' : 'Send Availability Email'}
-                    </button> */}
-                  </div>
-                )}
+                    </button>
+                  )}
+                  <button
+                    onClick={() => handleDeleteClick(notif.id)}
+                    style={(loading || isDeleting) ? styles.deleteButtonDisabled : styles.deleteButton}
+                    disabled={loading || isDeleting || confirmingDeleteId === notif.id}
+                  >
+                    Delete
+                  </button>
+                </div>
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {confirmingDeleteId && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.4)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            backgroundColor: '#fff',
+            padding: '25px 30px',
+            borderRadius: '8px',
+            boxShadow: '0 4px 15px rgba(0, 0, 0, 0.2)',
+            textAlign: 'center',
+            minWidth: '300px',
+            maxWidth: '450px',
+            zIndex: 1001
+          }}>
+            <p style={{
+              fontSize: '1.1em',
+              color: '#333',
+              marginBottom: '20px',
+              lineHeight: '1.5'
+            }}>Are you sure you want to delete this notification? This action cannot be undone.</p>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'center',
+              gap: '15px'
+            }}>
+              <button
+                onClick={handleConfirmDelete}
+                style={isDeleting ? {
+                  padding: '10px 18px',
+                  backgroundColor: '#e9ecef',
+                  color: '#6c757d',
+                  border: 'none',
+                  borderRadius: '5px',
+                  fontSize: '1em',
+                  fontWeight: '500',
+                  cursor: 'not-allowed',
+                  opacity: 0.8
+                } : {
+                  padding: '10px 18px',
+                  backgroundColor: '#dc3545',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '5px',
+                  cursor: 'pointer',
+                  fontSize: '1em',
+                  fontWeight: '500',
+                  transition: 'background-color 0.2s ease'
+                }}
+                disabled={isDeleting}
+              >
+                {isDeleting ? 'Deleting...' : 'Confirm Delete'}
+              </button>
+              <button
+                onClick={handleCancelDelete}
+                style={{
+                  padding: '10px 18px',
+                  backgroundColor: '#6c757d',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '5px',
+                  cursor: 'pointer',
+                  fontSize: '1em',
+                  fontWeight: '500',
+                  transition: 'background-color 0.2s ease'
+                }}
+                disabled={isDeleting}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
