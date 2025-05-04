@@ -1026,18 +1026,18 @@ const AdminNotifySize = () => {
                 )}
                 
                 <div style={styles.actionsContainer}>
-                  {!notif.email_sent && (
-                    <button
-                      onClick={() => sendAvailabilityEmail(notif)}
-                      disabled={sendingEmail[notif.id] || isDeleting}
-                      style={{
-                        ...styles.actionButton,
-                        ...(sendingEmail[notif.id] || isDeleting ? styles.actionButtonDisabled : {})
-                      }}
-                    >
-                      {sendingEmail[notif.id] ? 'Sending...' : 'Send Availability Email'}
-                    </button>
-                  )}
+                  {/* {!notif.email_sent && (
+                    // <button
+                    //   onClick={() => sendAvailabilityEmail(notif)}
+                    //   disabled={sendingEmail[notif.id] || isDeleting}
+                    //   style={{
+                    //     ...styles.actionButton,
+                    //     ...(sendingEmail[notif.id] || isDeleting ? styles.actionButtonDisabled : {})
+                    //   }}
+                    // >
+                    //   {sendingEmail[notif.id] ? 'Sending...' : 'Send Availability Email'}
+                    // </button>
+                  )} */}
                   <button
                     onClick={() => handleDeleteClick(notif.id)}
                     style={(loading || isDeleting) ? styles.deleteButtonDisabled : styles.deleteButton}
