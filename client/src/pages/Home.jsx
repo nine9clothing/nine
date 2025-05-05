@@ -883,30 +883,27 @@ const Home = () => {
             100% { opacity: 0; filter: blur(3px); }
           }
 
-          /* Refined box animations */
-          @keyframes fadeBox0 {
-            0% { opacity: 1; transform: scale(1) translate(0, 0); filter: blur(0); }
-            50% { opacity: 0.6; transform: scale(1.05) translate(-15px, -15px); filter: blur(1px); }
-            100% { opacity: 0; transform: scale(1.1) translate(-20px, -20px); filter: blur(2px); }
-          }
+          /* Refined box animations *//* Update grid box animations */
+@keyframes fadeBox0 {
+  0% { opacity: 1; transform: scale(1) translate(0, 0); }
+  100% { opacity: 0; transform: scale(1.1) translate(-20px, -20px); }
+}
 
-          @keyframes fadeBox1 {
-            0% { opacity: 1; transform: scale(1) translate(0, 0); filter: blur(0); }
-            50% { opacity: 0.6; transform: scale(1.05) translate(15px, -15px); filter: blur(1px); }
-            100% { opacity: 0; transform: scale(1.1) translate(20px, -20px); filter: blur(2px); }
-          }
+@keyframes fadeBox1 {
+  0% { opacity: 1; transform: scale(1) translate(0, 0); }
+  100% { opacity: 0; transform: scale(1.1) translate(20px, -20px); }
+}
 
-          @keyframes fadeBox2 {
-            0% { opacity: 1; transform: scale(1) translate(0, 0); filter: blur(0); }
-            50% { opacity: 0.6; transform: scale(1.05) translate(-15px, 15px); filter: blur(1px); }
-            100% { opacity: 0; transform: scale(1.1) translate(-20px, 20px); filter: blur(2px); }
-          }
+@keyframes fadeBox2 {
+  0% { opacity: 1; transform: scale(1) translate(0, 0); }
+  100% { opacity: 0; transform: scale(1.1) translate(-20px, 20px); }
+}
 
-          @keyframes fadeBox3 {
-            0% { opacity: 1; transform: scale(1) translate(0, 0); filter: blur(0); }
-            50% { opacity: 0.6; transform: scale(1.05) translate(15px, 15px); filter: blur(1px); }
-            100% { opacity: 0; transform: scale(1.1) translate(20px, 20px); filter: blur(2px); }
-          }
+@keyframes fadeBox3 {
+  0% { opacity: 1; transform: scale(1) translate(0, 0); }
+  100% { opacity: 0; transform: scale(1.1) translate(20px, 20px); }
+}
+
 
           @keyframes fadeIn {
             from { opacity: 0; transform: translateY(15px); filter: blur(1px); }
