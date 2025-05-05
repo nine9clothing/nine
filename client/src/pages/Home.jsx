@@ -736,36 +736,28 @@ const Home = () => {
           /* Snake-like inward motion for horizontal line 1 */
           @keyframes snakeInHorizontal1 {
             0% { top: 0; opacity: 0; transform: translateX(0); filter: blur(3px); }
-            25% { transform: translateX(10px); }
             50% { transform: translateX(-10px); }
-            75% { transform: translateX(5px); }
             100% { top: calc(40% - 7px); opacity: 1; transform: translateX(0); filter: blur(0); }
           }
 
           /* Snake-like inward motion for horizontal line 2 */
           @keyframes snakeInHorizontal2 {
             0% { top: 100%; opacity: 0; transform: translateX(0); filter: blur(3px); }
-            25% { transform: translateX(-10px); }
             50% { transform: translateX(10px); }
-            75% { transform: translateX(-5px); }
             100% { top: calc(60% + 5px); opacity: 1; transform: translateX(0); filter: blur(0); }
           }
 
           /* Snake-like inward motion for vertical line 1 */
           @keyframes snakeInVertical1 {
             0% { left: 0; opacity: 0; transform: translateY(0); filter: blur(3px); }
-            25% { transform: translateY(10px); }
             50% { transform: translateY(-10px); }
-            75% { transform: translateY(5px); }
             100% { left: calc(30% - 7px); opacity: 1; transform: translateY(0); filter: blur(0); }
           }
 
           /* Snake-like inward motion for vertical line 2 */
           @keyframes snakeInVertical2 {
             0% { left: 100%; opacity: 0; transform: translateY(0); filter: blur(3px); }
-            25% { transform: translateY(-10px); }
             50% { transform: translateY(10px); }
-            75% { transform: translateY(-5px); }
             100% { left: calc(70% + 5px); opacity: 1; transform: translateY(0); filter: blur(0); }
           }
 
@@ -805,7 +797,7 @@ const Home = () => {
           /* Apply animations with synchronized timing */
           .horizontalLineOut {
             animation: snakeInHorizontal1 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards,
-                      horizontalLineOut 2.5s ease-out 1.2s forwards;
+                      horizontalLineOut 2.5s ease-out 1.5s forwards;
             willChange: top, opacity, transform, filter;
             background: #FFA500;
           }
@@ -825,7 +817,7 @@ const Home = () => {
 
           .horizontalLineOut2 {
             animation: snakeInHorizontal2 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards,
-                      horizontalLineOut2 2.5s ease-out 1.2s forwards;
+                      horizontalLineOut2 2.5s ease-out 1.5s forwards;
             willChange: top, opacity, transform, filter;
             background: #FFA500;
           }
@@ -845,7 +837,7 @@ const Home = () => {
 
           .verticalLineOut {
             animation: snakeInVertical1 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards,
-                      verticalLineOut 2.5s ease-out 1.2s forwards;
+                      verticalLineOut 2.5s ease-out 1.5s forwards;
             willChange: left, opacity, transform, filter;
             background: #FFA500;
           }
@@ -865,7 +857,7 @@ const Home = () => {
 
           .verticalLineOut2 {
             animation: snakeInVertical2 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards,
-                      verticalLineOut2 2.5s ease-out 1.2s forwards;
+                      verticalLineOut2 2.5s ease-out 1.5s forwards;
             willChange: left, opacity, transform, filter;
             background: #FFA500;
           }
