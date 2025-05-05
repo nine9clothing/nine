@@ -4,7 +4,18 @@ import { supabase } from '../lib/supabase.js';
 import Navbar from '../components/Navbar';
 import Footer from '../pages/Footer';
 import ToastMessage from '../ToastMessage'; 
-
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { 
+    faUserCheck, 
+    faCoins, 
+    faExchangeAlt, 
+    faClock, 
+    faBan, 
+    faAdjust, 
+    faEdit, 
+    faExclamationTriangle, 
+    faFileContract 
+} from '@fortawesome/free-solid-svg-icons';
 const Rewards = () => {
     const [points, setPoints] = useState(0);
     const [activities, setActivities] = useState([]);
@@ -18,39 +29,48 @@ const Rewards = () => {
     const loyaltyInfo = [
         {
             title: "Eligibility",
-            content: "The loyalty program is open to all customers making eligible purchases."
+            content: "The loyalty program is open to all customers making eligible purchases.",
+            icon: faUserCheck
         },
         {
             title: "Earning Points",
-            content: "Customers will earn 10 loyalty points for every ₹100 spent on qualifying purchases. Points are awarded based on the final billed amount after discounts and after taxes (coupon discounts not included)."
+            content: "Customers will earn 10 loyalty points for every ₹100 spent on qualifying purchases. Points are awarded based on the final billed amount after discounts and after taxes (coupon discounts not included).",
+            icon: faCoins
         },
         {
             title: "Redeeming Points",
-            content: "5 loyalty points are equivalent to ₹1 when redeemed. Points can be redeemed for discounts on future purchases. A maximum of ₹99 worth of points can be redeemed per purchase. Points cannot be exchanged for cash."
+            content: "5 loyalty points are equivalent to ₹1 when redeemed. Points can be redeemed for discounts on future purchases. A maximum of ₹99 worth of points can be redeemed per purchase. Points cannot be exchanged for cash.",
+            icon: faExchangeAlt
         },
         {
             title: "Point Expiry",
-            content: "Loyalty points are valid for 12 months from the date of issuance unless otherwise specified. Expired points cannot be reinstated."
+            content: "Loyalty points are valid for 12 months from the date of issuance unless otherwise specified. Expired points cannot be reinstated.",
+            icon: faClock
         },
         {
             title: "Exclusions",
-            content: "Points may not be earned or redeemed during certain promotional events unless stated."
+            content: "Points may not be earned or redeemed during certain promotional events unless stated.",
+            icon: faBan
         },
         {
             title: "Account Adjustments",
-            content: "Points will be added to account after 10 days of purchase (if any exchange the time may vary)."
+            content: "Points will be added to account after 10 days of purchase (if any exchange the time may vary).",
+            icon: faAdjust
         },
         {
             title: "Program Changes",
-            content: "Nine9 reserves the right to modify, suspend, or terminate the loyalty program at any time without prior notice."
+            content: "Nine9 reserves the right to modify, suspend, or terminate the loyalty program at any time without prior notice.",
+            icon: faEdit
         },
         {
             title: "Fraudulent Activity",
-            content: "Any fraud, misuse, or violation of terms may result in disqualification from the loyalty program and forfeiture of points."
+            content: "Any fraud, misuse, or violation of terms may result in disqualification from the loyalty program and forfeiture of points.",
+            icon: faExclamationTriangle
         },
         {
             title: "General Terms",
-            content: "Participation in the loyalty program constitutes acceptance of these terms and conditions."
+            content: "Participation in the loyalty program constitutes acceptance of these terms and conditions.",
+            icon: faFileContract
         }
     ];
 
@@ -126,7 +146,6 @@ const Rewards = () => {
                     discount: redemption.discount_amount
                 }));
 
-                // Fetch user's birthday from registered_details
                 const { data: userData, error: userError } = await supabase
                     .from('registered_details')
                     .select('birthday')
@@ -171,7 +190,6 @@ const Rewards = () => {
                 setPoints(netPoints);
             } catch (error) {
                 console.error('Error fetching user, orders, or redemptions:', error.message);
-                // alert('Error loading rewards: ' + error.message);
             } finally {
                 setLoading(false);
             }
@@ -224,33 +242,33 @@ const Rewards = () => {
                 flex: '1 0 auto'
             }}>
                 <section style={{
-                    padding: '30px 15px',
+                    padding: '20px 10px',
                     textAlign: 'center',
                     maxWidth: '1200px',
                     margin: '0 auto'
                 }}>
                     <h2 style={{
-                        fontSize: "2.8rem",
+                        fontSize: '2.8rem',
                         fontFamily: "'Abril Extra Bold', sans-serif",
-                        marginBottom: '30px',
-                        marginTop:'60px',
+                        marginBottom: '20px',
+                        marginTop: '60px',
                         fontWeight: '700',
                         color: '#Ffa500'
                     }}>Your Rewards</h2>
 
                     <div style={{
                         maxWidth: '600px',
-                        margin: '0 auto 30px',
+                        margin: '0 auto 20px',
                         borderRadius: '12px',
                         textAlign: 'left',
-                        padding: '20px',
+                        padding: '15px',
                         background: 'linear-gradient(135deg, rgba(0, 0, 0, 0.9), rgba(26, 26, 26, 0.9))',
                         boxShadow: '0 6px 20px rgba(255, 165, 0, 0.2)',
                         border: '1px solid #Ffa500',
                         animation: 'fadeIn 0.5s ease-in-out'
                     }}>
                         <h3 style={{
-                            fontSize: '1.8rem',
+                            fontSize: '1.5rem',
                             fontFamily: "'Abril Extra Bold', sans-serif",
                             marginBottom: '10px',
                             color: '#fff',
@@ -272,16 +290,16 @@ const Rewards = () => {
                                 background: 'rgba(255, 165, 0, 0.1)',
                                 border: '1px solid rgba(255, 165, 0, 0.3)',
                                 flex: '1',
-                                minWidth: '120px'
+                                minWidth: '100px'
                             }}>
                                 <p style={{
-                                    fontSize: '0.9rem',
+                                    fontSize: '0.85rem',
                                     fontFamily: "'Louvette Semi Bold', sans-serif",
                                     color: '#d1d5db',
                                     marginBottom: '5px'
                                 }}>Points Balance</p>
                                 <p style={{
-                                    fontSize: '1.8rem',
+                                    fontSize: '1.5rem',
                                     fontFamily: "'Abril Extra Bold', sans-serif",
                                     color: '#Ffa500',
                                     fontWeight: '700'
@@ -292,18 +310,18 @@ const Rewards = () => {
                                 padding: '10px',
                                 borderRadius: '8px',
                                 background: 'rgba(255, 165, 0, 0.1)',
-                                border: '1px solid rgba(255, 165, 0, 0.3)',
+                                border: '11px solid rgba(255, 165, 0, 0.3)',
                                 flex: '1',
-                                minWidth: '120px'
+                                minWidth: '100px'
                             }}>
                                 <p style={{
-                                    fontSize: '0.9rem',
+                                    fontSize: '0.85rem',
                                     fontFamily: "'Louvette Semi Bold', sans-serif",
                                     color: '#d1d5db',
                                     marginBottom: '5px'
                                 }}>Cash Value</p>
                                 <p style={{
-                                    fontSize: '1.8rem',
+                                    fontSize: '1.5rem',
                                     fontFamily: "'Abril Extra Bold', sans-serif",
                                     color: '#Ffa500',
                                     fontWeight: '700'
@@ -312,7 +330,7 @@ const Rewards = () => {
                         </div>
                         {user && (
                             <p style={{
-                                fontSize: '0.8rem',
+                                fontSize: '0.75rem',
                                 fontFamily: "'Louvette Semi Bold', sans-serif",
                                 color: '#9ca3af',
                                 textAlign: 'center',
@@ -321,19 +339,19 @@ const Rewards = () => {
                         )}
                         <div style={{
                             textAlign: 'center',
-                            marginTop: '15px'
+                            marginTop: '10px'
                         }}>
                             <button 
                                 onClick={toggleTransactions}
                                 style={{
                                     background: 'linear-gradient(135deg, #Ffa500, #ff8c00)',
                                     color: 'black',
-                                    padding: '10px 20px',
-                                    borderRadius: '25px',
+                                    padding: '8px 15px',
+                                    borderRadius: '20px',
                                     border: 'none',
                                     fontFamily: "'Louvette Semi Bold', sans-serif",
                                     fontWeight: '600',
-                                    fontSize: '1rem',
+                                    fontSize: '0.9rem',
                                     cursor: 'pointer',
                                     boxShadow: '0 3px 10px rgba(255, 165, 0, 0.4)',
                                     transition: 'all 0.3s ease',
@@ -349,16 +367,16 @@ const Rewards = () => {
                     {showTransactions && (
                         <div style={{
                             maxWidth: '1200px',
-                            margin: '0 auto 40px',
+                            margin: '0 auto 30px',
                             background: 'linear-gradient(135deg, rgba(0, 0, 0, 0.85), rgba(26, 26, 26, 0.85))',
                             borderRadius: '12px',
-                            padding: '20px',
+                            padding: '15px',
                             border: '1px solid #Ffa500',
                             boxShadow: '0 6px 20px rgba(255, 165, 0, 0.2)',
                             animation: 'fadeIn 0.6s ease-in-out'
                         }}>
                             <h3 style={{
-                                fontSize: '1.8rem',
+                                fontSize: '1.5rem',
                                 fontFamily: "'Abril Extra Bold', sans-serif",
                                 marginBottom: '15px',
                                 color: '#Ffa500',
@@ -367,14 +385,14 @@ const Rewards = () => {
                             }}>Transaction History</h3>
                             {activities.length === 0 ? (
                                 <p style={{
-                                    fontSize: '1rem',
+                                    fontSize: '0.9rem',
                                     fontFamily: "'Louvette Semi Bold', sans-serif",
                                     color: '#fff',
                                     textAlign: 'center',
-                                    padding: '15px',
+                                    padding: '10px',
                                     background: 'rgba(255, 165, 0, 0.1)',
                                     borderRadius: '8px',
-                                    margin: '15px 0'
+                                    margin: '10px 0'
                                 }}>
                                     No activity found. <a href="/sort" style={{ color: '#Ffa500', textDecoration: 'underline', fontWeight: 'bold' }}>Start shopping to earn points!</a>
                                 </p>
@@ -384,7 +402,7 @@ const Rewards = () => {
                                         width: '100%',
                                         borderCollapse: 'separate',
                                         borderSpacing: '0',
-                                        fontSize: '0.9rem',
+                                        fontSize: '0.85rem',
                                         color: '#fff',
                                         fontFamily: "'Louvette Semi Bold', sans-serif",
                                         borderRadius: '8px',
@@ -392,11 +410,11 @@ const Rewards = () => {
                                     }}>
                                         <thead>
                                             <tr style={{ background: 'rgba(255, 165, 0, 0.3)' }}>
-                                                <th style={{ padding: '10px', textAlign: 'left', fontSize: '0.85rem' }}>Date</th>
-                                                <th style={{ padding: '10px', marginLeft:'40px ', fontSize: '0.85rem' }}>ID</th>
-                                                <th style={{ padding: '10px', textAlign: 'right', fontSize: '0.85rem' }}>Net (₹)</th>
-                                                <th style={{ padding: '10px', textAlign: 'right', fontSize: '0.85rem' }}>Points</th>
-                                                <th style={{ padding: '10px', textAlign: 'right', fontSize: '0.85rem' }}>Disc (₹)</th>
+                                                <th style={{ padding: '8px', textAlign: 'left', fontSize: '0.8rem' }}>Date</th>
+                                                <th style={{ padding: '8px', marginLeft:'10%', fontSize: '0.8rem' }}>ID</th>
+                                                <th style={{ padding: '8px', textAlign: 'right', fontSize: '0.8rem' }}>Net (₹)</th>
+                                                <th style={{ padding: '8px', textAlign: 'right', fontSize: '0.8rem' }}>Points</th>
+                                                <th style={{ padding: '8px', textAlign: 'right', fontSize: '0.8rem' }}>Disc (₹)</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -405,17 +423,17 @@ const Rewards = () => {
                                                     background: index % 2 === 0 ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.2)',
                                                     transition: 'all 0.3s ease'
                                                 }}>
-                                                    <td style={{ padding: '10px', borderBottom: '1px solid rgba(255, 165, 0, 0.2)' }}>
+                                                    <td style={{ padding: '8px', borderBottom: '1px solid rgba(255, 165, 0, 0.2)' }}>
                                                         {new Date(activity.date).toLocaleString().slice(0, 10)}
                                                     </td>
-                                                    <td style={{ padding: '10px', borderBottom: '1px solid rgba(255, 165, 0, 0.2)' }}>
+                                                    <td style={{ padding: '8px', borderBottom: '1px solid rgba(255, 165, 0, 0.2)' }}>
                                                         {activity.type === 'order' ? activity.id : activity.type === 'birthday' ? 'Birthday Bonus' : '-'}
                                                     </td>
-                                                    <td style={{ padding: '10px', borderBottom: '1px solid rgba(255, 165, 0, 0.2)', textAlign: 'right' }}>
+                                                    <td style={{ padding: '8px', borderBottom: '1px solid rgba(255, 165, 0, 0.2)', textAlign: 'right' }}>
                                                         {activity.type === 'order' ? activity.netAmount.toFixed(2) : '-'}
                                                     </td>
                                                     <td style={{
-                                                        padding: '10px',
+                                                        padding: '8px',
                                                         borderBottom: '1px solid rgba(255, 165, 0, 0.2)',
                                                         color: activity.points < 0 ? '#ff6b6b' : '#4ade80',
                                                         fontWeight: 'bold',
@@ -423,7 +441,7 @@ const Rewards = () => {
                                                     }}>
                                                         {activity.points < 0 ? activity.points : `+${activity.points}`}
                                                     </td>
-                                                    <td style={{ padding: '10px', borderBottom: '1px solid rgba(255, 165, 0, 0.2)', textAlign: 'right' }}>
+                                                    <td style={{ padding: '8px', borderBottom: '1px solid rgba(255, 165, 0, 0.2)', textAlign: 'right' }}>
                                                         {activity.type === 'redemption' ? activity.discount.toFixed(2) : '-'}
                                                     </td>
                                                 </tr>
@@ -438,29 +456,29 @@ const Rewards = () => {
                     <div style={{
                         maxWidth: '1200px',
                         margin: '0 auto 20px',
-                        padding: '0 15px'
+                        padding: '0 10px'
                     }}>
                         <h3 style={{
-                            fontSize: '1.8rem',
+                            fontSize: '1.5rem',
                             fontFamily: "'Abril Extra Bold', sans-serif",
                             color: '#fff',
                             textTransform: 'uppercase',
                             marginBottom: '10px'
                         }}>Loyalty Program</h3>
                         <p style={{
-                            fontSize: '0.9rem',
+                            fontSize: '0.85rem',
                             fontFamily: "'Louvette Semi Bold', sans-serif",
                             color: '#d1d5db',
-                            marginBottom: '20px'
+                            marginBottom: '15px'
                         }}>Tap any card to learn more about our loyalty program</p>
                     </div>
 
                     <div className="loyalty-cards-container" style={{
                         maxWidth: '1200px',
-                        margin: '0 auto 40px',
+                        margin: '0 auto 30px',
                         display: 'grid',
                         gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-                        gap: '15px',
+                        gap: '10px',
                         padding: '10px'
                     }}>
                         {loyaltyInfo.map((item, index) => (
@@ -489,10 +507,10 @@ const Rewards = () => {
                                         width: '100%',
                                         height: '100%',
                                         backfaceVisibility: 'hidden',
-                                        transform:"rotateY(0deg)",
+                                        transform: "rotateY(0deg)",
                                         background: 'linear-gradient(145deg, rgba(255, 255, 255, 0.95), rgba(230, 230, 230, 0.95))',
                                         borderRadius: '12px',
-                                        padding: '20px',
+                                        padding: '15px',
                                         border: '2px solid #Ffa500',
                                         boxShadow: '0 8px 20px rgba(0, 0, 0, 0.5)',
                                         display: 'flex',
@@ -510,8 +528,15 @@ const Rewards = () => {
                                             height: '6px',
                                             background: 'linear-gradient(90deg, #Ffa500, #ff8c00)'
                                         }}></div>
+                                        <div style={{
+                                           fontSize: '2rem',
+                                           color: '#Ffa500',
+                                           marginBottom: '12px'
+                                        }}>
+                                         <FontAwesomeIcon icon={item.icon} />
+                                        </div>
                                         <h3 style={{
-                                            fontSize: '1.3rem',
+                                            fontSize: '1.2rem',
                                             fontFamily: "'Abril Extra Bold', sans-serif",
                                             color: 'black',
                                             textTransform: 'uppercase',
@@ -530,19 +555,19 @@ const Rewards = () => {
                                         transform: 'rotateY(180deg)',
                                         background: 'linear-gradient(145deg, rgba(255, 165, 0, 0.9), rgba(255, 140, 0, 0.8))',
                                         borderRadius: '12px',
-                                        padding: '20px',
+                                        padding: '15px',
                                         border: '2px solid #000',
-                                        boxImmunohist4Shadow: '0 8px 20px rgba(0, 0, 0, 0.5)',
+                                        boxShadow: '0 8px 20px rgba(0, 0, 0, 0.5)',
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
                                         overflow: 'auto'
                                     }}>
                                         <p style={{
-                                            fontSize: '0.9rem',
+                                            fontSize: '0.85rem',
                                             fontFamily: "'Louvette Semi Bold', sans-serif",
                                             color: 'black',
-                                            lineHeight: '1.5',
+                                            lineHeight: '1.4',
                                             textAlign: 'center'
                                         }}>
                                             {item.content}
@@ -555,9 +580,9 @@ const Rewards = () => {
                 </section>
                 {toastMessage && (
                     <ToastMessage
-                    message={toastMessage.message}
-                    type={toastMessage.type}
-                    onClose={() => setToastMessage(null)}
+                        message={toastMessage.message}
+                        type={toastMessage.type}
+                        onClose={() => setToastMessage(null)}
                     />
                 )}
 
@@ -569,64 +594,83 @@ const Rewards = () => {
                         }
                         
                         @media (max-width: 768px) {
-                            .loyalty-cards-container {
-                                grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)) !important;
-                            }
-                            .flip-card {
-                                height: 150px !important;
-                            }
-                            .flip-card h3 {
-                                font-size: 1.1rem !important;
-                            }
-                            .flip-card p {
-                                font-size: 0.8rem !important;
-                            }
                             section {
-                                padding: 20px 10px !important;
+                                padding: '15px 8px'
                             }
                             h2 {
-                                font-size: 1.8rem !important;
-                                margin-top: 60px !important;
+                                font-size: '2rem',
+                                marginTop: '50px'
                             }
                             h3 {
-                                font-size: 1.5rem !important;
+                                font-size: '1.3rem'
                             }
                             .loyalty-cards-container {
-                                gap: 10px !important;
+                                grid-template-columns: 'repeat(auto-fill, minmax(220px, 1fr))',
+                                gap: '8px'
+                            }
+                            .flip-card {
+                                height: '150px'
+                            }
+                            .flip-card h3 {
+                                font-size: '1.1rem'
+                            }
+                            .flip-card p {
+                                font-size: '0.8rem'
+                            }
+                            .flip-card > div > div {
+                                padding: '12px'
+                            }
+                            table {
+                                font-size: '0.8rem'
+                            }
+                            th, td {
+                                padding: '6px'
+                            }
+                            button {
+                                padding: '8px 15px',
+                                font-size: '0.85rem'
                             }
                         }
                         
                         @media (max-width: 480px) {
-                            .loyalty-cards-container {
-                                grid-template-columns: 1fr !important;
-                            }
-                            .flip-card {
-                                height: 120px !important;
-                            }
-                            .flip-card h3 {
-                                font-size: 1rem !important;
-                            }
-                            .flip-card p {
-                                font-size: 0.75rem !important;
-                            }
-                            .flip-card > div > div {
-                                padding: 15px !important;
+                            section {
+                                padding: '10px 5px'
                             }
                             h2 {
-                                font-size: 1.5rem !important;
+                                font-size: '1.5rem',
+                                marginTop: '40px'
                             }
                             h3 {
-                                font-size: 1.3rem !important;
+                                font-size: '1.2rem'
+                            }
+                            .loyalty-cards-container {
+                                grid-template-columns: '1fr',
+                                gap: '5px'
+                            }
+                            .flip-card {
+                                height: '120px'
+                            }
+                            .flip-card h3 {
+                                font-size: '1rem'
+                            }
+                            .flip-card p {
+                                font-size: '0.75rem'
+                            }
+                            .flip-card > div > div {
+                                padding: '10px'
                             }
                             table {
-                                font-size: 0.8rem !important;
+                                font-size: '0.75rem'
                             }
                             th, td {
-                                padding: 8px !important;
+                                padding: '5px'
                             }
                             button {
-                                padding: 8px 15px !important;
-                                font-size: 0.9rem !important;
+                                padding: '6px 12px',
+                                font-size: '0.8rem'
+                            }
+                            .points-balance div {
+                                min-width: '90px'
                             }
                         }
                         

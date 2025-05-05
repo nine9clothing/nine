@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useWishlist } from '../context/WishlistContext';
-import { FaHeart } from 'react-icons/fa';
+import { FaHeart, FaShoppingCart } from 'react-icons/fa';
 
 const WishlistProductGrid = ({ products, onRemove }) => {
   const { wishlist, toggleWishlist, user } = useWishlist();
@@ -25,23 +25,35 @@ const WishlistProductGrid = ({ products, onRemove }) => {
       @media (max-width: 768px) {
         .gridContainer {
           grid-template-columns: repeat(2, 1fr) !important;
-          gap: 12px !important;
+          gap: 10px !important;
+          width: 100% !important;
+          max-width: 100% !important;
+          padding: 0 5px !important;
+          box-sizing: border-box !important;
         }
         .productCard {
-          height: auto !important;
+          height: 280px !important;
+          width: 100% !important;
           padding: 0 !important;
           border: none !important;
           border-radius: 0 !important;
-          margin-bottom: 20px !important;
+          margin-bottom: 15px !important;
           box-shadow: none !important;
+          box-sizing: border-box !important;
         }
         .productImageWrapper {
           height: 180px !important;
           border-radius: 8px !important;
           position: relative;
+          width: 100% !important;
+        }
+        .productImage {
+          border-radius: 8px !important;
+          width: 100% !important;
+          height: 100% !important;
         }
         .productName {
-          font-size: 13px !important;
+          font-size: 14px !important;
           font-weight: 500 !important;
           margin-top: 8px !important;
           margin-bottom: 2px !important;
@@ -50,7 +62,7 @@ const WishlistProductGrid = ({ products, onRemove }) => {
           overflow: hidden !important;
           text-overflow: ellipsis !important;
           white-space: nowrap !important;
-          font-family: 'Abril Extra Bold', sans-serif !important; /* Applied to headings */
+          font-family: 'Louvette Semi Bold', sans-serif !important;
         }
         .productPrice {
           font-size: 14px !important;
@@ -58,7 +70,8 @@ const WishlistProductGrid = ({ products, onRemove }) => {
           font-weight: bold !important;
           text-align: left !important;
           margin-top: 2px !important;
-          font-family: 'Louvette Semi Bold', sans-serif !important; /* Applied to descriptions */
+          margin-bottom: 8px !important;
+          font-family: 'Louvette Semi Bold', sans-serif !important;
         }
         .wishlistButton {
           position: absolute !important;
@@ -67,12 +80,37 @@ const WishlistProductGrid = ({ products, onRemove }) => {
           z-index: 10 !important;
           width: 30px !important;
           height: 30px !important;
-          background-color: rgba(255, 255, 255, 0.8) !important;
+          background-color: white !important;
           border-radius: 50% !important;
+          display: flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+        }
+        .addToCartButton {
+          display: flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          padding: 8px 12px !important;
+          background-color: #Ffa500 !important;
+          color: black !important;
+          border: none !important;
+          border-radius: 4px !important;
+          font-size: 14px !important;
+          font-weight: bold !important;
+          cursor: pointer !important;
+          width: 100% !important;
+          margin-top: 6px !important;
+          transition: background-color 0.2s ease !important;
+          font-family: 'Abril Extra Bold', sans-serif !important;
+        }
+        .addToCartButton:hover {
+          background-color: #e69500 !important;
+        }
+        .cartIcon {
+          margin-right: 6px !important;
         }
       }
       @media (min-width: 769px) {
-        
         .wishlistButton:hover {
           background-color: rgba(255, 255, 255, 1);
         }
@@ -85,6 +123,12 @@ const WishlistProductGrid = ({ products, onRemove }) => {
       }
     };
   }, []);
+
+  const handleAddToCart = (e, productId) => {
+    e.preventDefault();
+    e.stopPropagation();
+    window.location.href = `/product/${productId}`;
+  };
 
   return (
     <div style={styles.container}>
@@ -127,6 +171,16 @@ const WishlistProductGrid = ({ products, onRemove }) => {
               {/* Product Details */}
               <h3 className="productName" style={styles.productName}>{product.name}</h3>
               <p className="productPrice" style={styles.productPrice}>₹{product.price}</p>
+              {window.innerWidth <= 768 && (
+                <button
+                  onClick={(e) => handleAddToCart(e, product.id)}
+                  className="addToCartButton"
+                  style={styles.addToCartButton}
+                >
+                  <FaShoppingCart className="cartIcon" size={14} />
+                  Add to Cart
+                </button>
+              )}
             </div>
           </Link>
         ))}
@@ -165,7 +219,7 @@ const styles = {
     padding: '15px',
     textAlign: 'center',
     display: 'flex',
-    width:'320px',
+    width: '320px',
     flexDirection: 'column',
     alignItems: 'center',
     height: '500px',
@@ -217,7 +271,7 @@ const styles = {
     textOverflow: 'ellipsis',
     marginTop: '10px',
     marginBottom: '5px',
-    fontFamily: '"Abril Extra Bold", sans-serif' // Applied to headings (replacing Roboto)
+    fontFamily: '"Louvette Semi Bold", sans-serif'
   },
   productPrice: {
     fontWeight: 'bold',
@@ -225,7 +279,23 @@ const styles = {
     color: '#ffffff',
     marginTop: 'auto',
     paddingTop: '5px',
-    fontFamily: '"Louvette Semi Bold", sans-serif' // Applied to descriptions
+    fontFamily: '"Louvette Semi Bold", sans-serif'
+  },
+  addToCartButton: {
+    display: 'none',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: '8px 16px',
+    backgroundColor: '#Ffa500',
+    color: 'black',
+    border: 'none',
+    borderRadius: '4px',
+    fontWeight: 'bold',
+    cursor: 'pointer',
+    width: '100%',
+    marginTop: '8px',
+    transition: 'background-color 0.2s ease',
+    fontFamily: '"Abril Extra Bold", sans-serif'
   },
 };
 

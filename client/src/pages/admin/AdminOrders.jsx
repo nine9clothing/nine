@@ -46,20 +46,16 @@ const AdminOrders = () => {
       setToast({ message: 'Failed to fetch orders.', type: 'error' });
       setOrders([]);
     } else {
-      // Filter orders to take only one row per order_id (latest based on created_at) and with valid payment_method
       const filteredOrders = [];
       const orderMap = new Map();
 
       data.forEach((order) => {
-        // Only process rows where order_id equals display_order_id and payment_method is valid
         if (
           order.order_id === order.display_order_id &&
           order.payment_method &&
           order.payment_method !== 'N/A'
         ) {
-          // If order_id is not in the map or this row is newer, update the map
           if (!orderMap.has(order.order_id) || new Date(order.created_at) > new Date(orderMap.get(order.order_id).created_at)) {
-            // Ensure each item has a unique identifier
             const itemsWithUniqueIds = order.items.map((item, index) => ({
               ...item,
               id: item.id || `${order.order_id}-item-${index}`
@@ -73,7 +69,6 @@ const AdminOrders = () => {
         }
       });
 
-      // Convert map values to array
       filteredOrders.push(...orderMap.values());
       setOrders(filteredOrders || []);
     }
@@ -103,6 +98,9 @@ const AdminOrders = () => {
           }
           if (item?.units) {
             itemDesc += ` (Units: ${item.units})`;
+          }
+          if (item?.sku) {
+            itemDesc += ` (SKU: ${item.sku})`;
           }
           return itemDesc;
         }).join('; ');
@@ -243,6 +241,7 @@ const AdminOrders = () => {
                           {' — '} {formatCurrency(item.selling_price)}
                           {item.selectedSize && ` (Size: ${item.selectedSize})`}
                           {item.units && ` (Units: ${item.units})`}
+                          {item.sku && ` (ID: ${item.sku})`}
                         </span>
                       </li>
                     ))}

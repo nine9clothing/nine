@@ -78,16 +78,20 @@ const AdminInsights = () => {
       if (Array.isArray(o.items)) {
         o.items.forEach(item => {
           if (item?.name && item?.units !== undefined) {
-            productSales[item.name] = (productSales[item.name] || 0) + item.units;
+            const key = `${item.name}|${item.sku || 'N/A'}`;
+            productSales[key] = (productSales[key] || 0) + item.units;
           }
         });
       }
     });
 
     const topProducts = Object.entries(productSales)
-      .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
-      .slice(0, 5)
-      .map(([name, qty]) => ({ name, qty }));
+      .map(([key, qty]) => {
+        const [name, sku] = key.split('|');
+        return { name, sku, qty };
+      })
+      .sort((a, b) => b.qty - a.qty || a.name.localeCompare(b.name))
+      .slice(0, 5);
 
     console.log('Shipping status counts:', statusCounts);
     console.log('Top products:', topProducts);
@@ -146,9 +150,9 @@ const AdminInsights = () => {
     rows.push(['']);
 
     rows.push(['=== Top Products ===']);
-    rows.push(['Rank', 'Product Name', 'Units Sold']);
+    rows.push(['Rank', 'Product Name', 'SKU', 'Units Sold']);
     insights.topProducts?.forEach((p, i) => {
-      rows.push([i + 1, p.name, p.qty]);
+      rows.push([i + 1, p.name, p.sku, p.qty]);
     });
     rows.push(['']);
 
@@ -287,6 +291,7 @@ const AdminInsights = () => {
                   <tr>
                     <th style={{ textAlign: 'left', padding: '8px', borderBottom: '1px solid #ddd' }}>Rank</th>
                     <th style={{ textAlign: 'left', padding: '8px', borderBottom: '1px solid #ddd' }}>Product</th>
+                    <th style={{ textAlign: 'left', padding: '8px', borderBottom: '1px solid #ddd' }}>SKU (ID)</th>
                     <th style={{ textAlign: 'right', padding: '8px', borderBottom: '1px solid #ddd' }}>Units Sold</th>
                   </tr>
                 </thead>
@@ -295,6 +300,7 @@ const AdminInsights = () => {
                     <tr key={i} style={{ background: i === 0 ? '#f0fdf4' : 'transparent' }}>
                       <td style={{ padding: '8px' }}>{i + 1}</td>
                       <td style={{ padding: '8px' }}>{p.name} {i === 0 ? '(Top Seller)' : ''}</td>
+                      <td style={{ padding: '8px' }}>{p.sku}</td>
                       <td style={{ padding: '8px', textAlign: 'right' }}>{p.qty}</td>
                     </tr>
                   ))}
