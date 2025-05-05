@@ -15,7 +15,7 @@ const supabase = createClient(
 const Home = () => {
   const [gridVisible, setGridVisible] = useState(true); 
   const [logoEffect, setLogoEffect] = useState(0); 
-  const heroImages = ["/images/n1.jpg", "/images/n2.jpg", "/images/n3.jpg"];
+  const [heroImages, setHeroImages] = useState([]);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
   const [videos, setVideos] = useState([]);
@@ -27,6 +27,27 @@ const Home = () => {
     <span>Collaborate <FaHandsHelping style={{ marginLeft: '5px', verticalAlign: 'middle' }} /></span>,
     <span>Create <FaLightbulb style={{ marginLeft: '5px', verticalAlign: 'middle' }} /></span>
   ];
+
+  useEffect(() => {
+    const fetchHeroImages = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('hero_images') 
+          .select('image_url')
+          .order('id', { ascending: true });
+  
+        if (error) throw error;
+        
+        const imageUrls = data.map(item => item.image_url);
+        setHeroImages(imageUrls.length > 0 ? imageUrls : ["/images/n1.jpg", "/images/n2.jpg", "/images/n3.jpg"]);
+      } catch (error) {
+        console.error("Error fetching hero images:", error.message);
+      }
+    };
+  
+    fetchHeroImages();
+  }, []);
+
   useEffect(() => {
     const handleResize = () => setWindowWidth(window.innerWidth);
     window.addEventListener("resize", handleResize);
@@ -322,7 +343,7 @@ const Home = () => {
             padding: isMobile ? "0 20px" : undefined,
           }}
         >
-          <h1
+          {/* <h1
             style={{
               fontSize: isMobile ? "2.2rem" : "3.5rem",
               fontWeight: "900",
@@ -332,8 +353,8 @@ const Home = () => {
             }}
           >
             ESSENCE X EDGE
-          </h1>
-          <p
+          </h1> */}
+          {/* <p
             style={{
               fontSize: isMobile ? "1rem" : "1.2rem",
               fontWeight: "300",
@@ -343,7 +364,7 @@ const Home = () => {
             }}
           >
             Styled with Intent
-          </p>
+          </p> */}
         </div>
 
         <button
@@ -541,7 +562,7 @@ const Home = () => {
           height: isMobile ? "50vh" : "60vh",
           width: "100%",
           overflow: "hidden",
-          backgroundImage: `url(/images/n1.jpg)`,
+          backgroundImage: `url(/images/DSC00081.JPG)`,
           backgroundSize: "cover",
           backgroundPosition: "center",
           backgroundRepeat: "no-repeat",

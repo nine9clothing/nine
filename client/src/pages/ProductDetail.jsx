@@ -312,40 +312,87 @@ const ProductDetail = () => {
               <hr style={styles.divider} />
 
               <div style={styles.dropdownItem}>
-                <div style={styles.dropdownHeader} onClick={() => toggleSection('description')}>
-                  <span>Description</span>
-                  <span>{openSections.description ? '−' : '+'}</span>
-                </div>
-                {openSections.description && (
-                  <div style={styles.dropdownContent}>
-                    <p>{product.description || "No description available."}</p>
-                  </div>
-                )}
-              </div>
-
+  <div style={styles.dropdownHeader} onClick={() => toggleSection('description')}>
+    <span>Description</span>
+    <span>{openSections.description ? '−' : '+'}</span>
+  </div>
+  {openSections.description && (
+    <div style={styles.dropdownContent}>
+      {product.description ? (
+        <ul style={{ textAlign: 'left', paddingLeft: '20px' }}>
+          {product.description
+            .split('•')
+            .map((item, index) => {
+              const trimmedItem = item.trim();
+              return trimmedItem ? (
+                <li key={index} style={{ marginBottom: '5px', color: '#ccc' }}>
+                  {trimmedItem}
+                </li>
+              ) : null;
+            })
+            .filter(Boolean)}
+        </ul>
+      ) : (
+        <p>No description available.</p>
+      )}
+    </div>
+  )}
+</div>
               <div style={styles.dropdownItem}>
-                <div style={styles.dropdownHeader} onClick={() => toggleSection('careGuide')}>
-                  <span>Care Guide</span>
-                  <span>{openSections.careGuide ? '−' : '+'}</span>
-                </div>
-                {openSections.careGuide && (
-                  <div style={styles.dropdownContent}>
-                    <p>{product.care_guide || "No care guide available."}</p>
-                  </div>
-                )}
-              </div>
+  <div style={styles.dropdownHeader} onClick={() => toggleSection('careGuide')}>
+    <span>Care Guide</span>
+    <span>{openSections.careGuide ? '−' : '+'}</span>
+  </div>
+  {openSections.careGuide && (
+    <div style={styles.dropdownContent}>
+      {product.care_guide ? (
+        <ul style={{ textAlign: 'left', paddingLeft: '20px' }}>
+          {product.care_guide
+            .split('•')
+            .map((item, index) => {
+              const trimmedItem = item.trim();
+              return trimmedItem ? (
+                <li key={index} style={{ marginBottom: '5px', color: '#ccc' }}>
+                  {trimmedItem}
+                </li>
+              ) : null;
+            })
+            .filter(Boolean)}
+        </ul>
+      ) : (
+        <p>No care guide available.</p>
+      )}
+    </div>
+  )}
+</div>
 
-              <div style={styles.dropdownItem}>
-                <div style={styles.dropdownHeader} onClick={() => toggleSection('composition')}>
-                  <span>Composition/Fabric</span>
-                  <span>{openSections.composition ? '−' : '+'}</span>
-                </div>
-                {openSections.composition && (
-                  <div style={styles.dropdownContent}>
-                    <p>{product.composition_fabric || "No composition details available."}</p>
-                  </div>
-                )}
-              </div>
+<div style={styles.dropdownItem}>
+  <div style={styles.dropdownHeader} onClick={() => toggleSection('composition')}>
+    <span>Composition/Fabric</span>
+    <span>{openSections.composition ? '−' : '+'}</span>
+  </div>
+  {openSections.composition && (
+    <div style={styles.dropdownContent}>
+      {product.composition_fabric ? (
+        <ul style={{ textAlign: 'left', paddingLeft: '20px' }}>
+          {product.composition_fabric
+            .split('•')
+            .map((item, index) => {
+              const trimmedItem = item.trim();
+              return trimmedItem ? (
+                <li key={index} style={{ marginBottom: '5px', color: '#ccc' }}>
+                  {trimmedItem}
+                </li>
+              ) : null;
+            })
+            .filter(Boolean)}
+        </ul>
+      ) : (
+        <p>No composition details available.</p>
+      )}
+    </div>
+  )}
+</div>
             </div>
           </div>
         </div>

@@ -127,7 +127,12 @@ const ViewProducts = () => {
   const handleEditStart = (product) => {
     setConfirmingDeleteId(null); 
     setEditingProductId(product.id);
-    setEditFormData({ ...product, size: product.size ? product.size.split(',').map(s => s.trim()) : [] });
+    setEditFormData({ 
+      ...product, 
+      size: product.size ? product.size.split(',').map(s => s.trim()) : [],
+      care_guide: product.care_guide || '',
+      composition_fabric: product.composition_fabric || ''
+    });
   };
 
   const handleEditCancel = () => {
@@ -155,10 +160,10 @@ const ViewProducts = () => {
     setIsUpdating(true);
     setToast(null);
 
-    const { id, name, description, price, category, gender, size } = editFormData;
+    const { id, name, description, price, category, gender, size, care_guide, composition_fabric } = editFormData;
 
     if (!name || !description || !price || !category || !gender || !size || size.length === 0) {
-        setToast({ message: 'All fields must be filled, including at least one size, for update.', type: 'error' });
+        setToast({ message: 'Required fields (name, description, price, category, gender, and at least one size) must be filled.', type: 'error' });
         setIsUpdating(false);
         return;
     }
@@ -170,7 +175,9 @@ const ViewProducts = () => {
             price: parseFloat(price),
             category,
             gender,
-            size: Array.isArray(size) ? size.join(',') : size
+            size: Array.isArray(size) ? size.join(',') : size,
+            care_guide,
+            composition_fabric
         }).eq('id', id);
 
         if (error) {
@@ -298,6 +305,68 @@ const ViewProducts = () => {
                       </div>
                     </div>
 
+                    <label style={labelStyleSmall}>Description</label>
+                      <textarea
+                        value={editFormData.description || ''}
+                        onChange={(e) => handleEditChange('description', e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            const cursorPosition = e.target.selectionStart;
+                            const textBeforeCursor = editFormData.description.slice(0, cursorPosition);
+                            const textAfterCursor = editFormData.description.slice(cursorPosition);
+                            const newValue = `${textBeforeCursor}\n• ${textAfterCursor}`;
+                            handleEditChange('description', newValue);
+                            setTimeout(() => {
+                              e.target.selectionStart = cursorPosition + 3; 
+                              e.target.selectionEnd = cursorPosition + 3;
+                            }, 0);
+                          }
+                        }}
+                        style={{ ...inputStyleSmall, height: '60px' }}
+                      />
+
+                      <label style={labelStyleSmall}>Care Guide</label>
+                      <textarea
+                        value={editFormData.care_guide || ''}
+                        onChange={(e) => handleEditChange('care_guide', e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            const cursorPosition = e.target.selectionStart;
+                            const textBeforeCursor = editFormData.care_guide.slice(0, cursorPosition);
+                            const textAfterCursor = editFormData.care_guide.slice(cursorPosition);
+                            const newValue = `${textBeforeCursor}\n• ${textAfterCursor}`;
+                            handleEditChange('care_guide', newValue);
+                            setTimeout(() => {
+                              e.target.selectionStart = cursorPosition + 3; 
+                              e.target.selectionEnd = cursorPosition + 3;
+                            }, 0);
+                          }
+                        }}
+                        style={{ ...inputStyleSmall, height: '60px' }}
+                      />
+
+                      <label style={labelStyleSmall}>Composition Fabric</label>
+                      <textarea
+                        value={editFormData.composition_fabric || ''}
+                        onChange={(e) => handleEditChange('composition_fabric', e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            const cursorPosition = e.target.selectionStart;
+                            const textBeforeCursor = editFormData.composition_fabric.slice(0, cursorPosition);
+                            const textAfterCursor = editFormData.composition_fabric.slice(cursorPosition);
+                            const newValue = `${textBeforeCursor}\n• ${textAfterCursor}`;
+                            handleEditChange('composition_fabric', newValue);
+                            setTimeout(() => {
+                              e.target.selectionStart = cursorPosition + 3; 
+                              e.target.selectionEnd = cursorPosition + 3;
+                            }, 0);
+                          }
+                        }}
+                        style={{ ...inputStyleSmall, height: '60px' }}
+                      />
                     <div style={{ marginTop: '15px' }}>
                       <button onClick={handleUpdate} style={buttonStyle} disabled={isUpdating}>
                         {isUpdating ? 'Saving...' : 'Save'}
@@ -312,9 +381,19 @@ const ViewProducts = () => {
                     </p>
                     <h4>{product.name}</h4>
                     <p style={{ margin: '5px 0', fontWeight: 'bold' }}>₹{product.price}</p>
-                    <p style={{ fontSize: '0.9rem', color: '#555', marginBottom: '10px' }}>
+                    <p style={{ fontSize: '0.9rem', color: '#555', marginBottom: '5px' }}>
                         {product.category} | {product.gender} | Sizes: {product.size}
                     </p>
+                    {product.care_guide && (
+                      <p style={{ fontSize: '0.85rem', color: '#666', marginBottom: '5px' }}>
+                        Care Guide: {product.care_guide}
+                      </p>
+                    )}
+                    {product.composition_fabric && (
+                      <p style={{ fontSize: '0.85rem', color: '#666', marginBottom: '10px' }}>
+                        Composition: {product.composition_fabric}
+                      </p>
+                    )}
                     <p style={{ fontSize: '0.85rem', color: '#666', maxHeight: '40px', overflow: 'hidden', textOverflow: 'ellipsis', marginBottom: '15px' }}>
                         {product.description}
                     </p>
@@ -393,7 +472,7 @@ const inputStyleSmall = {
     marginBottom: '8px',
 };
 const labelStyleSmall = {
-    fontWeight: '500',
+    fontWeight: 'bold',
     marginBottom: '3px',
     fontSize: '0.85rem',
     display: 'block'
