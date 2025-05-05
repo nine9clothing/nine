@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { supabase } from '../../lib/supabase'; // Adjust path
 import ToastMessage from '../../ToastMessage'; // Adjust path
 
-const categories = ['T-Shirts', 'Hoodies', 'Jeans', 'Accessories'];
+const categories = ['T-Shirts'];
 const genders = ['Men', 'Women', 'Unisex'];
 const sizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'];
 
@@ -11,6 +11,7 @@ const AddProduct = () => {
   const [customCategory, setCustomCategory] = useState('');
   const [toast, setToast] = useState(null); // Toast message state for this component
   const [isSubmitting, setIsSubmitting] = useState(false); // Prevent double submits
+  const [uploadProgress, setUploadProgress] = useState(0); // Track upload progress
 
   const [newProduct, setNewProduct] = useState({
     name: '',
@@ -43,84 +44,157 @@ const AddProduct = () => {
   };
 
   const handleAddProduct = async () => {
-    if (isSubmitting) return;
-
+    if (isSubmitting) {
+      console.log('Submission blocked: already submitting');
+      return;
+    }
+  
     const finalCategory = newProduct.category === 'Other' ? customCategory.trim() : newProduct.category;
     const { name, description, price, gender, size, care_guide, composition_fabric } = newProduct;
-
+  
+    console.log('Validation inputs:', {
+      name,
+      description,
+      price,
+      imageFiles: imageFiles.length,
+      finalCategory,
+      gender,
+      size,
+      care_guide,
+      composition_fabric,
+    });
+  
     if (!name || !description || !price || imageFiles.length === 0 || !finalCategory || !gender || size.length === 0 || !care_guide || !composition_fabric) {
       let errorMessage = 'Please fill all required fields and upload at least one image.';
       if (newProduct.category === 'Other' && !finalCategory) {
-          errorMessage = 'Please enter a name for the custom category.';
+        errorMessage = 'Please enter a name for the custom category.';
       } else if (!newProduct.category) {
-          errorMessage = 'Please select or enter a category.';
+        errorMessage = 'Please select or enter a category.';
       }
+      console.log('Validation failed:', errorMessage);
       setToast({ message: errorMessage, type: 'error' });
       return;
     }
-
+  
     setIsSubmitting(true);
     setToast(null);
-
+    setUploadProgress(0);
+    console.log('Starting product submission');
+  
+    const timeout = setTimeout(() => {
+      setIsSubmitting(false);
+      setToast({
+        message: 'Operation timed out. Please check your connection and try again.',
+        type: 'error',
+      });
+    }, 60000); // 60 seconds
+  
     try {
+      // Verify session
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        console.error('No active session');
+        throw new Error('User not authenticated. Please log in again.');
+      }
+  
       const mediaUrls = [];
+      const totalFiles = imageFiles.length;
+      let filesUploaded = 0;
+  
+      const uploadWithTimeout = async (file, fileName) => {
+        const timeout = 30000; // 30 seconds
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error(`Upload timed out for ${file.name}`)), timeout)
+        );
+        const uploadPromise = supabase.storage.from('product-images').upload(fileName, file);
+        return Promise.race([uploadPromise, timeoutPromise]);
+      };
+  
       for (const file of imageFiles) {
+        console.log(`File: ${file.name}, Size: ${file.size} bytes, Type: ${file.type}`);
+        if (file.size > 10 * 1024 * 1024) {
+          throw new Error(`File ${file.name} exceeds 10MB limit`);
+        }
+        if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
+          throw new Error(`File ${file.name} is not a valid image or video`);
+        }
         const ext = file.name.split('.').pop();
         const fileName = `product-media/${Date.now()}-${Math.random().toString(36).substring(2)}.${ext}`;
-        const { error: uploadError } = await supabase.storage
-          .from('product-images')
-          .upload(fileName, file);
-
+        console.log(`Uploading file: ${fileName}`);
+        const { error: uploadError } = await uploadWithTimeout(file, fileName);
+  
         if (uploadError) {
-          console.error('Upload Error:', uploadError);
-          throw new Error('Failed to upload one of the files.');
+          console.error('Upload Error:', uploadError.message);
+          throw new Error(`Failed to upload file: ${file.name}`);
         }
-
+  
         const { data: urlData } = supabase.storage
           .from('product-images')
           .getPublicUrl(fileName);
-
+  
         if (!urlData || !urlData.publicUrl) {
-            console.error('Error getting public URL for:', fileName);
-            throw new Error('Failed to get public URL for an uploaded file.');
+          console.error('No public URL for:', fileName);
+          throw new Error(`Failed to get public URL for ${file.name}`);
         }
         mediaUrls.push(urlData.publicUrl);
+        filesUploaded += 1;
+        setUploadProgress((prev) => {
+          const newProgress = (filesUploaded / totalFiles) * 100;
+          console.log(`Progress update: ${newProgress}%`);
+          return newProgress;
+        });
+        console.log(`File uploaded: ${fileName}, Progress: ${(filesUploaded / totalFiles) * 100}%`);
       }
-
-      // Insert product data
-      const { error: insertError } = await supabase.from('products').insert([{
-        name,
-        description,
-        price: parseFloat(price),
-        media_urls: mediaUrls,
-        category: finalCategory,
-        gender,
-        size: size.join(','),
-        care_guide, // Save new field
-        composition_fabric, // Save new field
-      }]);
-
+  
+      console.log('Inserting product into database');
+      const { error: insertError } = await supabase.from('products').insert([
+        {
+          name,
+          description,
+          price: parseFloat(price),
+          media_urls: mediaUrls,
+          category: finalCategory,
+          gender,
+          size: size.join(','),
+          care_guide,
+          composition_fabric,
+        },
+      ]);
+  
       if (insertError) {
-        console.error('Insert Error:', insertError);
+        console.error('Insert Error:', insertError.message);
         throw new Error('Failed to add product to database.');
       }
-
+  
+      console.log('Product added successfully');
       setToast({ message: 'Product added successfully!', type: 'success' });
-      // Reset form
-      setNewProduct({ name: '', description: '', price: '', category: '', gender: '', size: [], care_guide: '', composition_fabric: '' });
+      setNewProduct({
+        name: '',
+        description: '',
+        price: '',
+        category: '',
+        gender: '',
+        size: [],
+        care_guide: '',
+        composition_fabric: '',
+      });
       setImageFiles([]);
-      setCustomCategory(''); // Reset custom category state
+      setCustomCategory('');
       const fileInput = document.getElementById('product-image-input');
       if (fileInput) fileInput.value = '';
-
     } catch (error) {
-      console.error('Error adding product:', error);
-      setToast({ message: error.message || 'An unexpected error occurred.', type: 'error' });
+      console.error('Error adding product:', error.message, error.stack);
+      setToast({
+        message: error.message || 'Failed to add product. Please try again.',
+        type: 'error',
+      });
     } finally {
+      clearTimeout(timeout);
       setIsSubmitting(false);
+      setUploadProgress(0);
+      console.log('Submission complete, isSubmitting set to false');
     }
   };
-
   return (
     <div style={{ padding: '20px' }}>
       <h2 style={{ 
@@ -223,13 +297,36 @@ const AddProduct = () => {
             </button>
           ))}
         </div>
-        <button
-          onClick={handleAddProduct}
-          style={isSubmitting ? { ...buttonStyle, opacity: 0.6, cursor: 'not-allowed' } : buttonStyle}
-          disabled={isSubmitting}
-        >
-          {isSubmitting ? 'Adding...' : 'Add Product'}
-        </button>
+        {isSubmitting ? (
+          <div style={{ marginTop: '10px' }}>
+            <div style={{
+              width: '100%',
+              backgroundColor: '#e0e0e0',
+              borderRadius: '6px',
+              height: '8px',
+              overflow: 'hidden',
+            }}>
+              <div
+                style={{
+                  width: `${uploadProgress}%`,
+                  backgroundColor: '#000',
+                  height: '100%',
+                  transition: 'width 0.3s ease',
+                }}
+              />
+            </div>
+            <div style={{ textAlign: 'center', marginTop: '5px', fontSize: '0.9rem' }}>
+              Uploading: {Math.round(uploadProgress)}%
+            </div>
+          </div>
+        ) : (
+          <button
+            onClick={handleAddProduct}
+            style={buttonStyle}
+          >
+            Add Product
+          </button>
+        )}
       </div>
 
       {toast && (

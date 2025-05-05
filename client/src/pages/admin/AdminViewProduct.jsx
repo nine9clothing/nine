@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase'; 
 import ToastMessage from '../../ToastMessage'; 
 
-const categories = ['T-Shirts', 'Hoodies', 'Jeans', 'Accessories']; 
+const categories = ['T-Shirts']; 
 const genders = ['Men', 'Women', 'Unisex']; 
 const sizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL']; 
 
@@ -267,9 +267,6 @@ const ViewProducts = () => {
                     <label style={labelStyleSmall}>Name</label>
                     <input value={editFormData.name || ''} onChange={e => handleEditChange('name', e.target.value)} style={inputStyleSmall} />
 
-                    <label style={labelStyleSmall}>Description</label>
-                    <textarea value={editFormData.description || ''} onChange={e => handleEditChange('description', e.target.value)} style={{...inputStyleSmall, height: '60px'}} />
-
                     <label style={labelStyleSmall}>Price</label>
                     <input value={editFormData.price || ''} type="number" min="0" step="0.01" onChange={e => handleEditChange('price', e.target.value)} style={inputStyleSmall} />
 
@@ -306,67 +303,70 @@ const ViewProducts = () => {
                     </div>
 
                     <label style={labelStyleSmall}>Description</label>
-                      <textarea
-                        value={editFormData.description || ''}
-                        onChange={(e) => handleEditChange('description', e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            e.preventDefault();
-                            const cursorPosition = e.target.selectionStart;
-                            const textBeforeCursor = editFormData.description.slice(0, cursorPosition);
-                            const textAfterCursor = editFormData.description.slice(cursorPosition);
-                            const newValue = `${textBeforeCursor}\n• ${textAfterCursor}`;
-                            handleEditChange('description', newValue);
-                            setTimeout(() => {
-                              e.target.selectionStart = cursorPosition + 3; 
-                              e.target.selectionEnd = cursorPosition + 3;
-                            }, 0);
-                          }
-                        }}
-                        style={{ ...inputStyleSmall, height: '60px' }}
-                      />
+                  <textarea
+                    value={editFormData.description || ''}
+                    onChange={(e) => handleEditChange('description', e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        const cursorPosition = e.target.selectionStart;
+                        const textBeforeCursor = editFormData.description.slice(0, cursorPosition);
+                        const textAfterCursor = editFormData.description.slice(cursorPosition);
+                        const newValue = `${textBeforeCursor}\n• ${textAfterCursor}`;
+                        handleEditChange('description', newValue);
+                        // Move cursor to the correct position after the bullet point
+                        setTimeout(() => {
+                          e.target.selectionStart = cursorPosition + 3; // Adjust for "\n• "
+                          e.target.selectionEnd = cursorPosition + 3;
+                        }, 0);
+                      }
+                    }}
+                    style={{ ...inputStyleSmall, height: '60px' }}
+                  />
 
-                      <label style={labelStyleSmall}>Care Guide</label>
-                      <textarea
-                        value={editFormData.care_guide || ''}
-                        onChange={(e) => handleEditChange('care_guide', e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            e.preventDefault();
-                            const cursorPosition = e.target.selectionStart;
-                            const textBeforeCursor = editFormData.care_guide.slice(0, cursorPosition);
-                            const textAfterCursor = editFormData.care_guide.slice(cursorPosition);
-                            const newValue = `${textBeforeCursor}\n• ${textAfterCursor}`;
-                            handleEditChange('care_guide', newValue);
-                            setTimeout(() => {
-                              e.target.selectionStart = cursorPosition + 3; 
-                              e.target.selectionEnd = cursorPosition + 3;
-                            }, 0);
-                          }
-                        }}
-                        style={{ ...inputStyleSmall, height: '60px' }}
-                      />
+                  <label style={labelStyleSmall}>Care Guide</label>
+                  <textarea
+                    value={editFormData.care_guide || ''}
+                    onChange={(e) => handleEditChange('care_guide', e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        const cursorPosition = e.target.selectionStart;
+                        const textBeforeCursor = editFormData.care_guide.slice(0, cursorPosition);
+                        const textAfterCursor = editFormData.care_guide.slice(cursorPosition);
+                        const newValue = `${textBeforeCursor}\n• ${textAfterCursor}`;
+                        handleEditChange('care_guide', newValue);
+                        // Move cursor to the correct position after the bullet point
+                        setTimeout(() => {
+                          e.target.selectionStart = cursorPosition + 3; // Adjust for "\n• "
+                          e.target.selectionEnd = cursorPosition + 3;
+                        }, 0);
+                      }
+                    }}
+                    style={{ ...inputStyleSmall, height: '60px' }}
+                  />
 
-                      <label style={labelStyleSmall}>Composition Fabric</label>
-                      <textarea
-                        value={editFormData.composition_fabric || ''}
-                        onChange={(e) => handleEditChange('composition_fabric', e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            e.preventDefault();
-                            const cursorPosition = e.target.selectionStart;
-                            const textBeforeCursor = editFormData.composition_fabric.slice(0, cursorPosition);
-                            const textAfterCursor = editFormData.composition_fabric.slice(cursorPosition);
-                            const newValue = `${textBeforeCursor}\n• ${textAfterCursor}`;
-                            handleEditChange('composition_fabric', newValue);
-                            setTimeout(() => {
-                              e.target.selectionStart = cursorPosition + 3; 
-                              e.target.selectionEnd = cursorPosition + 3;
-                            }, 0);
-                          }
-                        }}
-                        style={{ ...inputStyleSmall, height: '60px' }}
-                      />
+                  <label style={labelStyleSmall}>Composition Fabric</label>
+                  <textarea
+                    value={editFormData.composition_fabric || ''}
+                    onChange={(e) => handleEditChange('composition_fabric', e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        const cursorPosition = e.target.selectionStart;
+                        const textBeforeCursor = editFormData.composition_fabric.slice(0, cursorPosition);
+                        const textAfterCursor = editFormData.composition_fabric.slice(cursorPosition);
+                        const newValue = `${textBeforeCursor}\n• ${textAfterCursor}`;
+                        handleEditChange('composition_fabric', newValue);
+                        // Move cursor to the correct position after the bullet point
+                        setTimeout(() => {
+                          e.target.selectionStart = cursorPosition + 3; // Adjust for "\n• "
+                          e.target.selectionEnd = cursorPosition + 3;
+                        }, 0);
+                      }
+                    }}
+                    style={{ ...inputStyleSmall, height: '60px' }}
+                  />
                     <div style={{ marginTop: '15px' }}>
                       <button onClick={handleUpdate} style={buttonStyle} disabled={isUpdating}>
                         {isUpdating ? 'Saving...' : 'Save'}

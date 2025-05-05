@@ -17,7 +17,7 @@ const getImageUrl = (mediaUrls, index = 0) => {
 };
 
 const Sort = () => {
-  const [sortOption, setSortOption] = useState('Featured'); 
+  const [sortOption, setSortOption] = useState('Featured');
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategories, setSelectedCategories] = useState([]);
@@ -77,6 +77,8 @@ const Sort = () => {
         }
         .productCard {
           height: 300px !important;
+          width: 100% !important;
+          max-width: 130px !important; /* Restrict width */
           padding: 0 !important;
           border: none !important;
           border-radius: 0 !important;
@@ -85,11 +87,19 @@ const Sort = () => {
         }
         .productImageWrapper {
           height: 180px !important;
+          width: 120% !important;
+          max-width: 120px !important; /* Restrict width */
           border-radius: 8px !important;
           position: relative;
         }
+        .productImage {
+          width: 100% !important;
+          max-width: 120px !important; /* Restrict image width */
+          height: 100% !important;
+          object-fit: cover !important;
+        }
         .productName {
-          font-size: 13px !important;
+          font-size: 11px !important;
           font-weight: 500 !important;
           margin-top: 8px !important;
           margin-bottom: 2px !important;
@@ -98,7 +108,7 @@ const Sort = () => {
           overflow: hidden !important;
           text-overflow: ellipsis !important;
           white-space: nowrap !important;
-          font-family: 'Louvette Semi Bold', sans-serif !important; 
+          font-family: 'Louvette Semi Bold', sans-serif !important;
         }
         .productPrice {
           font-size: 14px !important;
@@ -106,7 +116,7 @@ const Sort = () => {
           font-weight: bold !important;
           text-align: left !important;
           margin-top: 2px !important;
-          margin-bottom: 8px !important; 
+          margin-bottom: 8px !important;
           font-family: 'Louvette Semi Bold', sans-serif !important;
         }
         .wishlistButton {
@@ -130,9 +140,10 @@ const Sort = () => {
           font-weight: bold !important;
           cursor: pointer !important;
           width: 100% !important;
+          max-width: 180px !important; /* Restrict width */
           margin-top: 6px !important;
           transition: background-color 0.2s ease !important;
-          font-family: 'Abril Extra Bold', sans-serif !important; 
+          font-family: 'Abril Extra Bold', sans-serif !important;
         }
         .addToCartButton:hover {
           background-color: #e69500 !important;
@@ -160,18 +171,18 @@ const Sort = () => {
           width: 100% !important;
           margin-bottom: 15px !important;
           text-align: left !important;
-          display: block !important; 
+          display: block !important;
         }
         .filterSectionTitle {
           font-size: 1.1rem !important;
           color: #Ffa500 !important;
           margin-bottom: 10px !important;
-          font-family: 'Abril Extra Bold', sans-serif !important; // Applied to headings
+          font-family: 'Abril Extra Bold', sans-serif !important;
         }
         .select, .checkboxLabel {
           font-size: 13px !important;
           color: white !important;
-          font-family: 'Louvette Semi Bold', sans-serif !important; // Applied to descriptions
+          font-family: 'Louvette Semi Bold', sans-serif !important;
         }
         .select {
           width: 100% !important;
@@ -186,7 +197,7 @@ const Sort = () => {
         }
         .checkboxText {
           margin-left: 8px !important;
-          font-family: 'Louvette Semi Bold', sans-serif !important; // Applied to descriptions
+          font-family: 'Louvette Semi Bold', sans-serif !important;
         }
         .filterButton {
           margin-right: 10px !important;
@@ -446,7 +457,7 @@ const styles = {
     minHeight: '100vh',
     backgroundColor: "black",
     position: 'relative',
-    fontFamily: "'Roboto', sans-serif", 
+    fontFamily: "'Roboto', sans-serif",
   },
   section: {
     padding: '20px',
@@ -460,12 +471,12 @@ const styles = {
     marginTop: '10px',
     textAlign: 'center',
     color: "#Ffa500",
-    fontFamily: "'Abril Extra Bold', sans-serif", 
+    fontFamily: "'Abril Extra Bold', sans-serif",
     marginBottom: '30px',
   },
   buttonContainer: {
     textAlign: 'right',
-    marginBottom: '10px', 
+    marginBottom: '10px',
     position: 'relative',
   },
   filterButton: {
@@ -473,7 +484,7 @@ const styles = {
     color: 'black',
     padding: '8px 16px',
     border: 'none',
-    fontFamily: "'Abril Extra Bold', sans-serif", 
+    fontFamily: "'Abril Extra Bold', sans-serif",
     borderRadius: '50px',
     fontWeight: 'bold',
     cursor: 'pointer',
@@ -487,7 +498,7 @@ const styles = {
   filterPopup: {
     display: 'flex',
     justifyContent: 'space-between',
-    alignItems: 'flex-start', 
+    alignItems: 'flex-start',
     width: '100%',
     backgroundColor: '#000',
     padding: '15px 0',
@@ -497,46 +508,46 @@ const styles = {
     top: '60px',
     left: 0,
     zIndex: 1000,
-    flexWrap: 'nowrap', 
-    overflowX: 'auto', 
-    whiteSpace: 'nowrap', 
+    flexWrap: 'nowrap',
+    overflowX: 'auto',
+    whiteSpace: 'nowrap',
   },
   filterSection: {
-    flex: '0 0 auto', 
-    minWidth: '150px', 
+    flex: '0 0 auto',
+    minWidth: '150px',
     padding: '0 15px',
-    textAlign: 'left', 
-    marginRight: '20px', 
+    textAlign: 'left',
+    marginRight: '20px',
   },
   filterSectionTitle: {
     fontSize: '1.1rem',
     fontWeight: '600',
     color: '#fff',
     marginBottom: '10px',
-    marginTop:'10px',
+    marginTop: '10px',
     textTransform: 'uppercase',
-    fontFamily: "'Abril Extra Bold', sans-serif", // Applied to headings
+    fontFamily: "'Abril Extra Bold', sans-serif",
   },
   checkboxLabel: {
     display: 'flex',
     alignItems: 'center',
-    marginBottom: '10px', 
+    marginBottom: '10px',
     fontSize: '14px',
     cursor: 'pointer',
-    color: 'white', 
-    fontFamily: "'Louvette Semi Bold', sans-serif", 
+    color: 'white',
+    fontFamily: "'Louvette Semi Bold', sans-serif",
   },
   checkboxText: {
-    marginLeft: '10px', 
-    fontFamily: "'Louvette Semi Bold', sans-serif", 
+    marginLeft: '10px',
+    fontFamily: "'Louvette Semi Bold', sans-serif",
   },
   select: {
     width: '100%',
-    padding: '10px', 
+    padding: '10px',
     borderRadius: '6px',
     border: '1px solid #ccc',
     fontSize: '14px',
-    backgroundColor: 'white', 
+    backgroundColor: 'white',
     cursor: 'pointer',
     fontFamily: "'Louvette Semi Bold', sans-serif",
   },
@@ -544,11 +555,11 @@ const styles = {
     flex: 1,
     paddingLeft: '20px',
     paddingRight: '20px',
-    marginTop: '20px', 
+    marginTop: '20px',
   },
   gridContainer: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+    gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 300px))', // Adjusted to constrain width
     gap: '30px',
     justifyContent: 'center',
   },
@@ -569,6 +580,8 @@ const styles = {
     flexDirection: 'column',
     alignItems: 'center',
     height: '500px',
+    width: '100%',
+    maxWidth: '300px', // Restrict maximum width
     margin: '0 auto',
     overflow: 'hidden',
     transition: 'transform 0.3s ease, box-shadow 0.3s ease',
@@ -598,6 +611,7 @@ const styles = {
   },
   imageWrapper: {
     width: '100%',
+    maxWidth: '300px', // Restrict maximum width
     height: '350px',
     overflow: 'hidden',
     marginBottom: '15px',
@@ -607,6 +621,7 @@ const styles = {
   productImage: {
     display: 'block',
     width: '100%',
+    maxWidth: '300px', // Restrict maximum width
     height: '100%',
     objectFit: 'cover',
     transition: 'transform 0.4s ease-out',
@@ -623,7 +638,7 @@ const styles = {
     textOverflow: 'ellipsis',
     marginTop: '10px',
     marginBottom: '5px',
-    fontFamily: "'Louvette Semi Bold', sans-serif", // Applied to descriptions
+    fontFamily: "'Louvette Semi Bold', sans-serif",
   },
   productDescription: {
     fontSize: '14px',
@@ -632,7 +647,7 @@ const styles = {
     maxHeight: '40px',
     overflow: 'hidden',
     textOverflow: 'ellipsis',
-    fontFamily: "'Louvette Semi Bold', sans-serif", // Applied to descriptions
+    fontFamily: "'Louvette Semi Bold', sans-serif",
   },
   productPrice: {
     fontWeight: 'bold',
@@ -640,7 +655,7 @@ const styles = {
     color: 'white',
     marginTop: 'auto',
     paddingTop: '5px',
-    fontFamily: "'Louvette Semi Bold', sans-serif", // Applied to descriptions
+    fontFamily: "'Louvette Semi Bold', sans-serif",
   },
   addToCartButton: {
     display: 'none',
@@ -654,21 +669,22 @@ const styles = {
     fontWeight: 'bold',
     cursor: 'pointer',
     width: '100%',
+    maxWidth: '300px', // Restrict maximum width
     marginTop: '8px',
     transition: 'background-color 0.2s ease',
-    fontFamily: "'Abril Extra Bold', sans-serif", // Applied to headings
+    fontFamily: "'Abril Extra Bold', sans-serif",
   },
   message: {
     textAlign: 'center',
     fontWeight: 'bold',
     fontSize: '18px',
     color: '#aaa',
-    fontFamily: "'Louvette Semi Bold', sans-serif", // Applied to descriptions
+    fontFamily: "'Louvette Semi Bold', sans-serif",
   },
   loadingText: {
     fontSize: '14px',
     color: '#666',
-    fontFamily: "'Louvette Semi Bold', sans-serif", // Applied to descriptions
+    fontFamily: "'Louvette Semi Bold', sans-serif",
   },
 };
 
