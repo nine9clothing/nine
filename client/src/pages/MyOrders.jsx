@@ -492,7 +492,7 @@ const styles = {
   },
   heading: {
     fontFamily: "'Abril Extra Bold', sans-serif",
-    fontSize: "2.8rem",
+    fontSize: "2.5rem",
     fontWeight: '700',
     textAlign: 'center',
     marginTop: '60px',
@@ -633,7 +633,7 @@ const styles = {
   },
   headingMobile: {
     fontFamily: "'Abril Extra Bold', sans-serif",
-    fontSize: "2rem",
+    fontSize: "1.5rem",
     fontWeight: '700',
     textAlign: 'center',
     marginTop: '50px',

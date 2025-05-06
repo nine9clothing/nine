@@ -49,7 +49,7 @@ const About = () => {
       textAlign: 'center',
     },
     heading: {
-      fontSize: "2.8rem",
+      fontSize: "2rem",
       fontWeight: '900',
       marginBottom: '30px',
       fontFamily: '"Abril Extra Bold", sans-serif', 

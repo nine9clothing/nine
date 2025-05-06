@@ -132,10 +132,10 @@ const styles = {
   pageTitle: {
     fontWeight: '700',
     fontFamily: "'Abril Extra Bold', sans-serif", 
-    fontSize: window.innerWidth <= 768 ? '2rem' : '2.2rem',
-    marginBottom: '30px',
+    fontSize: window.innerWidth <= 768 ? '2rem' : '2rem',
+    marginBottom: '10px',
     color: '#Ffa500',
-    marginTop: '10px',
+    marginTop: '1px',
     textAlign: 'center',
   },
   loadingText: {

@@ -1684,9 +1684,9 @@ const styles = {
     padding: window.innerWidth <= 768 ? '0' : '12px',
   },
   columnHeading: {
-    marginTop: window.innerWidth <= 768 ? '50px' : '50px',
+    marginTop: window.innerWidth <= 768 ? '60px' : '60px',
     marginBottom: '20px',
-    fontSize: '2.8rem',
+    fontSize: '2rem',
     fontWeight: '700',
     fontFamily: "'Abril Extra Bold', sans-serif",
     color: '#Ffa500',
@@ -1701,7 +1701,7 @@ const styles = {
     transition: 'transform 0.25s ease-in-out, box-shadow 0.25s ease-in-out',
   },
   cardTitle: {
-    fontSize: '1.8rem',
+    fontSize: '1.5rem',
     fontWeight: '600',
     fontFamily: "'Abril Extra Bold', sans-serif",
     marginBottom: '16px',

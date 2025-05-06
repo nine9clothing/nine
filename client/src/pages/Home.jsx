@@ -1,16 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { createClient } from "@supabase/supabase-js";
+import { supabase } from '../lib/supabase'; 
 import Navbar from "../components/Navbar";
 import ProductGrid from "../components/ProductGrid";
 import ReelsSection from "../components/ReelsSection";
 import logo from "../assets/nine9_logo.png";
 import { FaArrowLeft, FaArrowRight, FaBoxOpen, FaSyncAlt, FaShieldAlt, FaComments, FaHandsHelping, FaLightbulb } from "react-icons/fa";
 import Footer from "../pages/Footer";
-
-const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL,
-  import.meta.env.VITE_SUPABASE_ANON_KEY
-);
 
 const Home = () => {
   const [gridVisible, setGridVisible] = useState(true); 
@@ -520,10 +515,10 @@ const Home = () => {
         >
           <FaSyncAlt style={{ fontSize: isMobile ? "30px" : "40px", color: "#Ffa500", marginBottom: "15px" }} />
           <h3 style={{ fontSize: isMobile ? "1.1rem" : "1.3rem", fontWeight: "700", marginBottom: "10px", letterSpacing: "1px", fontFamily: '"Abril Extra Bold", sans-serif' }}>
-            5 DAYS RETURN
+            5 DAYS Exchange
           </h3>
           <p style={{ fontSize: isMobile ? "0.9rem" : "1rem", fontWeight: "400", color: "#cccccc", maxWidth: isMobile ? "100%" : "180px", lineHeight: "1.5", fontFamily: '"Louvette Semi Bold", sans-serif' }}>
-            Hassle-free returns within 5 days of delivery.
+            Hassle-free exchange within 5 days of delivery.
           </p>
         </div>
 

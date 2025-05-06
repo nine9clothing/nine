@@ -466,7 +466,7 @@ const styles = {
     transition: 'margin-left 0.3s ease',
   },
   sectionTitle: {
-    fontSize: "2.8rem",
+    fontSize: "2rem",
     fontWeight: '700',
     marginTop: '10px',
     textAlign: 'center',
@@ -559,7 +559,7 @@ const styles = {
   },
   gridContainer: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 300px))', // Adjusted to constrain width
+    gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 300px))', 
     gap: '30px',
     justifyContent: 'center',
   },

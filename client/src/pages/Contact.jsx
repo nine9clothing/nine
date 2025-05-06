@@ -91,12 +91,12 @@ const Contact = () => {
           textAlign: 'center'
         }}>
           <h2 style={{
-            fontSize: "2.8rem",
+            fontSize: "2rem",
             fontFamily: "'Abril Extra Bold', sans-serif", 
             marginBottom: '30px',
             fontWeight: '700',
             color: '#Ffa500',
-            marginTop: '50px' 
+            marginTop: '30px' 
           }}>Contact Us</h2>
           <form onSubmit={handleSubmit} style={{
             maxWidth: '600px',

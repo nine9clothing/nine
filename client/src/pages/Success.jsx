@@ -4,7 +4,6 @@ import Navbar from '../components/Navbar';
 import Footer from "../pages/Footer";      
 
 const Success = () => {
-  // Apply media query styles when component mounts
   useEffect(() => {
     const styleSheet = document.createElement('style');
     styleSheet.type = 'text/css';
@@ -31,7 +30,6 @@ const Success = () => {
     `;
     document.head.appendChild(styleSheet);
     
-    // Clean up function
     return () => {
       styleSheet.remove();
     };
@@ -82,8 +80,8 @@ const styles = {
     textAlign: 'center',
   },
   title: {
-    fontFamily: "'Abril Extra Bold', sans-serif", // Applied to headings
-    fontSize: '2.4rem',
+    fontFamily: "'Abril Extra Bold', sans-serif", 
+    fontSize: '2rem',
     color: '#28a745',
     marginBottom: '20px',
     fontWeight: '700',
@@ -91,13 +89,13 @@ const styles = {
   subtitle: {
     fontSize: '1.2rem',
     marginBottom: '10px',
-    fontFamily: "'Louvette Semi Bold', sans-serif", // Applied to descriptions
+    fontFamily: "'Louvette Semi Bold', sans-serif", 
     fontWeight: '500',
   },
   infoText: {
     fontSize: '1rem',
     color: '#555',
-    fontFamily: "'Louvette Semi Bold', sans-serif", // Applied to descriptions
+    fontFamily: "'Louvette Semi Bold', sans-serif", 
     marginBottom: '30px',
     lineHeight: '1.6',
   },
@@ -106,7 +104,7 @@ const styles = {
     backgroundColor: 'black',
     color: '#fff',
     border: 'none',
-    fontFamily: "'Louvette Semi Bold', sans-serif", // Applied to descriptions
+    fontFamily: "'Louvette Semi Bold', sans-serif", 
     borderRadius: '6px',
     fontSize: '1rem',
     fontWeight: '600',

@@ -699,6 +699,7 @@ const Login = () => {
 
   const headingStyle = {
     fontSize: '2rem',
+    marginTop:'10px',
     marginBottom: '20px',
     textAlign: 'center',
     color: 'black',

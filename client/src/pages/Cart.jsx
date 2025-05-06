@@ -345,13 +345,13 @@ const styles = {
     margin: '0 auto',
   },
   columnHeading: {
-    marginTop: '55px',
+    marginTop: '65px',
     marginBottom: '24px',
     fontWeight: '700',
     color: 'white',
     textAlign: window.innerWidth <= 768 ? 'center' : 'left',
     fontFamily: "'Abril Extra Bold', sans-serif",
-    fontSize: window.innerWidth <= 768 ? '2rem' : '2.2rem',
+    fontSize: window.innerWidth <= 768 ? '1.8rem' : '2rem',
   },
   leftColumn: {
     flex: '1',

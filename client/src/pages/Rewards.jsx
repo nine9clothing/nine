@@ -248,7 +248,7 @@ const Rewards = () => {
                     margin: '0 auto'
                 }}>
                     <h2 style={{
-                        fontSize: '2.8rem',
+                        fontSize: '2rem',
                         fontFamily: "'Abril Extra Bold', sans-serif",
                         marginBottom: '20px',
                         marginTop: '60px',

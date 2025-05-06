@@ -122,8 +122,8 @@ const Navbar = ({ showLogo }) => {
     e.preventDefault();
     setShowSearch(!showSearch);
     setSearchQuery('');
-    setProducts([]); // Clear previous results when toggling search bar
-    setError(''); // Clear previous error
+    setProducts([]); 
+    setError('');
   };
 
   const handleSearchSubmit = async (e) => {
@@ -210,7 +210,7 @@ const Navbar = ({ showLogo }) => {
       flex: 1,
       position: 'relative',
       zIndex: 1050,
-      marginLeft: isMobile ? '0' : '33%',
+      marginLeft: isMobile ? '0' : '33.5%',
       justifyContent: 'isMobile ? center : flex-start',
     },
     logo: {
@@ -681,7 +681,7 @@ const Navbar = ({ showLogo }) => {
         </div>
       )}
 
-      {isMobile && (
+      {/* {isMobile && (
         <Link to="/cart" style={styles.floatingCart}>
           <FaShoppingCart className="floating-cart-icon" />
           {cartCount > 0 && (
@@ -701,7 +701,7 @@ const Navbar = ({ showLogo }) => {
           )}
         </Link>
         
-      )}
+      )} */}
      {toastMessage && (
         <ToastMessage
           message={toastMessage.message}

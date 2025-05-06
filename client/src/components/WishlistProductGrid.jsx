@@ -25,35 +25,39 @@ const WishlistProductGrid = ({ products, onRemove }) => {
       @media (max-width: 768px) {
         .gridContainer {
           grid-template-columns: repeat(2, 1fr) !important;
-          gap: 10px !important;
+          gap: 12px !important;
           width: 100% !important;
           max-width: 100% !important;
           padding: 0 5px !important;
           box-sizing: border-box !important;
         }
         .productCard {
-          height: 280px !important;
+          height: 300px !important;
           width: 100% !important;
+          max-width: 130px !important;
           padding: 0 !important;
           border: none !important;
           border-radius: 0 !important;
-          margin-bottom: 15px !important;
+          margin-bottom: 20px !important;
           box-shadow: none !important;
           box-sizing: border-box !important;
         }
         .productImageWrapper {
           height: 180px !important;
+          width: 120% !important;
+          max-width: 120px !important;
           border-radius: 8px !important;
           position: relative;
-          width: 100% !important;
         }
         .productImage {
-          border-radius: 8px !important;
           width: 100% !important;
+          max-width: 120px !important;
           height: 100% !important;
+          object-fit: cover !important;
+          border-radius: 8px !important;
         }
         .productName {
-          font-size: 14px !important;
+          font-size: 11px !important;
           font-weight: 500 !important;
           margin-top: 8px !important;
           margin-bottom: 2px !important;
@@ -90,15 +94,16 @@ const WishlistProductGrid = ({ products, onRemove }) => {
           display: flex !important;
           align-items: center !important;
           justify-content: center !important;
-          padding: 8px 12px !important;
+          padding: 6px 12px !important;
           background-color: #Ffa500 !important;
           color: black !important;
           border: none !important;
           border-radius: 4px !important;
-          font-size: 14px !important;
+          font-size: 12px !important;
           font-weight: bold !important;
           cursor: pointer !important;
           width: 100% !important;
+          max-width: 180px !important;
           margin-top: 6px !important;
           transition: background-color 0.2s ease !important;
           font-family: 'Abril Extra Bold', sans-serif !important;

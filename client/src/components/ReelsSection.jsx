@@ -1,10 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Volume2, VolumeX, X, Play } from 'lucide-react';
-import { createClient } from '@supabase/supabase-js';
-
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+import { supabase } from '../lib/supabase'; // Import shared Supabase client
 const VIDEO_FORMATS = /\.(mp4|webm|ogg|mov)$/i; 
 
 // Custom Hook for Window Size
@@ -718,11 +714,11 @@ const ReelsSection = ({ singleLine = true, isMobile = false }) => {
                   bottom: 0,
                   backgroundColor: 'rgba(0, 0, 0, 0.2)'
                 }}></div>
-                {video.caption && (
+                {/* {video.caption && (
                   <div style={styles.caption}>
                     {video.caption}
                   </div>
-                )}
+                )} */}
               </div>
             ))}
           </div>
