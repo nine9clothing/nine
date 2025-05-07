@@ -1147,6 +1147,74 @@ const Checkout = () => {
     setSelectedAddressId(newId);
   };
 
+  // const handleOnlinePayment = async () => {
+  //   setLoadingOrder(true);
+  //   try {
+  //     console.log('handleOnlinePayment - addresses:', addresses);
+  //     console.log('handleOnlinePayment - selectedAddressId:', selectedAddressId);
+  //     const selectedAddress = addresses.find(addr => addr.id.toString() === selectedAddressId);
+  //     console.log('handleOnlinePayment - selectedAddress:', selectedAddress);
+  //     if (!selectedAddress) {
+  //       throw new Error('Selected address not found.');
+  //     }
+
+  //     const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/razorpay/create-order`, {
+  //       amount: totalWithShipping,
+  //       currency: 'INR',
+  //       receipt: `order_rcptid_${Date.now()}`,
+  //     });
+
+  //     const order = response.data;
+  //     if (order.error) {
+  //       throw new Error('Error creating Razorpay order: ' + order.error);
+  //     }
+
+  //     const options = {
+  //       key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+  //       amount: order.amount,
+  //       currency: order.currency,
+  //       name: 'Clothing Brand',
+  //       description: 'Purchase of Clothing Items',
+  //       order_id: order.id,
+  //       handler: async function (response) {
+  //         const verifyResponse = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/razorpay/verify-payment`, {
+  //           razorpay_order_id: response.razorpay_order_id,
+  //           razorpay_payment_id: response.razorpay_payment_id,
+  //           razorpay_signature: response.razorpay_signature,
+  //         });
+
+  //         const verifyResult = verifyResponse.data;
+  //         if (verifyResult.status === 'success') {
+  //           await completeOrder(response.razorpay_payment_id);
+  //         } else {
+  //           setToastMessage({ message: 'Payment verification failed: ' + verifyResult.message, type: 'error' });
+  //           setLoadingOrder(false);
+  //         }
+  //       },
+  //       modal: {
+  //         ondismiss: function() {
+  //           setLoadingOrder(false);
+  //           navigate('/checkout', {
+  //             state: { subtotal, discount, pointsToRedeem, pointsDiscount, total: totalAfterDiscount, appliedPromo }
+  //           });
+  //         }
+  //       },
+  //       prefill: {
+  //         name: user?.user_metadata?.full_name || 'Customer Name',
+  //         email: user?.email || 'customer@example.com',
+  //         contact: selectedAddress.phone || '9999999999',
+  //       },
+  //       theme: { color: '#Ffa500' },
+  //     };
+
+  //     const rzp = new window.Razorpay(options);
+  //     rzp.open();
+  //   } catch (error) {
+  //     console.error('Online payment error:', error);
+  //     setToastMessage({ message: 'Failed to initiate payment: ' + error.message, type: 'error' });
+  //     setLoadingOrder(false);
+  //   }
+  // };
   const handleOnlinePayment = async () => {
     setLoadingOrder(true);
     try {
@@ -1154,45 +1222,64 @@ const Checkout = () => {
       console.log('handleOnlinePayment - selectedAddressId:', selectedAddressId);
       const selectedAddress = addresses.find(addr => addr.id.toString() === selectedAddressId);
       console.log('handleOnlinePayment - selectedAddress:', selectedAddress);
+  
       if (!selectedAddress) {
-        throw new Error('Selected address not found.');
+        throw new Error('Selected address not found');
       }
-
+      if (!user?.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(user.email)) {
+        throw new Error('Invalid or missing email');
+      }
+      if (!selectedAddress.phone || !/^[6-9]\d{9}$/.test(selectedAddress.phone)) {
+        throw new Error('Invalid phone number: ' + selectedAddress.phone);
+      }
+      if (isNaN(totalWithShipping) || totalWithShipping <= 0) {
+        throw new Error('Invalid totalWithShipping: ' + totalWithShipping);
+      }
+      if (!import.meta.env.VITE_RAZORPAY_KEY_ID) {
+        throw new Error('Razorpay key not configured');
+      }
+  
+      console.log('Total with shipping:', totalWithShipping);
       const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/razorpay/create-order`, {
         amount: totalWithShipping,
         currency: 'INR',
-        receipt: `order_rcptid_${Date.now()}`,
+        receipt: `order_rcptid_${Date.now()}`
       });
-
+  
       const order = response.data;
       if (order.error) {
         throw new Error('Error creating Razorpay order: ' + order.error);
       }
-
+  
       const options = {
-        key: import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_xxx',
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
         amount: order.amount,
         currency: order.currency,
         name: 'Clothing Brand',
         description: 'Purchase of Clothing Items',
         order_id: order.id,
         handler: async function (response) {
-          const verifyResponse = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/razorpay/verify-payment`, {
-            razorpay_order_id: response.razorpay_order_id,
-            razorpay_payment_id: response.razorpay_payment_id,
-            razorpay_signature: response.razorpay_signature,
-          });
-
-          const verifyResult = verifyResponse.data;
-          if (verifyResult.status === 'success') {
-            await completeOrder(response.razorpay_payment_id);
-          } else {
-            setToastMessage({ message: 'Payment verification failed: ' + verifyResult.message, type: 'error' });
+          try {
+            const verifyResponse = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/razorpay/verify-payment`, {
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature
+            });
+            const verifyResult = verifyResponse.data;
+            if (verifyResult.status === 'success') {
+              await completeOrder(response.razorpay_payment_id);
+            } else {
+              setToastMessage({ message: 'Payment verification failed: ' + verifyResult.message, type: 'error' });
+              setLoadingOrder(false);
+            }
+          } catch (error) {
+            console.error('Verification error:', error);
+            setToastMessage({ message: 'Payment verification failed: ' + error.message, type: 'error' });
             setLoadingOrder(false);
           }
         },
         modal: {
-          ondismiss: function() {
+          ondismiss: function () {
             setLoadingOrder(false);
             navigate('/checkout', {
               state: { subtotal, discount, pointsToRedeem, pointsDiscount, total: totalAfterDiscount, appliedPromo }
@@ -1201,13 +1288,23 @@ const Checkout = () => {
         },
         prefill: {
           name: user?.user_metadata?.full_name || 'Customer Name',
-          email: user?.email || 'customer@example.com',
-          contact: selectedAddress.phone || '9999999999',
+          email: user.email,
+          contact: selectedAddress.phone
         },
-        theme: { color: '#Ffa500' },
+        theme: { color: '#Ffa500' }
       };
-
+  
       const rzp = new window.Razorpay(options);
+      rzp.on('payment.failed', function (response) {
+        console.error('Payment failed:', response.error);
+        setToastMessage({ message: `Payment failed: ${response.error.description}`, type: 'error' });
+        setLoadingOrder(false);
+      });
+      rzp.on('payment.error', function (response) {
+        console.error('Checkout error:', response.error);
+        setToastMessage({ message: `Checkout error: ${response.error.description}`, type: 'error' });
+        setLoadingOrder(false);
+      });
       rzp.open();
     } catch (error) {
       console.error('Online payment error:', error);
@@ -1215,7 +1312,6 @@ const Checkout = () => {
       setLoadingOrder(false);
     }
   };
-
   const completeOrder = async (paymentId = null) => {
     if (cartItems.length === 0) {
       setToastMessage({ message: 'Your cart is empty.', type: 'error' });
