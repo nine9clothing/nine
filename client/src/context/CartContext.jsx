@@ -20,6 +20,7 @@ export const CartProvider = ({ children }) => {
   const [isCartLoaded, setIsCartLoaded] = useState(false);
   const [syncError, setSyncError] = useState(null);
 
+  // Merge local and server carts to combine unique items
   const mergeCarts = (localCart, serverCart) => {
     const merged = [...serverCart];
     localCart.forEach((localItem) => {
@@ -38,7 +39,6 @@ export const CartProvider = ({ children }) => {
     if (authLoading) return;
 
     const loadCart = debounce(async () => {
-      setIsCartLoaded(false); // Reset loading state
       let localCart = [];
       try {
         const savedCart = localStorage.getItem('cart');
@@ -46,6 +46,7 @@ export const CartProvider = ({ children }) => {
           const parsedCart = JSON.parse(savedCart);
           if (Array.isArray(parsedCart)) {
             localCart = parsedCart;
+            console.log('Restored cart from local storage:', localCart);
             setCartItems(localCart);
           } else {
             console.warn('Invalid local cart data, resetting.');
@@ -58,6 +59,7 @@ export const CartProvider = ({ children }) => {
       }
 
       if (user && user.id) {
+        console.log('Fetching cart for user ID:', user.id);
         try {
           const { data, error } = await supabase
             .from('cart_data')
@@ -66,26 +68,53 @@ export const CartProvider = ({ children }) => {
             .single();
           if (error) {
             console.error('Error fetching cart from Supabase:', error.message);
-            setSyncError('Failed to fetch cart. Using local cart.');
-            setCartItems(localCart);
-          } else {
-            const serverCart = Array.isArray(data?.cart_items) ? data.cart_items : [];
-            const mergedCart = mergeCarts(localCart, serverCart);
+            if (error.code === '42P01') {
+              setSyncError('Cart database unavailable. Using local cart.');
+            }
+            // Keep local cart if Supabase fails
+          } else if (data && Array.isArray(data.cart_items)) {
+            console.log('Cart items fetched from Supabase:', data.cart_items);
+            const mergedCart = mergeCarts(localCart, data.cart_items);
             setCartItems(mergedCart);
             try {
               localStorage.setItem('cart', JSON.stringify(mergedCart));
             } catch (e) {
-              console.error('Local storage error:', e);
-              setSyncError('Failed to save cart locally.');
+              if (e.name === 'QuotaExceededError') {
+                console.error('Local storage quota exceeded. Clearing cart.');
+                localStorage.removeItem('cart');
+                setCartItems([]);
+                setSyncError('Cart cleared due to storage limits.');
+              } else {
+                console.error('Local storage unavailable:', e);
+              }
+            }
+          } else {
+            console.warn('No cart data found in Supabase for user:', user.id);
+            if (localCart.length > 0) {
+              // Sync local cart to Supabase if Supabase has no data
+              try {
+                await supabase
+                  .from('cart_data')
+                  .upsert(
+                    {
+                      user_id: user.id,
+                      cart_items: localCart,
+                      updated_at: new Date().toISOString(),
+                    },
+                    { onConflict: 'user_id' }
+                  );
+              } catch (err) {
+                console.error('Error syncing local cart to Supabase:', err.message);
+                setSyncError('Failed to sync cart. Changes saved locally.');
+              }
             }
           }
         } catch (err) {
           console.error('Unexpected error fetching cart:', err.message);
           setSyncError('Failed to fetch cart. Using local cart.');
-          setCartItems(localCart);
         }
       } else {
-        setCartItems(localCart);
+        console.log('No user, using local cart');
       }
       setIsCartLoaded(true);
     }, 100);
@@ -100,6 +129,21 @@ export const CartProvider = ({ children }) => {
     const syncCart = debounce(async () => {
       try {
         if (user && user.id) {
+          // Check if cart has changed
+          const currentCart = JSON.stringify(cartItems);
+          const { data: serverData } = await supabase
+            .from('cart_data')
+            .select('cart_items')
+            .eq('user_id', user.id)
+            .single();
+          const lastSyncedCart = JSON.stringify(serverData?.cart_items || []);
+          if (currentCart === lastSyncedCart) {
+            console.log('No cart changes to sync.');
+            setSyncError(null);
+            return;
+          }
+
+          console.log('Syncing cart to Supabase for user ID:', user.id, cartItems);
           const { error } = await supabase
             .from('cart_data')
             .upsert(
@@ -118,22 +162,50 @@ export const CartProvider = ({ children }) => {
               localStorage.setItem('cart', JSON.stringify(cartItems));
               setSyncError(null);
             } catch (e) {
-              console.error('Local storage error:', e);
-              setSyncError('Failed to save cart locally.');
+              if (e.name === 'QuotaExceededError') {
+                console.error('Local storage quota exceeded. Clearing cart.');
+                localStorage.removeItem('cart');
+                setCartItems([]);
+                setSyncError('Cart cleared due to storage limits.');
+              } else {
+                console.error('Local storage unavailable:', e);
+                setSyncError('Failed to save cart locally.');
+              }
             }
           }
         } else {
+          console.log('No user, saving cart to local storage:', cartItems);
           try {
             localStorage.setItem('cart', JSON.stringify(cartItems));
             setSyncError(null);
           } catch (e) {
-            console.error('Local storage error:', e);
-            setSyncError('Failed to save cart locally.');
+            if (e.name === 'QuotaExceededError') {
+              console.error('Local storage quota exceeded. Clearing cart.');
+              localStorage.removeItem('cart');
+              setCartItems([]);
+              setSyncError('Cart cleared due to storage limits.');
+            } else {
+              console.error('Local storage unavailable:', e);
+              setSyncError('Failed to save cart locally.');
+            }
           }
         }
       } catch (err) {
         console.error('Unexpected error syncing cart:', err.message);
         setSyncError('Failed to sync cart. Changes saved locally.');
+        try {
+          localStorage.setItem('cart', JSON.stringify(cartItems));
+        } catch (e) {
+          if (e.name === 'QuotaExceededError') {
+            console.error('Local storage quota exceeded. Clearing cart.');
+            localStorage.removeItem('cart');
+            setCartItems([]);
+            setSyncError('Cart cleared due to storage limits.');
+          } else {
+            console.error('Local storage unavailable:', e);
+            setSyncError('Failed to save cart locally.');
+          }
+        }
       }
     }, 400);
 
@@ -171,33 +243,7 @@ export const CartProvider = ({ children }) => {
     );
   };
 
-  const clearCart = async () => {
-    setCartItems([]);
-    try {
-      localStorage.setItem('cart', JSON.stringify([]));
-      if (user && user.id) {
-        const { error } = await supabase
-          .from('cart_data')
-          .upsert(
-            {
-              user_id: user.id,
-              cart_items: [],
-              updated_at: new Date().toISOString(),
-            },
-            { onConflict: 'user_id' }
-          );
-        if (error) {
-          console.error('Error clearing cart in Supabase:', error.message);
-          setSyncError('Failed to clear cart on server. Cleared locally.');
-        } else {
-          setSyncError(null);
-        }
-      }
-    } catch (e) {
-      console.error('Error clearing cart:', e);
-      setSyncError('Failed to clear cart.');
-    }
-  };
+  const clearCart = () => setCartItems([]);
 
   if (!isCartLoaded || authLoading) {
     return (
