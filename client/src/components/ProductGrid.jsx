@@ -5,9 +5,9 @@
 
 // const ProductCard = ({ product, styles, uniqueKeySuffix = "" }) => (
 // 	<div
-// 		key={`${product.id}${uniqueKeySuffix}`} 
+// 		key={`${product.id}${uniqueKeySuffix}`}
 // 		style={styles.card}
-// 		className="product-item" 
+// 		className="product-item"
 // 	>
 // 		<Link
 // 			to={`/product/${product.id}`}
@@ -56,15 +56,15 @@
 // 		const mockData = Array.from({ length: 6 }, (_, i) => ({
 // 			id: `prod-${i + 1}`,
 // 			name: `Product Name ${i + 1}`,
-// 			created_at: new Date(Date.now() - i * 1000 * 60 * 60 * 24).toISOString(), 
+// 			created_at: new Date(Date.now() - i * 1000 * 60 * 60 * 24).toISOString(),
 // 			media_urls: [
 // 				"https://via.placeholder.com/300x500/eee/888?text=Product+" + (i + 1),
-// 			], 
+// 			],
 // 		}));
 // 		const sorted = [...mockData].sort(
 // 			(a, b) => new Date(b.created_at) - new Date(a.created_at)
 // 		);
-// 		setProducts(sorted.slice(0, 6)); 
+// 		setProducts(sorted.slice(0, 6));
 
 // 		fetch("https://nine-ymmn.onrender.com/api/products")
 // 			.then((response) => response.json())
@@ -78,7 +78,7 @@
 // 	}, []);
 
 // 	const getStyles = () => {
-// 		const baseStyles = { ...styles }; 
+// 		const baseStyles = { ...styles };
 
 // 		if (isMobile) {
 // 			baseStyles.grid = {
@@ -90,18 +90,18 @@
 // 			baseStyles.singleLineContainer = {
 // 				...styles.singleLineContainer,
 // 				gap: "15px",
-// 				padding: "20px 0", 
+// 				padding: "20px 0",
 // 			};
 // 			baseStyles.card = {
 // 				...styles.card,
 // 				padding: "10px",
-// 				width: "200px", 
-// 				flexShrink: 0, 
+// 				width: "200px",
+// 				flexShrink: 0,
 // 			};
 // 			baseStyles.imageWrapper = {
 // 				...styles.imageWrapper,
 // 				height: "270px",
-// 				width: "180px", 
+// 				width: "180px",
 // 				marginBottom: "10px",
 // 			};
 // 			baseStyles.name = {
@@ -153,14 +153,14 @@
 // 		gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
 // 		gap: "30px",
 // 		padding: "40px 20px",
-// 		width: "100%", 
+// 		width: "100%",
 // 	},
 // 	singleLineContainer: {
 // 		display: "flex",
 // 		flexDirection: "row",
-// 		flexWrap: "nowrap", 
+// 		flexWrap: "nowrap",
 // 		gap: "30px",
-// 		padding: "40px 0px", 
+// 		padding: "40px 0px",
 // 	},
 // 	card: {
 // 		padding: "20px",
@@ -169,13 +169,13 @@
 // 		transition: "transform 0.2s ease",
 // 		position: "relative",
 // 		overflow: "hidden",
-// 		width: "320px", 
+// 		width: "320px",
 // 		flexShrink: 0,
 // 	},
 // 	imageWrapper: {
 // 		height: "400px",
 // 		width: "280px",
-// 		margin: "0 auto", 
+// 		margin: "0 auto",
 // 		overflow: "hidden",
 // 		marginBottom: "20px",
 // 		backgroundColor: "#f0f0f0",
@@ -186,7 +186,7 @@
 // 		height: "100%",
 // 		objectFit: "cover",
 // 		transition: "transform 0.3s ease",
-// 		display: "block", 
+// 		display: "block",
 // 	},
 // 	name: {
 // 		fontSize: "1.2rem",
@@ -194,13 +194,14 @@
 // 		marginBottom: "12px",
 // 		color: "#Ffa500",
 // 		fontFamily: '"Abril Extra Bold", sans-serif',
-// 		whiteSpace: "nowrap", 
+// 		whiteSpace: "nowrap",
 // 		overflow: "hidden",
 // 		textOverflow: "ellipsis",
 // 	},
 // };
 
 // export default ProductGrid;
+
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 

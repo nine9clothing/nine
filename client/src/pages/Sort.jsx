@@ -70,7 +70,7 @@ const Sort = () => {
   useEffect(() => {
     const style = document.createElement('style');
     style.innerHTML = `
-      @media (max-width: 768px) {
+      @media (max-width: 767.9px) {
         .gridContainer {
           grid-template-columns: repeat(2, 1fr) !important;
           gap: 12px !important;

@@ -16,6 +16,7 @@ import {
     faExclamationTriangle, 
     faFileContract 
 } from '@fortawesome/free-solid-svg-icons';
+
 const Rewards = () => {
     const [points, setPoints] = useState(0);
     const [activities, setActivities] = useState([]);
@@ -102,7 +103,7 @@ const Rewards = () => {
 
                 const { data: ordersData, error: ordersError } = await supabase
                     .from('orders')
-                    .select('display_order_id, total_amount, shipping_charges, created_at')
+                    .select('display_order_id, total_amount, shipping_charges, cod_fee, created_at')
                     .eq('user_id', user.id);
 
                 if (ordersError) throw ordersError;
@@ -110,12 +111,17 @@ const Rewards = () => {
                 const ordersWithPoints = ordersData.map(order => {
                     const totalAmount = order.total_amount != null ? order.total_amount : 0;
                     const shippingCharges = order.shipping_charges != null ? order.shipping_charges : 0;
-                    const netAmount = totalAmount - shippingCharges;
+                    const codFee = order.cod_fee != null ? order.cod_fee : 0; // Handle cod_fee
+                    const netAmount = totalAmount - shippingCharges - codFee; // Subtract cod_fee
+                    const orderDate = new Date(order.created_at);
+                    const currentDate = new Date();
+                    const daysSinceOrder = (currentDate - orderDate) / (1000 * 60 * 60 * 24);
+                    const points = daysSinceOrder >= 12 ? calculatePoints(netAmount) : 0;
                     return {
                         type: 'order',
                         id: order.display_order_id,
                         netAmount: netAmount,
-                        points: calculatePoints(netAmount),
+                        points: points,
                         date: order.created_at,
                         discount: 0
                     };
@@ -186,10 +192,24 @@ const Rewards = () => {
                 const totalRedeemedPoints = redemptions.reduce((sum, redemption) => sum + Math.abs(redemption.points), 0);
                 const netPoints = totalEarnedPoints - totalRedeemedPoints + birthdayPoints;
 
+                // Update loyalty_points in registered_details table
+                const { error: updateError } = await supabase
+                    .from('registered_details')
+                    .update({ loyalty_points: netPoints })
+                    .eq('id', user.id);
+
+                if (updateError) {
+                    throw new Error(`Failed to update loyalty points: ${updateError.message}`);
+                }
+
                 setActivities(allActivities);
                 setPoints(netPoints);
             } catch (error) {
-                console.error('Error fetching user, orders, or redemptions:', error.message);
+                console.error('Error fetching user, orders, or updating points:', error.message);
+                setToastMessage({
+                    message: 'Failed to load or update rewards. Please try again.',
+                    type: 'error'
+                });
             } finally {
                 setLoading(false);
             }
@@ -310,7 +330,7 @@ const Rewards = () => {
                                 padding: '10px',
                                 borderRadius: '8px',
                                 background: 'rgba(255, 165, 0, 0.1)',
-                                border: '11px solid rgba(255, 165, 0, 0.3)',
+                                border: '1px solid rgba(255, 165, 0, 0.3)',
                                 flex: '1',
                                 minWidth: '100px'
                             }}>
@@ -383,7 +403,7 @@ const Rewards = () => {
                                 textTransform: 'uppercase',
                                 textAlign: 'center'
                             }}>Transaction History</h3>
-                            {activities.length === 0 ? (
+                            {activities.length === 0 || activities.every(activity => activity.points <= 0) ? (
                                 <p style={{
                                     fontSize: '0.9rem',
                                     fontFamily: "'Louvette Semi Bold', sans-serif",
@@ -418,7 +438,7 @@ const Rewards = () => {
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {activities.map((activity, index) => (
+                                            {activities.filter(activity => activity.points > 0).map((activity, index) => (
                                                 <tr key={index} style={{ 
                                                     background: index % 2 === 0 ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.2)',
                                                     transition: 'all 0.3s ease'
@@ -435,11 +455,11 @@ const Rewards = () => {
                                                     <td style={{
                                                         padding: '8px',
                                                         borderBottom: '1px solid rgba(255, 165, 0, 0.2)',
-                                                        color: activity.points < 0 ? '#ff6b6b' : '#4ade80',
+                                                        color: '#4ade80',
                                                         fontWeight: 'bold',
                                                         textAlign: 'right'
                                                     }}>
-                                                        {activity.points < 0 ? activity.points : `+${activity.points}`}
+                                                        {`+${activity.points}`}
                                                     </td>
                                                     <td style={{ padding: '8px', borderBottom: '1px solid rgba(255, 165, 0, 0.2)', textAlign: 'right' }}>
                                                         {activity.type === 'redemption' ? activity.discount.toFixed(2) : '-'}

@@ -25,39 +25,35 @@ const CartCheckout = () => {
 
   useEffect(() => {
     const getUserAndPoints = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      const currentUser = session?.user;
-      if (currentUser) {
-        setUser(currentUser);
-
-        const { data: ordersData, error: ordersError } = await supabase
-          .from('orders')
-          .select('display_order_id, total_amount, shipping_charges')
-          .eq('user_id', currentUser.id);
-
-        if (ordersError) throw ordersError;
-
-        const ordersWithPoints = ordersData.map(order => {
-          const totalAmount = order.total_amount != null ? order.total_amount : 0;
-          const shippingCharges = order.shipping_charges != null ? order.shipping_charges : 0;
-          const netAmount = totalAmount - shippingCharges;
-          return { net_amount: netAmount };
-        });
-
-        const totalEarnedPoints = ordersWithPoints.reduce((sum, order) => sum + Math.max(0, Math.floor(order.net_amount / 100) * 10), 0);
-
-        const { data: redemptionsData, error: redemptionsError } = await supabase
-          .from('point_redemptions')
-          .select('points_redeemed')
-          .eq('user_id', currentUser.id);
-
-        if (redemptionsError) throw redemptionsError;
-
-        const totalRedeemedPoints = redemptionsData.reduce((sum, redemption) => sum + redemption.points_redeemed, 0);
-        setPoints(totalEarnedPoints - totalRedeemedPoints);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const currentUser = session?.user;
+        if (currentUser) {
+          setUser(currentUser);
+  
+          // Fetch loyalty_points from registered_details
+          const { data: userData, error: userError } = await supabase
+            .from('registered_details')
+            .select('loyalty_points')
+            .eq('id', currentUser.id)
+            .single();
+  
+          if (userError) {
+            throw new Error(`Failed to fetch loyalty points: ${userError.message}`);
+          }
+  
+          if (!userData || userData.loyalty_points == null) {
+            throw new Error('No loyalty points data found for user.');
+          }
+  
+          setPoints(userData.loyalty_points);
+        }
+      } catch (error) {
+        console.error('Error fetching user or points:', error.message);
+        setToastMessage({ message: 'Failed to load user or points data.', type: 'error' });
       }
     };
-
+  
     getUserAndPoints();
   }, []);
 
@@ -72,8 +68,8 @@ const CartCheckout = () => {
     }
   }, [redeemPoints, points]);
 
-  const handleRemoveItem = (itemId) => {
-    removeFromCart(itemId);
+  const handleRemoveItem = (itemId, selectedSize) => {
+    removeFromCart(itemId, selectedSize);
     setToastMessage({ message: 'Item removed.', type: 'success' });
   };
 
@@ -215,9 +211,9 @@ const CartCheckout = () => {
                   </div>
                   <p style={styles.itemPrice}>₹{item.price * item.quantity}</p>
                 </div>
-                <button onClick={() => handleRemoveItem(item.id)} style={styles.removeBtn}>
-                  Remove
-                </button>
+                <button onClick={() => handleRemoveItem(item.id, item.selectedSize)} style={styles.removeBtn}>
+          Remove
+        </button>
               </div>
             ))
           )}

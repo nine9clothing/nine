@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { supabase } from '../../lib/supabase'; // Adjust path
-import ToastMessage from '../../ToastMessage'; // Adjust path
+import { supabase } from '../../lib/supabase'; 
+import ToastMessage from '../../ToastMessage'; 
 
 const categories = ['T-Shirts'];
 const genders = ['Men', 'Women', 'Unisex'];
@@ -9,19 +9,21 @@ const sizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'];
 const AddProduct = () => {
   const [imageFiles, setImageFiles] = useState([]);
   const [customCategory, setCustomCategory] = useState('');
-  const [toast, setToast] = useState(null); // Toast message state for this component
-  const [isSubmitting, setIsSubmitting] = useState(false); // Prevent double submits
-  const [uploadProgress, setUploadProgress] = useState(0); // Track upload progress
+  const [toast, setToast] = useState(null); 
+  const [isSubmitting, setIsSubmitting] = useState(false); 
+  const [uploadProgress, setUploadProgress] = useState(0); 
 
   const [newProduct, setNewProduct] = useState({
     name: '',
     description: '',
     price: '',
-    category: '', // This will hold the selected value ('T-Shirts', 'Hoodies', 'Other', etc.)
+    category: '',
     gender: '',
     size: [],
-    care_guide: '', // New field for care guide (text input)
-    composition_fabric: '', // New field for fabric composition (text input)
+    care_guide: '', 
+    composition_fabric: '', 
+    shipping_info: '', 
+    exchange: '', 
   });
 
   const toggleSize = (selected) => {
@@ -50,7 +52,7 @@ const AddProduct = () => {
     }
   
     const finalCategory = newProduct.category === 'Other' ? customCategory.trim() : newProduct.category;
-    const { name, description, price, gender, size, care_guide, composition_fabric } = newProduct;
+    const { name, description, price, gender, size, care_guide, composition_fabric, shipping_info, exchange } = newProduct;
   
     console.log('Validation inputs:', {
       name,
@@ -62,9 +64,11 @@ const AddProduct = () => {
       size,
       care_guide,
       composition_fabric,
+      shipping_info,
+      exchange,
     });
   
-    if (!name || !description || !price || imageFiles.length === 0 || !finalCategory || !gender || size.length === 0 || !care_guide || !composition_fabric) {
+    if (!name || !description || !price || imageFiles.length === 0 || !finalCategory || !gender || size.length === 0 || !care_guide || !composition_fabric || !shipping_info || !exchange) {
       let errorMessage = 'Please fill all required fields and upload at least one image.';
       if (newProduct.category === 'Other' && !finalCategory) {
         errorMessage = 'Please enter a name for the custom category.';
@@ -158,6 +162,8 @@ const AddProduct = () => {
           size: size.join(','),
           care_guide,
           composition_fabric,
+          shipping_info,
+          exchange,
         },
       ]);
   
@@ -177,6 +183,8 @@ const AddProduct = () => {
         size: [],
         care_guide: '',
         composition_fabric: '',
+        shipping_info: '',
+        exchange: '',
       });
       setImageFiles([]);
       setCustomCategory('');
@@ -227,6 +235,24 @@ const AddProduct = () => {
           onChange={e => setNewProduct({ ...newProduct, composition_fabric: e.target.value })}
           style={{ ...inputStyle, height: '80px' }}
           placeholder="Enter fabric composition (e.g., 100% Cotton, Cotton Blend)"
+        />
+
+        <label style={labelStyle}>Shipping Information <span style={asterisk}>*</span></label>
+        <textarea
+          required
+          value={newProduct.shipping_info}
+          onChange={e => setNewProduct({ ...newProduct, shipping_info: e.target.value })}
+          style={{ ...inputStyle, height: '80px' }}
+          placeholder="Enter shipping details (e.g., shipping methods)"
+        />
+
+        <label style={labelStyle}>Exchange Policy <span style={asterisk}>*</span></label>
+        <textarea
+          required
+          value={newProduct.exchange}
+          onChange={e => setNewProduct({ ...newProduct, exchange: e.target.value })}
+          style={{ ...inputStyle, height: '80px' }}
+          placeholder="Enter exchange policy (e.g., conditions for exchange)"
         />
 
         <label style={labelStyle}>Price <span style={asterisk}>*</span></label>

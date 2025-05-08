@@ -435,26 +435,38 @@ const razorpay = new Razorpay({
 });
 
 app.post('/api/razorpay/create-order', async (req, res) => {
+  console.log('Request body received:', req.body);
   const { amount, currency = 'INR', receipt } = req.body;
-
+  if (!amount || isNaN(amount) || amount <= 0) {
+    console.error('Invalid amount received:', amount);
+    return res.status(400).json({ error: 'Invalid or missing amount' });
+  }
   const options = {
-    amount: amount * 100, 
+    amount: Math.round(amount * 100),
     currency,
     receipt: receipt || `receipt_${Date.now()}`,
   };
-
   try {
+    console.log('Creating Razorpay order with options:', options);
     const order = await razorpay.orders.create(options);
+    console.log('Razorpay order created:', order);
     res.json({
       id: order.id,
       currency: order.currency,
       amount: order.amount,
     });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('Razorpay order creation error:', {
+      message: error.message,
+      status: error.statusCode,
+      details: error.error,
+    });
+    res.status(error.statusCode || 500).json({
+      error: 'Failed to create order',
+      details: error.error?.description || error.message,
+    });
   }
 });
-
 app.post('/api/razorpay/verify-payment', (req, res) => {
   const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
 

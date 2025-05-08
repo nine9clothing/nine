@@ -1375,7 +1375,7 @@ const Checkout = () => {
         shipping: { is_billing: true },
         items: orderItems,
         sub_total: totalAfterDiscount,
-        dimensions: { length: 10, breadth: 15, height: 10, weight: totalWeight },
+        dimensions: { length: 16, breadth: 12, height: 16, weight: totalWeight },
         user_id: user.id,
         shipping_charges: selectedShippingOption.rate,
         cod_fee: codFee, 

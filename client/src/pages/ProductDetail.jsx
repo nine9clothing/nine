@@ -26,6 +26,8 @@ const ProductDetail = () => {
     description: false,
     careGuide: false,
     composition: false,
+    shippingInfo: false,
+    exchange: false,
   });
   // New state to track if "Notify Me" modal is open and the size selected for notification
   const [showNotifyModal, setShowNotifyModal] = useState(false);
@@ -309,91 +311,148 @@ const ProductDetail = () => {
             </div>
 
             <div style={styles.dropdownSection}>
-              <hr style={styles.divider} />
+  <hr style={styles.divider} />
 
-              <div style={styles.dropdownItem}>
-  <div style={styles.dropdownHeader} onClick={() => toggleSection('description')}>
-    <span>Description</span>
-    <span>{openSections.description ? '−' : '+'}</span>
-  </div>
-  {openSections.description && (
-    <div style={styles.dropdownContent}>
-      {product.description ? (
-        <ul style={{ textAlign: 'left', paddingLeft: '20px' }}>
-          {product.description
-            .split('•')
-            .map((item, index) => {
-              const trimmedItem = item.trim();
-              return trimmedItem ? (
-                <li key={index} style={{ marginBottom: '5px', color: '#ccc' }}>
-                  {trimmedItem}
-                </li>
-              ) : null;
-            })
-            .filter(Boolean)}
-        </ul>
-      ) : (
-        <p>No description available.</p>
-      )}
+  <div style={styles.dropdownItem}>
+    <div style={styles.dropdownHeader} onClick={() => toggleSection('description')}>
+      <span>Description</span>
+      <span>{openSections.description ? '−' : '+'}</span>
     </div>
-  )}
-</div>
-              <div style={styles.dropdownItem}>
-  <div style={styles.dropdownHeader} onClick={() => toggleSection('careGuide')}>
-    <span>Care Guide</span>
-    <span>{openSections.careGuide ? '−' : '+'}</span>
+    {openSections.description && (
+      <div style={styles.dropdownContent}>
+        {product.description ? (
+          <ul style={{ textAlign: 'left', paddingLeft: '20px' }}>
+            {product.description
+              .split('•')
+              .map((item, index) => {
+                const trimmedItem = item.trim();
+                return trimmedItem ? (
+                  <li key={index} style={{ marginBottom: '5px', color: '#ccc' }}>
+                    {trimmedItem}
+                  </li>
+                ) : null;
+              })
+              .filter(Boolean)}
+          </ul>
+        ) : (
+          <p>No description available.</p>
+        )}
+      </div>
+    )}
   </div>
-  {openSections.careGuide && (
-    <div style={styles.dropdownContent}>
-      {product.care_guide ? (
-        <ul style={{ textAlign: 'left', paddingLeft: '20px' }}>
-          {product.care_guide
-            .split('•')
-            .map((item, index) => {
-              const trimmedItem = item.trim();
-              return trimmedItem ? (
-                <li key={index} style={{ marginBottom: '5px', color: '#ccc' }}>
-                  {trimmedItem}
-                </li>
-              ) : null;
-            })
-            .filter(Boolean)}
-        </ul>
-      ) : (
-        <p>No care guide available.</p>
-      )}
-    </div>
-  )}
-</div>
 
-<div style={styles.dropdownItem}>
-  <div style={styles.dropdownHeader} onClick={() => toggleSection('composition')}>
-    <span>Composition/Fabric</span>
-    <span>{openSections.composition ? '−' : '+'}</span>
-  </div>
-  {openSections.composition && (
-    <div style={styles.dropdownContent}>
-      {product.composition_fabric ? (
-        <ul style={{ textAlign: 'left', paddingLeft: '20px' }}>
-          {product.composition_fabric
-            .split('•')
-            .map((item, index) => {
-              const trimmedItem = item.trim();
-              return trimmedItem ? (
-                <li key={index} style={{ marginBottom: '5px', color: '#ccc' }}>
-                  {trimmedItem}
-                </li>
-              ) : null;
-            })
-            .filter(Boolean)}
-        </ul>
-      ) : (
-        <p>No composition details available.</p>
-      )}
+  <div style={styles.dropdownItem}>
+    <div style={styles.dropdownHeader} onClick={() => toggleSection('careGuide')}>
+      <span>Care Guide</span>
+      <span>{openSections.careGuide ? '−' : '+'}</span>
     </div>
-  )}
+    {openSections.careGuide && (
+      <div style={styles.dropdownContent}>
+        {product.care_guide ? (
+          <ul style={{ textAlign: 'left', paddingLeft: '20px' }}>
+            {product.care_guide
+              .split('•')
+              .map((item, index) => {
+                const trimmedItem = item.trim();
+                return trimmedItem ? (
+                  <li key={index} style={{ marginBottom: '5px', color: '#ccc' }}>
+                    {trimmedItem}
+                  </li>
+                ) : null;
+              })
+              .filter(Boolean)}
+          </ul>
+        ) : (
+          <p>No care guide available.</p>
+        )}
+      </div>
+    )}
+  </div>
+
+  <div style={styles.dropdownItem}>
+    <div style={styles.dropdownHeader} onClick={() => toggleSection('composition')}>
+      <span>Composition/Fabric</span>
+      <span>{openSections.composition ? '−' : '+'}</span>
+    </div>
+    {openSections.composition && (
+      <div style={styles.dropdownContent}>
+        {product.composition_fabric ? (
+          <ul style={{ textAlign: 'left', paddingLeft: '20px' }}>
+            {product.composition_fabric
+              .split('•')
+              .map((item, index) => {
+                const trimmedItem = item.trim();
+                return trimmedItem ? (
+                  <li key={index} style={{ marginBottom: '5px', color: '#ccc' }}>
+                    {trimmedItem}
+                  </li>
+                ) : null;
+              })
+              .filter(Boolean)}
+          </ul>
+        ) : (
+          <p>No composition details available.</p>
+        )}
+      </div>
+    )}
+  </div>
+
+  <div style={styles.dropdownItem}>
+    <div style={styles.dropdownHeader} onClick={() => toggleSection('shippingInfo')}>
+      <span>Shipping Info</span>
+      <span>{openSections.shippingInfo ? '−' : '+'}</span>
+    </div>
+    {openSections.shippingInfo && (
+      <div style={styles.dropdownContent}>
+        {product.shipping_info ? (
+          <ul style={{ textAlign: 'left', paddingLeft: '20px' }}>
+            {product.shipping_info
+              .split('•')
+              .map((item, index) => {
+                const trimmedItem = item.trim();
+                return trimmedItem ? (
+                  <li key={index} style={{ marginBottom: '5px', color: '#ccc' }}>
+                    {trimmedItem}
+                  </li>
+                ) : null;
+              })
+              .filter(Boolean)}
+          </ul>
+        ) : (
+          <p>No shipping info available.</p>
+        )}
+      </div>
+    )}
+  </div>
+
+  <div style={styles.dropdownItem}>
+    <div style={styles.dropdownHeader} onClick={() => toggleSection('exchange')}>
+      <span>Exchange</span>
+      <span>{openSections.exchange ? '−' : '+'}</span>
+    </div>
+    {openSections.exchange && (
+      <div style={styles.dropdownContent}>
+        {product.exchange ? (
+          <ul style={{ textAlign: 'left', paddingLeft: '20px' }}>
+            {product.exchange
+              .split('•')
+              .map((item, index) => {
+                const trimmedItem = item.trim();
+                return trimmedItem ? (
+                  <li key={index} style={{ marginBottom: '5px', color: '#ccc' }}>
+                    {trimmedItem}
+                  </li>
+                ) : null;
+              })
+              .filter(Boolean)}
+          </ul>
+        ) : (
+          <p>No exchange info available.</p>
+        )}
+      </div>
+    )}
+  </div>
 </div>
-            </div>
           </div>
         </div>
       </div>
@@ -455,7 +514,6 @@ const ProductDetail = () => {
     </div>
   );
 };
-
 const styles = {
   '@keyframes iconHover': {
     '0%': { transform: 'scale(1) rotate(0deg)' },
@@ -469,7 +527,7 @@ const styles = {
     backgroundColor: '#000',
   },
   mobileContainer: {
-    padding: '80px 10px 20px', // Increased top padding from 60px to 80px
+    padding: '80px 10px 20px',
     maxWidth: '100%',
     margin: '0',
     backgroundColor: '#000',
@@ -484,7 +542,7 @@ const styles = {
   mobileContentWrapper: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '25px', // Increased from 15px to 25px for more spacing
+    gap: '25px',
     justifyContent: 'center',
     alignItems: 'center',
     width: '100%',
@@ -496,6 +554,18 @@ const styles = {
     justifyContent: 'center',
     position: 'relative',
     width: '100%',
+    height: '600px', // Fixed height to stabilize arrow positions
+    overflow: 'hidden',
+  },
+  mobileImageWrapper: {
+    flex: '1 1 100%',
+    maxWidth: '100%',
+    display: 'flex',
+    justifyContent: 'center',
+    position: 'relative',
+    width: '100%',
+    height: '400px', // Fixed height for mobile
+    overflow: 'hidden',
   },
   detailsWrapper: {
     flex: '1 1 400px',
@@ -529,7 +599,7 @@ const styles = {
     fontSize: '1.2rem',
     fontFamily: "'Abril Extra Bold', sans-serif",
     fontWeight: '700',
-    marginBottom: '10px', // Increased from 5px to 10px
+    marginBottom: '10px',
     color: '#fff',
   },
   detail: {
@@ -541,7 +611,7 @@ const styles = {
   },
   mobileDetail: {
     fontSize: '1rem',
-    margin: '8px 0', // Increased from 4px to 8px
+    margin: '8px 0',
     fontFamily: "'Louvette Semi Bold', sans-serif",
     color: '#fff',
     fontWeight: '700',
@@ -564,7 +634,7 @@ const styles = {
   mobileSizeOptions: {
     display: 'flex',
     gap: '5px',
-    fontFamily: "'RobLouvette Semi Boldoto', sans-serif",
+    fontFamily: "'Louvette Semi Bold', sans-serif",
     color: '#fff',
     flexWrap: 'wrap',
     alignItems: 'center',
@@ -642,7 +712,7 @@ const styles = {
   },
   mobileSplitButtonWrapper: {
     display: 'flex',
-    marginTop: '20px', // Increased from 15px to 20px
+    marginTop: '20px',
     width: '100%',
     gap: '3px',
   },
@@ -705,13 +775,13 @@ const styles = {
     transform: 'translateY(-50%)',
     fontSize: '22px',
     color: 'black',
-    backgroundColor: 'transparent',
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
     border: 'none',
-    zIndex: 2,
+    zIndex: 100,
     cursor: 'pointer',
-    padding: '2px',
-    transition: 'transform 0.2s ease',
-    filter: 'drop-shadow(0 0 2px rgba(0, 0, 0, 0.3))',
+    padding: '8px',
+    borderRadius: '50%',
+    transition: 'background-color 0.2s ease',
   },
   mobileArrowLeft: {
     position: 'absolute',
@@ -720,13 +790,13 @@ const styles = {
     transform: 'translateY(-50%)',
     fontSize: '20px',
     color: 'black',
-    backgroundColor: 'transparent',
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
     border: 'none',
-    zIndex: 2,
+    zIndex: 100,
     cursor: 'pointer',
-    padding: '5px',
-    transition: 'transform 0.2s ease',
-    filter: 'drop-shadow(0 0 2px rgba(0, 0, 0, 0.3))',
+    padding: '6px',
+    borderRadius: '50%',
+    transition: 'background-color 0.2s ease',
   },
   arrowRight: {
     position: 'absolute',
@@ -735,13 +805,13 @@ const styles = {
     transform: 'translateY(-50%)',
     fontSize: '22px',
     color: 'black',
-    backgroundColor: 'transparent',
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
     border: 'none',
-    zIndex: 2,
+    zIndex: 100,
     cursor: 'pointer',
-    padding: '2px',
-    transition: 'transform 0.2s ease',
-    filter: 'drop-shadow(0 0 2px rgba(0, 0, 0, 0.3))',
+    padding: '8px',
+    borderRadius: '50%',
+    transition: 'background-color 0.2s ease',
   },
   mobileArrowRight: {
     position: 'absolute',
@@ -750,13 +820,13 @@ const styles = {
     transform: 'translateY(-50%)',
     fontSize: '20px',
     color: 'black',
-    backgroundColor: 'transparent',
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
     border: 'none',
-    zIndex: '2',
+    zIndex: 100,
     cursor: 'pointer',
-    padding: '5px',
-    transition: 'transform 0.2s ease',
-    filter: 'drop-shadow(0 0 2px rgba(0, 0, 0, 0.3))',
+    padding: '6px',
+    borderRadius: '50%',
+    transition: 'background-color 0.2s ease',
   },
   modalOverlay: {
     position: 'fixed',
@@ -801,7 +871,7 @@ const styles = {
     cursor: 'pointer',
   },
   dropdownSection: {
-    marginTop: '20px', // Increased from 15px to 20px
+    marginTop: '20px',
     borderTop: '1px solid #fff',
     paddingTop: '10px',
   },
