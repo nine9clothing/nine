@@ -36,6 +36,9 @@ const CreatePromoCode = () => {
           code: formData.code.toUpperCase(),
           discount: parseFloat(formData.discount),
           max_uses_per_user: parseInt(formData.maxUsesPerUser),
+          limit: 10,
+          display: "true",
+          used: 0,
         },
       ]);
 
