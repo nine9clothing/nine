@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { supabase } from '../lib/supabase'; 
 import Navbar from "../components/Navbar";
 import ProductGrid from "../components/ProductGrid";
-import ReelsSection from "../components/ReelsSection";
+// import ReelsSection from "../components/ReelsSection";
 import logo from "../assets/nine9_logo.png";
 import { FaArrowLeft, FaArrowRight, FaBoxOpen, FaSyncAlt, FaShieldAlt, FaComments, FaHandsHelping, FaLightbulb } from "react-icons/fa";
 import Footer from "../pages/Footer";
@@ -398,7 +398,7 @@ const Home = () => {
                         backgroundColor: "#FFA500",
                         opacity:'80%',
                         color: "black",
-                        borderRadius: "50px",
+                        borderRadius: "10px",
                         fontSize: isMobile ? "0.8rem" : "1rem",
                         fontWeight: "600",
                         whiteSpace: "nowrap",
@@ -556,7 +556,7 @@ const Home = () => {
         </div>
       </section>
 
-      {videos.length > 0 && <ReelsSection videos={videos} isMobile={isMobile} />}
+      {/* {videos.length > 0 && <ReelsSection videos={videos} isMobile={isMobile} />} */}
 
       <section
         style={{

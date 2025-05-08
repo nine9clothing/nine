@@ -55,7 +55,7 @@ const Rewards = () => {
         },
         {
             title: "Account Adjustments",
-            content: "Points will be added to account after 10 days of purchase (if any exchange the time may vary).",
+            content: "Points will be added to account after 15 days of purchase (if any exchange the time may vary).",
             icon: faAdjust
         },
         {
@@ -116,7 +116,7 @@ const Rewards = () => {
                     const orderDate = new Date(order.created_at);
                     const currentDate = new Date();
                     const daysSinceOrder = (currentDate - orderDate) / (1000 * 60 * 60 * 24);
-                    const points = daysSinceOrder >= 12 ? calculatePoints(netAmount) : 0;
+                    const points = daysSinceOrder >= 15 ? calculatePoints(netAmount) : 0;
                     return {
                         type: 'order',
                         id: order.display_order_id,

@@ -1,3 +1,6 @@
+//uncomment reelsection and home line
+
+
 // import React, { useState, useEffect, useCallback, useRef } from 'react';
 // import { ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Volume2, VolumeX, X, Play } from 'lucide-react';
 // import { supabase } from '../lib/supabase'; // Import shared Supabase client
