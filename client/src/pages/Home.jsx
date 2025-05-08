@@ -17,6 +17,7 @@ const Home = () => {
   const [email, setEmail] = useState("");
   const [subscribeStatus, setSubscribeStatus] = useState({ message: "", type: "" });
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
+  const [codesToDisplay, setCodesToDisplay] = useState([]);
   const words = [
     <span>Talk <FaComments style={{ marginLeft: '5px', verticalAlign: 'middle' }} /></span>,
     <span>Collaborate <FaHandsHelping style={{ marginLeft: '5px', verticalAlign: 'middle' }} /></span>,
@@ -41,6 +42,32 @@ const Home = () => {
     };
   
     fetchHeroImages();
+  }, []);
+
+  useEffect(() => {
+    const fetchCodes = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('promocodes')
+          .select('code, discount')
+          .eq('display', true);
+
+        if (error) throw error;
+
+        // Ensure discount is a valid number, default to 0 if null or invalid
+        const formattedData = data.map(item => ({
+          code: item.code,
+          discount: typeof item.discount === 'number' && !isNaN(item.discount) ? item.discount : 0
+        }));
+
+        setCodesToDisplay(formattedData);
+      } catch (error) {
+        console.error("Error fetching codes:", error.message);
+        setCodesToDisplay([]); // Fallback to empty array on error
+      }
+    };
+
+    fetchCodes();
   }, []);
 
   useEffect(() => {
@@ -93,14 +120,13 @@ const Home = () => {
   useEffect(() => {
     const logoEffectInterval = setInterval(() => {
       setLogoEffect((prev) => {
-        if (prev >= 5) { // 3 blink cycles (0-1, 2-3, 4-5)
+        if (prev >= 5) {
           clearInterval(logoEffectInterval);
           return prev;
         }
         return prev + 1;
       });
-    }, 300); // Blink every 300ms
-
+    }, 300);
     return () => clearInterval(logoEffectInterval);
   }, []);
 
@@ -208,7 +234,6 @@ const Home = () => {
             })}
           </div>
 
-          {/* Horizontal Line 1 */}
           <div
             className="horizontalLineOut"
             style={{
@@ -223,7 +248,6 @@ const Home = () => {
               willChange: "opacity, transform",
             }}
           />
-          {/* Horizontal Line 2 */}
           <div
             className="horizontalLineOut2"
             style={{
@@ -239,7 +263,6 @@ const Home = () => {
             }}
           />
 
-          {/* Vertical Line 1 */}
           <div
             className="verticalLineOut"
             style={{
@@ -254,7 +277,6 @@ const Home = () => {
               willChange: "opacity, transform",
             }}
           />
-          {/* Vertical Line 2 */}
           <div
             className="verticalLineOut2"
             style={{
@@ -326,6 +348,114 @@ const Home = () => {
 
         <div
           style={{
+            position: "absolute",
+            top: isMobile ? "6%" : "6%",
+            width: "100%",
+            zIndex: 2,
+            backgroundColor: "transparent",
+            padding: isMobile ? "10px 0" : "15px 0",
+          }}
+        >
+          <h2
+            style={{
+              fontSize: isMobile ? "1rem" : "1.2rem",
+              fontWeight: "700",
+              textAlign: "center",
+              color: "#FFA500",
+              marginBottom: "10px",
+              fontFamily: '"Abril Extra Bold", sans-serif',
+              textTransform: "uppercase",
+              letterSpacing: "1px",
+              textShadow: "0px 0px 5px rgba(255, 165, 0, 0.5)",
+            }}
+          >
+          </h2>
+
+          {codesToDisplay && codesToDisplay.length > 0 ? (
+            <div
+              style={{
+                position: "relative",
+                width: "100%",
+                overflow: "hidden",
+                padding: "5px 0",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  animation: "slideCodes 15s linear infinite",
+                  width: "max-content",
+                }}
+              >
+                {[...codesToDisplay, ...codesToDisplay].map((codeItem, index) => {
+                  const { code, discount } = codeItem;
+                  return (
+                    <div
+                      key={index}
+                      style={{
+                        margin: "0 10px",
+                        padding: "6px 14px",
+                        backgroundColor: "#FFA500",
+                        opacity:'80%',
+                        color: "black",
+                        borderRadius: "50px",
+                        fontSize: isMobile ? "0.8rem" : "1rem",
+                        fontWeight: "600",
+                        whiteSpace: "nowrap",
+                        fontFamily: '"Abril Extra Bold", sans-serif',
+                        display: "flex",
+                        alignItems: "center",
+                        boxShadow: "0 4px 8px rgba(0, 0, 0, 0.3)",
+                        border: "1px solid rgba(255, 255, 255, 0.2)",
+                        position: "relative",
+                        overflow: "hidden",
+                      }}
+                    >
+                      <span>
+                        {discount > 0 ? (
+                          <>
+                            {discount}% off: <strong>USE CODE: {code}</strong>
+                          </>
+                        ) : (
+                          <>
+                            USE CODE: <strong>{code}</strong>
+                          </>
+                        )}
+                      </span>
+                      <div
+                        style={{
+                          position: "absolute",
+                          top: 0,
+                          left: "-100%",
+                          width: "50%",
+                          height: "100%",
+                          background: "linear-gradient(to right, transparent, rgba(255,255,255,0.2), transparent)",
+                          animation: `shimmer 2s infinite ${index * 0.5}s`,
+                          pointerEvents: "none",
+                        }}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ) : (
+            <p
+              style={{
+                textAlign: "center",
+                color: "#fff",
+                fontSize: isMobile ? "0.9rem" : "1rem",
+                fontFamily: '"Louvette Semi Bold", sans-serif',
+                padding: "10px 0",
+              }}
+            >
+              No active codes available.
+            </p>
+          )}
+        </div>
+
+        <div
+          style={{
             zIndex: 2,
             position: "relative",
             color: "#fff",
@@ -338,28 +468,6 @@ const Home = () => {
             padding: isMobile ? "0 20px" : undefined,
           }}
         >
-          {/* <h1
-            style={{
-              fontSize: isMobile ? "2.2rem" : "3.5rem",
-              fontWeight: "900",
-              letterSpacing: "2px",
-              marginBottom: "10px",
-              fontFamily: '"Abril Extra Bold", sans-serif',
-            }}
-          >
-            ESSENCE X EDGE
-          </h1> */}
-          {/* <p
-            style={{
-              fontSize: isMobile ? "1rem" : "1.2rem",
-              fontWeight: "300",
-              letterSpacing: "2px",
-              marginBottom: "20px",
-              fontFamily: '"Louvette Semi Bold", sans-serif',
-            }}
-          >
-            Styled with Intent
-          </p> */}
         </div>
 
         <button
@@ -403,7 +511,6 @@ const Home = () => {
         </button>
       </section>
 
-      {/* Latest Drops Section */}
       <section
         style={{
           padding: isMobile ? "40px 10px" : "60px 20px",
@@ -451,7 +558,6 @@ const Home = () => {
 
       {videos.length > 0 && <ReelsSection videos={videos} isMobile={isMobile} />}
 
-      {/* Enhanced Shipping Section */}
       <section
         style={{
           padding: isMobile ? "30px 15px" : "60px 40px",
@@ -591,7 +697,6 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Get in Touch Section */}
       <section
         style={{
           padding: isMobile ? "40px 15px" : "80px 40px",
@@ -749,59 +854,50 @@ const Home = () => {
       </section>
       <style>
         {`
-          /* Snake-like inward motion for horizontal line 1 */
           @keyframes snakeInHorizontal1 {
             0% { top: 0; opacity: 0; transform: translateX(0); filter: blur(3px); }
             50% { transform: translateX(-10px); }
             100% { top: calc(40% - 7px); opacity: 1; transform: translateX(0); filter: blur(0); }
           }
 
-          /* Snake-like inward motion for horizontal line 2 */
           @keyframes snakeInHorizontal2 {
             0% { top: 100%; opacity: 0; transform: translateX(0); filter: blur(3px); }
             50% { transform: translateX(10px); }
             100% { top: calc(60% + 5px); opacity: 1; transform: translateX(0); filter: blur(0); }
           }
 
-          /* Snake-like inward motion for vertical line 1 */
           @keyframes snakeInVertical1 {
             0% { left: 0; opacity: 0; transform: translateY(0); filter: blur(3px); }
             50% { transform: translateY(-10px); }
             100% { left: calc(30% - 7px); opacity: 1; transform: translateY(0); filter: blur(0); }
           }
 
-          /* Snake-like inward motion for vertical line 2 */
           @keyframes snakeInVertical2 {
             0% { left: 100%; opacity: 0; transform: translateY(0); filter: blur(3px); }
             50% { transform: translateY(10px); }
             100% { left: calc(70% + 5px); opacity: 1; transform: translateY(0); filter: blur(0); }
           }
 
-          /* Smooth fade-out for horizontal line 1 */
           @keyframes horizontalLineOut {
             0% { top: calc(40% - 7px); opacity: 1; filter: brightness(1) drop-shadow(0 0 4px #FFA500); }
             100% { top: 0; opacity: 0; filter: brightness(0.7) drop-shadow(0 0 2px #FFA500); }
           }
 
-          /* Smooth fade-out for horizontal line 2 */
           @keyframes horizontalLineOut2 {
             0% { top: calc(60% + 5px); opacity: 1; filter: brightness(1) drop-shadow(0 0 4px #FFA500); }
             100% { top: 100%; opacity: 0; filter: brightness(0.7) drop-shadow(0 0 2px #FFA500); }
           }
 
-          /* Smooth fade-out for vertical line 1 */
           @keyframes verticalLineOut {
             0% { left: calc(30% - 7px); opacity: 1; filter: brightness(1) drop-shadow(0 0 4px #FFA500); }
             100% { left: 0; opacity: 0; filter: brightness(0.7) drop-shadow(0 0 2px #FFA500); }
           }
 
-          /* Smooth fade-out for vertical line 2 */
           @keyframes verticalLineOut2 {
             0% { left: calc(70% + 5px); opacity: 1; filter: brightness(1) drop-shadow(0 0 4px #FFA500); }
             100% { left: 100%; opacity: 0; filter: brightness(0.7) drop-shadow(0 0 2px #FFA500); }
           }
 
-          /* Refined logo entrance with #FFA500 and white glow */
           @keyframes logoBlink {
             0% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); filter: drop-shadow(0 0 0 #FFA500); }
             25% { opacity: 1; transform: translate(-50%, -50%) scale(1); filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.6)); }
@@ -810,7 +906,6 @@ const Home = () => {
             100% { opacity: 1; transform: translate(-50%, -50%) scale(1); filter: drop-shadow(0 0 4px #FFA500); }
           }
 
-          /* Apply animations with synchronized timing */
           .horizontalLineOut {
             animation: snakeInHorizontal1 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards,
                       horizontalLineOut 2.5s ease-out 1.5s forwards;
@@ -823,8 +918,8 @@ const Home = () => {
             position: absolute;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 2px;
+            width: "100%",
+            height: "2px",
             background: linear-gradient(to right, #FFA500, white, transparent);
             animation: trailFade 1.5s ease-out 1.2s forwards;
             willChange: opacity, filter;
@@ -840,11 +935,11 @@ const Home = () => {
 
           .horizontalLineOut2::after {
             content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 2px;
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "2px",
             background: linear-gradient(to left, #FFA500, white, transparent);
             animation: trailFade 1.5s ease-out 1.2s forwards;
             willChange: opacity, filter;
@@ -860,11 +955,11 @@ const Home = () => {
 
           .verticalLineOut::after {
             content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 2px;
-            height: 100%;
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: "2px",
+            height: "100%",
             background: linear-gradient(to bottom, #FFA500, white, transparent);
             animation: trailFade 1.5s ease-out 1.2s forwards;
             willChange: opacity, filter;
@@ -880,18 +975,17 @@ const Home = () => {
 
           .verticalLineOut2::after {
             content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 2px;
-            height: 100%;
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: "2px",
+            height: "100%",
             background: linear-gradient(to top, #FFA500, white, transparent);
             animation: trailFade 1.5s ease-out 1.2s forwards;
             willChange: opacity, filter;
             filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.5));
           }
 
-          /* Enhanced trail effect */
           @keyframes trailFade {
             0% { opacity: 0; filter: blur(3px); }
             20% { opacity: 0.7; filter: blur(1px); }
@@ -899,27 +993,25 @@ const Home = () => {
             100% { opacity: 0; filter: blur(3px); }
           }
 
-          /* Refined box animations *//* Update grid box animations */
-@keyframes fadeBox0 {
-  0% { opacity: 1; transform: scale(1) translate(0, 0); }
-  100% { opacity: 0; transform: scale(1.1) translate(-20px, -20px); }
-}
+          @keyframes fadeBox0 {
+            0% { opacity: 1; transform: scale(1) translate(0, 0); }
+            100% { opacity: 0; transform: scale(1.1) translate(-20px, -20px); }
+          }
 
-@keyframes fadeBox1 {
-  0% { opacity: 1; transform: scale(1) translate(0, 0); }
-  100% { opacity: 0; transform: scale(1.1) translate(20px, -20px); }
-}
+          @keyframes fadeBox1 {
+            0% { opacity: 1; transform: scale(1) translate(0, 0); }
+            100% { opacity: 0; transform: scale(1.1) translate(20px, -20px); }
+          }
 
-@keyframes fadeBox2 {
-  0% { opacity: 1; transform: scale(1) translate(0, 0); }
-  100% { opacity: 0; transform: scale(1.1) translate(-20px, 20px); }
-}
+          @keyframes fadeBox2 {
+            0% { opacity: 1; transform: scale(1) translate(0, 0); }
+            100% { opacity: 0; transform: scale(1.1) translate(-20px, 20px); }
+          }
 
-@keyframes fadeBox3 {
-  0% { opacity: 1; transform: scale(1) translate(0, 0); }
-  100% { opacity: 0; transform: scale(1.1) translate(20px, 20px); }
-}
-
+          @keyframes fadeBox3 {
+            0% { opacity: 1; transform: scale(1) translate(0, 0); }
+            100% { opacity: 0; transform: scale(1.1) translate(20px, 20px); }
+          }
 
           @keyframes fadeIn {
             from { opacity: 0; transform: translateY(15px); filter: blur(1px); }
@@ -929,6 +1021,16 @@ const Home = () => {
           @keyframes scrollProducts {
             0% { transform: translateX(0); }
             100% { transform: translateX(-50%); }
+          }
+
+        @keyframes slideCodes {
+  0% { transform: translateX(100%); }
+  100% { transform: translateX(-100%); }
+}
+
+          @keyframes shimmer {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(1000%); }
           }
 
           @keyframes fadeInUp {

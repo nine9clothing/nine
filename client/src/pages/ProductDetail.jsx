@@ -472,12 +472,52 @@ const ProductDetail = () => {
           <div style={isMobile ? styles.mobileModalContent : styles.modalContent}>
             <h3>Size Guide</h3>
             <p>Please refer to the measurements below for your perfect fit:</p>
-            <ul style={{ textAlign: 'left' }}>
-              <li><strong>S:</strong> Chest 34-36 inches, Waist 28-30 inches</li>
-              <li><strong>M:</strong> Chest 38-40 inches, Waist 32-34 inches</li>
-              <li><strong>L:</strong> Chest 42-44 inches, Waist 36-38 inches</li>
-              <li><strong>XL:</strong> Chest 46-48 inches, Waist 40-42 inches</li>
-            </ul>
+            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid #ccc' }}>
+                  <th style={{ padding: '8px' }}>Size</th>
+                  <th style={{ padding: '8px' }}>Chest (inches)</th>
+                  <th style={{ padding: '8px' }}>Length (inches)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td style={{ padding: '8px' }}>XS</td>
+                  <td style={{ padding: '8px' }}>39</td>
+                  <td style={{ padding: '8px' }}>27</td>
+                </tr>
+                <tr>
+                  <td style={{ padding: '8px' }}>S</td>
+                  <td style={{ padding: '8px' }}>41</td>
+                  <td style={{ padding: '8px' }}>27.5</td>
+                </tr>
+                <tr>
+                  <td style={{ padding: '8px' }}>M</td>
+                  <td style={{ padding: '8px' }}>43</td>
+                  <td style={{ padding: '8px' }}>28</td>
+                </tr>
+                <tr>
+                  <td style={{ padding: '8px' }}>L</td>
+                  <td style={{ padding: '8px' }}>45</td>
+                  <td style={{ padding: '8px' }}>29</td>
+                </tr>
+                <tr>
+                  <td style={{ padding: '8px' }}>XL</td>
+                  <td style={{ padding: '8px' }}>47</td>
+                  <td style={{ padding: '8px' }}>30</td>
+                </tr>
+                <tr>
+                  <td style={{ padding: '8px' }}>XXL</td>
+                  <td style={{ padding: '8px' }}>51</td>
+                  <td style={{ padding: '8px' }}>31</td>
+                </tr>
+                <tr>
+                  <td style={{ padding: '8px' }}>XXXL</td>
+                  <td style={{ padding: '8px' }}>53</td>
+                  <td style={{ padding: '8px' }}>32</td>
+                </tr>
+              </tbody>
+            </table>
             <button onClick={() => setShowSizeGuide(false)} style={styles.modalCloseButton}>
               Close
             </button>
