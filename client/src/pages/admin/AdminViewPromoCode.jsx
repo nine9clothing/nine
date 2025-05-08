@@ -8,6 +8,7 @@ const ViewPromoCodes = () => {
   const [toast, setToast] = useState(null);
   const [confirmingDeleteId, setConfirmingDeleteId] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [updatingDisplayId, setUpdatingDisplayId] = useState(null); // For display toggle
 
   // Fetch promo codes from Supabase
   const fetchPromoCodes = async () => {
@@ -17,7 +18,7 @@ const ViewPromoCodes = () => {
     try {
       const { data, error } = await supabase
         .from('promocodes')
-        .select('*')
+        .select('*') // ensure 'limit', 'used', 'display' are selected
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -84,10 +85,35 @@ const ViewPromoCodes = () => {
     setConfirmingDeleteId(null);
   };
 
-  // Refresh the promo code list
-  const handleRefresh = () => {
-    fetchPromoCodes();
+  // Handle display toggle
+  const handleToggleDisplay = async (promoId, currentDisplayStatus) => {
+    setUpdatingDisplayId(promoId);
+    setToast(null);
+    const newDisplayStatus = !currentDisplayStatus;
+
+    try {
+        const { error } = await supabase
+            .from('promocodes')
+            .update({ display: newDisplayStatus })
+            .eq('id', promoId);
+
+        if (error) throw error;
+
+        setPromoCodes(prevCodes =>
+            prevCodes.map(p =>
+                p.id === promoId ? { ...p, display: newDisplayStatus } : p
+            )
+        );
+        setToast({ message: `Promo code display set to ${newDisplayStatus}.`, type: 'success' });
+
+    } catch (err) {
+        console.error('Error updating display status:', err);
+        setToast({ message: err.message || 'Failed to update display status.', type: 'error' });
+    } finally {
+        setUpdatingDisplayId(null);
+    }
   };
+
 
   return (
     <div style={{ padding: '20px' }}>
@@ -111,41 +137,64 @@ const ViewPromoCodes = () => {
                 <th style={tableHeaderStyle}>Created</th>
                 <th style={tableHeaderStyle}>Code</th>
                 <th style={tableHeaderStyle}>Discount (%)</th>
-                <th style={tableHeaderStyle}>Max Uses Per User</th>
+                <th style={tableHeaderStyle}>Limit</th>
+                <th style={tableHeaderStyle}>Used</th>
+                <th style={tableHeaderStyle}>Remaining</th>
+                <th style={tableHeaderStyle}>Display</th>
                 <th style={tableHeaderStyle}>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {promoCodes.map((promo) => (
-                <tr key={promo.id} style={{ borderBottom: '1px solid #eee' }}>
-                  <td style={tableCellStyle}>
-                    {promo.created_at ? new Date(promo.created_at).toLocaleString() : 'N/A'}
-                  </td>
-                  <td style={tableCellStyle}>{promo.code}</td>
-                  <td style={tableCellStyle}>{promo.discount}</td>
-                  <td style={tableCellStyle}>
-                    {promo.max_uses_per_user || 'N/A'}
-                  </td>
-                  <td style={tableCellStyle}>
-                    <button
-                      onClick={() => handleDeleteClick(promo.id)}
-                      style={{
-                        padding: '6px 12px',
-                        backgroundColor: '#dc3545',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '6px',
-                        cursor: 'pointer',
-                        fontSize: '0.9em',
-                        opacity: loading || isDeleting ? 0.7 : 1,
-                      }}
-                      disabled={loading || isDeleting || confirmingDeleteId === promo.id}
-                    >
-                      Delete
-                    </button>
-                  </td>
-                </tr>
-              ))}
+              {promoCodes.map((promo) => {
+                const remainingUses = (promo.limit || 0) - (promo.used || 0);
+                const isCurrentlyUpdatingDisplay = updatingDisplayId === promo.id;
+                const isSomeActionInProgress = loading || isDeleting || confirmingDeleteId !== null;
+
+                return (
+                  <tr key={promo.id} style={{ borderBottom: '1px solid #eee' }}>
+                    <td style={tableCellStyle}>
+                      {promo.created_at ? new Date(promo.created_at).toLocaleString() : 'N/A'}
+                    </td>
+                    <td style={tableCellStyle}>{promo.code}</td>
+                    <td style={tableCellStyle}>{promo.discount}</td>
+                    <td style={tableCellStyle}>{promo.limit !== null ? promo.limit : 'N/A'}</td>
+                    <td style={tableCellStyle}>{promo.used !== null ? promo.used : 'N/A'}</td>
+                    <td style={tableCellStyle}>{remainingUses >= 0 ? remainingUses : 'N/A'}</td>
+                    <td style={tableCellStyle}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <button
+                                onClick={() => handleToggleDisplay(promo.id, promo.display)}
+                                style={{
+                                    ...smallButtonStyle,
+                                    backgroundColor: isCurrentlyUpdatingDisplay ? '#ccc' : (promo.display ? '#ffc107' : '#28a745'),
+                                    minWidth: '100px', // Ensure consistent width
+                                }}
+                                disabled={isSomeActionInProgress || isCurrentlyUpdatingDisplay}
+                            >
+                                {isCurrentlyUpdatingDisplay ? (
+                                    <div style={spinnerContainer}>
+                                        <div style={{ ...spinner, borderTop: '2px solid #333' }}></div>
+                                    </div>
+                                ) : (promo.display ? "Don't Display" : "Display")}
+                            </button>
+                        </div>
+                    </td>
+                    <td style={tableCellStyle}>
+                      <button
+                        onClick={() => handleDeleteClick(promo.id)}
+                        style={{
+                          ...smallButtonStyle,
+                          backgroundColor: '#dc3545',
+                          opacity: (isSomeActionInProgress && confirmingDeleteId !== promo.id) || isCurrentlyUpdatingDisplay ? 0.7 : 1,
+                        }}
+                        disabled={isSomeActionInProgress || isCurrentlyUpdatingDisplay || confirmingDeleteId === promo.id}
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -213,18 +262,19 @@ const tableHeaderStyle = {
   fontWeight: '600',
   color: '#333',
   fontSize: '0.9em',
+  whiteSpace: 'nowrap',
 };
 
 const tableCellStyle = {
   border: '1px solid #ddd',
   padding: '12px 15px',
-  verticalAlign: 'top',
+  verticalAlign: 'middle', // Changed to middle for better alignment with buttons
   fontSize: '0.95em',
   color: '#333',
 };
 
 // Button style
-const buttonStyle = {
+const buttonStyle = { // General modal button style
   padding: '10px 15px',
   backgroundColor: '#000',
   color: '#fff',
@@ -234,12 +284,27 @@ const buttonStyle = {
   marginRight: '6px',
   fontSize: '0.95rem',
   opacity: 1,
-  transition: 'opacity 0.2s ease',
+  transition: 'opacity 0.2s ease, background-color 0.2s ease',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
   minWidth: '120px',
 };
+
+const smallButtonStyle = { // For action buttons in table rows
+    padding: '6px 12px',
+    color: 'white',
+    border: 'none',
+    borderRadius: '6px',
+    cursor: 'pointer',
+    fontSize: '0.9em',
+    opacity: 1,
+    transition: 'opacity 0.2s ease, background-color 0.2s ease',
+    display: 'inline-flex', // Changed for better spinner alignment
+    alignItems: 'center',
+    justifyContent: 'center',
+};
+
 
 // Modal styles
 const modalOverlay = {
@@ -284,28 +349,33 @@ const spinnerContainer = {
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
+  width: '100%', // Ensure spinner container takes full width of button
+  height: '100%', // Ensure spinner container takes full height of button
 };
 
 const spinner = {
   border: '2px solid rgba(255, 255, 255, 0.3)',
   borderRadius: '50%',
-  borderTop: '2px solid #ffffff',
+  borderTop: '2px solid #ffffff', // Default white spinner for dark buttons
   width: '16px',
   height: '16px',
   animation: 'spin 1s linear infinite',
 };
 
-// Add spinner keyframes
+// Add spinner keyframes (ensure it's only added once)
 if (typeof window !== 'undefined') {
-  const spinnerKeyframes = `
-  @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-  }`;
-  
-  const styleElement = document.createElement('style');
-  styleElement.innerHTML = spinnerKeyframes;
-  document.head.appendChild(styleElement);
+  if (!document.getElementById('spinner-keyframes-style')) {
+    const spinnerKeyframes = `
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }`;
+    
+    const styleElement = document.createElement('style');
+    styleElement.id = 'spinner-keyframes-style';
+    styleElement.innerHTML = spinnerKeyframes;
+    document.head.appendChild(styleElement);
+  }
 }
 
 export default ViewPromoCodes;

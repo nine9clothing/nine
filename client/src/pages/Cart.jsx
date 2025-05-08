@@ -103,17 +103,31 @@ const CartCheckout = () => {
     try {
       const { data: promo, error } = await supabase
         .from('promocodes')
-        .select('*')
+        .select('*') // This should fetch 'limit', 'used', and 'display' columns as well
         .eq('code', promoCode.toUpperCase())
         .single();
 
       if (error || !promo) {
-        setToastMessage({ message: 'Invalid promo code.', type: 'error' });
+        setToastMessage({ message: 'Invalid or expired promo code.', type: 'error' });
         setDiscount(0);
         setAppliedPromo(null);
         return;
       }
 
+      // Check if the promo code has reached its overall usage limit
+      // Ensure 'used' and 'limit' are numbers. Handle null or undefined if necessary.
+      const usedCount = typeof promo.used === 'number' ? promo.used : 0;
+      const limitCount = typeof promo.limit === 'number' ? promo.limit : Infinity; // If no limit, consider it infinite
+
+      if (usedCount >= limitCount) {
+        setToastMessage({ message: 'This promo code has reached its usage limit.', type: 'error' });
+        setDiscount(0);
+        setAppliedPromo(null);
+        return;
+      }
+
+      /*
+      // --- Start of commented out user-specific usage check ---
       const { data: usageData, error: usageError } = await supabase
         .from('promo_usage')
         .select('usage_count')
@@ -121,24 +135,35 @@ const CartCheckout = () => {
         .eq('promo_code_id', promo.id)
         .single();
 
+      if (usageError && usageError.code !== 'PGRST116') { // PGRST116 means no rows found, which is fine
+        console.error("Error fetching promo usage:", usageError);
+        // Optionally, you could decide to block promo application here or proceed
+        // For now, let's assume if there's an error fetching usage, we might allow it
+        // or show a generic error.
+      }
+      
       let usageCount = 0;
       if (usageData) {
         usageCount = usageData.usage_count;
       }
 
-      if (usageCount >= promo.max_uses_per_user) {
+      if (promo.max_uses_per_user && usageCount >= promo.max_uses_per_user) {
         setToastMessage({ message: 'You have exceeded the maximum uses for this promo code.', type: 'error' });
         setDiscount(0);
         setAppliedPromo(null);
         return;
       }
+      // --- End of commented out user-specific usage check ---
+      */
 
       const discountAmount = (subtotal * promo.discount) / 100;
       setDiscount(discountAmount);
       setAppliedPromo(promo);
       setToastMessage({ message: `Promo code applied! ${promo.discount}% off.`, type: 'success' });
+
     } catch (error) {
-      setToastMessage({ message: 'Error applying promo code.', type: 'error' });
+      console.error('Error applying promo code:', error);
+      setToastMessage({ message: 'Error applying promo code. Please try again.', type: 'error' });
       setDiscount(0);
       setAppliedPromo(null);
     }

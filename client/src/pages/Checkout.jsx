@@ -1426,30 +1426,58 @@ const Checkout = () => {
 
       if (location.state?.appliedPromo) {
         try {
-          const { data: usageData, error: usageError } = await supabase
+          const promoId = location.state.appliedPromo.id; // This is the PK of the promocode
+      
+          // 1. Fetch current overall 'used' count for the promo
+          const { data: promoDetails, error: promoDetailsError } = await supabase
+            .from('promocodes')
+            .select('used')
+            .eq('id', promoId) // Corrected
+            .single();
+      
+          if (promoDetailsError) {
+            console.error('Error fetching promo details from promocodes:', promoDetailsError);
+            throw promoDetailsError; // Or handle more gracefully
+          }
+          const currentOverallUsed = promoDetails.used;
+      
+          // 2. Increment and update the overall 'used' count in 'promocodes'
+          const { error: overallUpdateError } = await supabase
+            .from('promocodes')
+            .update({ used: currentOverallUsed + 1 })
+            .eq('id', promoId); // Corrected
+      
+          if (overallUpdateError) {
+            console.error('Error updating overall promo used count:', overallUpdateError);
+            // Decide if this is a critical failure
+          }
+      
+          // 3. Handle user-specific usage in 'promo_usage'
+          const { data: userUsageData, error: userUsageFetchError } = await supabase
             .from('promo_usage')
             .select('usage_count')
             .eq('user_id', user.id)
-            .eq('promo_code_id', location.state.appliedPromo.id)
+            .eq('promo_code_id', promoId) // Assumes promo_code_id is the FK in promo_usage
             .single();
-          
-          if (usageError && usageError.code !== 'PGRST116') {
-            console.error('Error checking promo usage:', usageError);
-          }
-          
-          if (usageData) {
-            const { error: updateError } = await supabase
+      
+          if (userUsageFetchError && userUsageFetchError.code !== 'PGRST116') {
+            console.error('Error fetching user-specific promo usage:', userUsageFetchError);
+          } else if (userUsageData) {
+            // User has used this promo before, update their count
+            const { error: userUpdateError } = await supabase
               .from('promo_usage')
-              .update({ usage_count: usageData.usage_count + 1 })
+              .update({ usage_count: userUsageData.usage_count + 1 })
               .eq('user_id', user.id)
-              .eq('promo_code_id', location.state.appliedPromo.id);
-            if (updateError) console.error('Error updating promo usage:', updateError);
+              .eq('promo_code_id', promoId);
+            if (userUpdateError) console.error('Error updating user promo usage:', userUpdateError);
           } else {
-            const { error: insertError } = await supabase
+            // User's first time, insert new record
+            const { error: userInsertError } = await supabase
               .from('promo_usage')
-              .insert({ user_id: user.id, promo_code_id: location.state.appliedPromo.id, usage_count: 1 });
-            if (insertError) console.error('Error inserting promo usage:', insertError);
+              .insert({ user_id: user.id, promo_code_id: promoId, usage_count: 1 });
+            if (userInsertError) console.error('Error inserting user promo usage:', userInsertError);
           }
+      
         } catch (promoError) {
           console.error('Error processing promo code usage:', promoError);
         }

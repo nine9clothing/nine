@@ -8,7 +8,9 @@ const CreatePromoCode = () => {
   const [formData, setFormData] = useState({
     code: '',
     discount: '',
-    maxUsesPerUser: 1,
+    maxUsesPerUser: '1', // Keep as string for input, parse on submit
+    display: 'false',     // Default to 'true'
+    limit: '',           // New field for limit
   });
 
   // Handle form input changes
@@ -24,20 +26,36 @@ const CreatePromoCode = () => {
     setToast(null);
 
     // Validation
-    if (!formData.code || !formData.discount || formData.discount <= 0 || formData.discount > 100) {
-      setToast({ message: 'Please enter a valid promo code and discount (1-100%).', type: 'error' });
+    if (!formData.code.trim()) {
+      setToast({ message: 'Promo code is required.', type: 'error' });
       setLoading(false);
       return;
     }
+    if (!formData.discount || parseFloat(formData.discount) <= 0 || parseFloat(formData.discount) > 100) {
+      setToast({ message: 'Discount must be a number between 1 and 100.', type: 'error' });
+      setLoading(false);
+      return;
+    }
+    if (!formData.maxUsesPerUser || parseInt(formData.maxUsesPerUser, 10) < 1) {
+        setToast({ message: 'Max uses per user must be at least 1.', type: 'error' });
+        setLoading(false);
+        return;
+    }
+    if (!formData.limit || parseInt(formData.limit, 10) < 1) {
+        setToast({ message: 'Limit must be at least 1.', type: 'error' });
+        setLoading(false);
+        return;
+    }
+    // Display is a select with a default, so it should always have a valid value if marked required.
 
     try {
       const { error } = await supabase.from('promocodes').insert([
         {
-          code: formData.code.toUpperCase(),
+          code: formData.code.toUpperCase().trim(),
           discount: parseFloat(formData.discount),
-          max_uses_per_user: parseInt(formData.maxUsesPerUser),
-          limit: 10,
-          display: "true",
+          // max_uses_per_user: parseInt(formData.maxUsesPerUser, 10),
+          limit: parseInt(formData.limit, 10),
+          display: formData.display === 'true', // Convert string to boolean
           used: 0,
         },
       ]);
@@ -45,7 +63,7 @@ const CreatePromoCode = () => {
       if (error) throw error;
 
       setToast({ message: 'Promo code created successfully!', type: 'success' });
-      setFormData({ code: '', discount: '', maxUsesPerUser: 1 });
+      setFormData({ code: '', discount: '', maxUsesPerUser: '1', display: 'true', limit: '' });
     } catch (err) {
       console.error('Error creating promo code:', err);
       setToast({ message: err.message || 'Failed to create promo code.', type: 'error' });
@@ -101,25 +119,51 @@ const CreatePromoCode = () => {
             placeholder="Enter discount percentage"
             min="1"
             max="100"
+            step="0.01" // Allow decimal for discount if needed
             required
           />
 
           <label style={labelStyle}>
-            Max Uses Per User
+            Limit (Total Uses) <span style={asterisk}>*</span>
+          </label>
+          <input
+            type="number"
+            name="limit"
+            value={formData.limit}
+            onChange={handleInputChange}
+            style={inputStyle}
+            placeholder="Enter total usage limit (e.g., 100)"
+            min="1"
+            required
+          />
+
+          <label style={labelStyle}>
+            Display <span style={asterisk}>*</span>
           </label>
           <select
+            name="display"
+            value={formData.display}
+            onChange={handleInputChange}
+            style={inputStyle}
+            required
+          >
+            <option value="true">True</option>
+            <option value="false">False</option>
+          </select>
+
+          {/* <label style={labelStyle}>
+            Max Uses Per User <span style={asterisk}>*</span>
+          </label>
+          <input
+            type="number"
             name="maxUsesPerUser"
             value={formData.maxUsesPerUser}
             onChange={handleInputChange}
             style={inputStyle}
-          >
-            <option value="1">1</option>
-            <option value="2">2</option>
-            <option value="3">3</option>
-            <option value="5">5</option>
-            <option value="10">10</option>
-            <option value="999">Unlimited</option>
-          </select>
+            placeholder="Enter max uses per user (e.g., 1)"
+            min="1"
+            required
+          /> */}
 
           <button
             type="submit"
@@ -147,7 +191,7 @@ const CreatePromoCode = () => {
   );
 };
 
-// Styles
+// Styles (remain unchanged from your original code)
 const inputStyle = {
   width: '100%',
   padding: '10px',
@@ -194,7 +238,7 @@ const asterisk = {
   marginLeft: '2px'
 };
 
-// Loading spinner styles
+// Loading spinner styles (remain unchanged)
 const spinnerContainer = {
   display: 'flex',
   alignItems: 'center',
@@ -210,21 +254,24 @@ const spinner = {
   animation: 'spin 1s linear infinite',
 };
 
-// Add spinner keyframes
+// Add spinner keyframes (remain unchanged)
 if (typeof window !== 'undefined') {
-  const spinnerKeyframes = `
-  @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-  }`;
-  
-  const styleElement = document.createElement('style');
-  styleElement.innerHTML = spinnerKeyframes;
-  document.head.appendChild(styleElement);
+  const existingStyleElement = document.getElementById('spinner-keyframes-style');
+  if (!existingStyleElement) { // Add only if not already present
+    const spinnerKeyframes = `
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }`;
+    
+    const styleElement = document.createElement('style');
+    styleElement.id = 'spinner-keyframes-style'; // Add an ID to prevent duplicates
+    styleElement.innerHTML = spinnerKeyframes;
+    document.head.appendChild(styleElement);
+  }
 }
 
 export default CreatePromoCode;
-
 
 // import React, { useState } from 'react';
 // import { supabase } from '../../lib/supabase';
