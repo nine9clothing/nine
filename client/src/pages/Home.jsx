@@ -556,7 +556,7 @@ const Home = () => {
         </div>
       </section>
 
-      {/* {videos.length > 0 && <ReelsSection videos={videos} isMobile={isMobile} />} */}
+      {videos.length > 0 && <ReelsSection videos={videos} isMobile={isMobile} />}
 
       <section
         style={{

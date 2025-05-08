@@ -810,14 +810,14 @@ const ReelsSection = ({ singleLine = true, isMobile = false }) => {
           }
         `}
       </style>
-      <section style={{
+      {/* <section style={{
         padding: mobileView ? "20px 0" : "40px 0", 
         background: "#000",
         overflow: "hidden"
       }}>
         <h2 style={styles.sectionTitle}>Trending Reels</h2>
         {renderContent()}
-      </section>
+      </section> */}
       {selectedVideo && (
         <VideoPage 
           video={selectedVideo} 
