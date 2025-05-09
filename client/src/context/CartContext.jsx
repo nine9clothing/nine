@@ -248,7 +248,7 @@ export const CartProvider = ({ children }) => {
   if (!isCartLoaded || authLoading) {
     return (
       <div style={{ padding: '20px', textAlign: 'center' }}>
-        <p>Loading your cart...</p>
+        <p>Loading...</p>
         <button
           onClick={() => window.location.reload()}
           style={{

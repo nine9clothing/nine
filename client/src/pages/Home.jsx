@@ -449,7 +449,6 @@ const Home = () => {
                 padding: "10px 0",
               }}
             >
-              No active codes available.
             </p>
           )}
         </div>

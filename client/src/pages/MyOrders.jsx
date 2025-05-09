@@ -268,7 +268,7 @@ const MyOrders = () => {
 
                   <div style={styles.mobileMetaInfo}>
                     <p style={styles.metaMobile}><strong>Date:</strong> {new Date(order.created_at).toLocaleString()}</p>
-                    <p style={styles.metaMobile}><strong>Total:</strong> ₹{(order.total - (order.shipping_charges || 0)- (order.cod_fee || 0)).toFixed(2)}</p>
+                    <p style={styles.metaMobile}><strong>Total:</strong> ₹{order.total.toFixed(2)}</p>
                     <p style={styles.metaMobile}><strong>Payment Method:</strong> {order.payment_method}</p>
                   </div>
 
@@ -338,7 +338,7 @@ const MyOrders = () => {
                     </div>
 
                     <p style={styles.meta}><strong>Date:</strong> {new Date(order.created_at).toLocaleString()}</p>
-                    <p style={styles.meta}><strong>Total:</strong> ₹{(order.total - (order.shipping_charges || 0)- (order.cod_fee || 0)).toFixed(2)}</p>
+                    <p style={styles.meta}><strong>Total:</strong> ₹{order.total.toFixed(2)}</p>
                     <p style={styles.meta}><strong>Payment Method:</strong> {order.payment_method}</p>
 
                     <div style={styles.section}>

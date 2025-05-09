@@ -32,8 +32,13 @@ const ViewProducts = () => {
         setProducts([]);
         setFilteredProducts([]);
     } else {
-        setProducts(data || []);
-        setFilteredProducts(data || []);
+        // Parse size JSON strings into objects
+        const parsedData = data.map(product => ({
+          ...product,
+          size: typeof product.size === 'string' ? JSON.parse(product.size) : product.size || {}
+        }));
+        setProducts(parsedData || []);
+        setFilteredProducts(parsedData || []);
     }
     setLoading(false);
   };
@@ -129,7 +134,7 @@ const ViewProducts = () => {
     setEditingProductId(product.id);
     setEditFormData({ 
       ...product, 
-      size: product.size ? product.size.split(',').map(s => s.trim()) : [],
+      size: product.size || sizes.reduce((acc, size) => ({ ...acc, [size]: 0 }), {}),
       care_guide: product.care_guide || '',
       composition_fabric: product.composition_fabric || '',
       shipping_info: product.shipping_info || '',
@@ -146,15 +151,12 @@ const ViewProducts = () => {
     setEditFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleSizeChange = (size) => {
-    setEditFormData(prev => {
-      const currentSizes = prev.size || [];
-      if (currentSizes.includes(size)) {
-        return { ...prev, size: currentSizes.filter(s => s !== size) };
-      } else {
-        return { ...prev, size: [...currentSizes, size] };
-      }
-    });
+  const handleSizeStockChange = (size, value) => {
+    const stockValue = Math.max(0, parseInt(value) || 0); // Ensure non-negative integers
+    setEditFormData(prev => ({
+      ...prev,
+      size: { ...prev.size, [size]: stockValue }
+    }));
   };
 
   const handleUpdate = async () => {
@@ -164,8 +166,11 @@ const ViewProducts = () => {
 
     const { id, name, description, price, category, gender, size, care_guide, composition_fabric, shipping_info, exchange } = editFormData;
 
-    if (!name || !description || !price || !category || !gender || !size || size.length === 0 || !care_guide || !composition_fabric || !shipping_info || !exchange) {
-        setToast({ message: 'All fields are required.', type: 'error' });
+    // Check if at least one size has stock > 0
+    const hasStock = Object.values(size).some(stock => stock > 0);
+
+    if (!name || !description || !price || !category || !gender || !hasStock || !care_guide || !composition_fabric || !shipping_info || !exchange) {
+        setToast({ message: 'All fields are required, and at least one size must have stock.', type: 'error' });
         setIsUpdating(false);
         return;
     }
@@ -177,7 +182,7 @@ const ViewProducts = () => {
             price: parseFloat(price),
             category,
             gender,
-            size: Array.isArray(size) ? size.join(',') : size,
+            size: JSON.stringify(size), // Store size as JSON string
             care_guide,
             composition_fabric,
             shipping_info,
@@ -223,7 +228,6 @@ const ViewProducts = () => {
 
       <div style={{ marginBottom: '20px' }}>
         <input
-        
           type="text"
           placeholder="Search by product name or ID..."
           value={searchTerm}
@@ -289,19 +293,26 @@ const ViewProducts = () => {
                       {genders.map((g, i) => <option key={i} value={g}>{g}</option>)}
                     </select>
 
-                    <label style={labelStyleSmall}>Sizes</label>
+                    <label style={labelStyleSmall}>Size Availability</label>
                     <div style={sizeContainerStyle}>
                       <div style={checkboxRowStyle}>
                         {sizes.map((size, index) => (
-                          <label key={index} style={checkboxLabelStyle}>
+                          <div key={index} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <label style={{ fontSize: '0.9rem', minWidth: '30px' }}>{size}</label>
                             <input
-                              type="checkbox"
-                              checked={editFormData.size?.includes(size) || false}
-                              onChange={() => handleSizeChange(size)}
-                              style={checkboxStyle}
+                              type="number"
+                              min="0"
+                              value={editFormData.size[size] || 0}
+                              onChange={(e) => handleSizeStockChange(size, e.target.value)}
+                              style={{
+                                ...inputStyleSmall,
+                                width: '80px',
+                                padding: '6px',
+                                marginBottom: '0',
+                              }}
+                              placeholder="Stock"
                             />
-                            {size}
-                          </label>
+                          </div>
                         ))}
                       </div>
                     </div>
@@ -426,7 +437,10 @@ const ViewProducts = () => {
                     <h4>{product.name}</h4>
                     <p style={{ margin: '5px 0', fontWeight: 'bold' }}>₹{product.price}</p>
                     <p style={{ fontSize: '0.9rem', color: '#555', marginBottom: '5px' }}>
-                        {product.category} | {product.gender} | Sizes: {product.size}
+                        {product.category} | {product.gender} | Sizes: {Object.entries(product.size)
+                          .filter(([_, stock]) => stock > 0)
+                          .map(([size, stock]) => `${size} (${stock})`)
+                          .join(', ') || 'None'}
                     </p>
                     {product.care_guide && (
                       <p style={{ fontSize: '0.85rem', color: '#666', marginBottom: '5px' }}>
@@ -540,7 +554,7 @@ const buttonStyle = {
   cursor: 'pointer',
   marginRight: '6px',
   fontSize: '0.9rem',
-  opacity: 1,
+  opacity: '1',
   transition: 'opacity 0.2s ease, background-color 0.2s ease',
 };
 
@@ -559,7 +573,7 @@ const productBox = {
   display: 'flex',
   flexDirection: 'column',
   transition: 'box-shadow 0.2s ease-in-out',
-  maxWidth: '400px', // Added to cap the stretching
+  maxWidth: '400px',
 };
 const mediaContainerStyle = {
     position: 'relative',
@@ -605,17 +619,6 @@ const checkboxRowStyle = {
   display: 'flex',
   flexWrap: 'wrap',
   gap: '15px',
-};
-const checkboxLabelStyle = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: '5px',
-  fontSize: '0.9rem',
-};
-const checkboxStyle = {
-  width: '20px',
-  height: '20px',
-  cursor: 'pointer',
 };
 
 export default ViewProducts;

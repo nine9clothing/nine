@@ -13,31 +13,75 @@ const AddProduct = () => {
   const [isSubmitting, setIsSubmitting] = useState(false); 
   const [uploadProgress, setUploadProgress] = useState(0); 
 
-  const [newProduct, setNewProduct] = useState({
-    name: '',
-    description: '',
-    price: '',
-    strike_price: '', // Added strike_price field
-    category: '',
-    gender: '',
-    size: {}, // Object to store size:stock pairs
-    care_guide: '', 
-    composition_fabric: '', 
-    shipping_info: '', 
-    exchange: '', 
-  });
-
-  // Initialize size availability with 0 stock for each size
-  useEffect(() => {
+  const [newProduct, setNewProduct] = useState(() => {
+    const savedProduct = localStorage.getItem('addProductForm');
     const initialSizes = sizes.reduce((acc, size) => {
       acc[size] = 0;
       return acc;
     }, {});
-    setNewProduct((prev) => ({ ...prev, size: initialSizes }));
+    if (savedProduct) {
+      const parsed = JSON.parse(savedProduct);
+      return {
+        name: parsed.name || '',
+        description: parsed.description || '',
+        price: parsed.price || '',
+        strike_price: parsed.strike_price || '',
+        category: parsed.category || '',
+        gender: parsed.gender || '',
+        size: parsed.size || initialSizes,
+        care_guide: parsed.care_guide || '',
+        composition_fabric: parsed.composition_fabric || '',
+        shipping_info: parsed.shipping_info || '',
+        exchange: parsed.exchange || '',
+      };
+    }
+    return {
+      name: '',
+      description: '',
+      price: '',
+      strike_price: '',
+      category: '',
+      gender: '',
+      size: initialSizes,
+      care_guide: '',
+      composition_fabric: '',
+      shipping_info: '',
+      exchange: '',
+    };
+  });
+
+  useEffect(() => {
+    const savedCustomCategory = localStorage.getItem('addProductCustomCategory');
+    if (savedCustomCategory) {
+      setCustomCategory(savedCustomCategory);
+    }
+
+    const savedImageFiles = localStorage.getItem('addProductImageFiles');
+    if (savedImageFiles) {
+      setToast({
+        message: 'Image files were not persisted due to page refresh. Please re-upload the files.',
+        type: 'warning',
+      });
+    }
   }, []);
 
+  useEffect(() => {
+    localStorage.setItem('addProductForm', JSON.stringify(newProduct));
+    localStorage.setItem('addProductCustomCategory', customCategory);
+    if (imageFiles.length > 0) {
+      const imageFileNames = imageFiles.map(file => ({
+        name: file.name,
+        size: file.size,
+        type: file.type,
+      }));
+      localStorage.setItem('addProductImageFiles', JSON.stringify(imageFileNames));
+    } else {
+      localStorage.removeItem('addProductImageFiles');
+    }
+  }, [newProduct, customCategory, imageFiles]);
+
   const handleSizeStockChange = (size, value) => {
-    const stockValue = Math.max(0, parseInt(value) || 0); // Ensure non-negative integers
+    const stockValue = Math.max(0, parseInt(value) || 0);
     setNewProduct({
       ...newProduct,
       size: { ...newProduct.size, [size]: stockValue },
@@ -53,7 +97,7 @@ const AddProduct = () => {
   };
 
   const handleCustomCategoryChange = (e) => {
-    setCustomCategory(e.target.value); // Only update the customCategory state
+    setCustomCategory(e.target.value);
   };
 
   const handleAddProduct = async () => {
@@ -61,10 +105,10 @@ const AddProduct = () => {
       console.log('Submission blocked: already submitting');
       return;
     }
-  
+
     const finalCategory = newProduct.category === 'Other' ? customCategory.trim() : newProduct.category;
     const { name, description, price, strike_price, gender, size, care_guide, composition_fabric, shipping_info, exchange } = newProduct;
-  
+
     console.log('Validation inputs:', {
       name,
       description,
@@ -79,12 +123,11 @@ const AddProduct = () => {
       shipping_info,
       exchange,
     });
-  
-    // Check if at least one size has stock > 0
+
     const hasStock = Object.values(size).some(stock => stock > 0);
 
-    if (!name || !description || !price || imageFiles.length === 0 || !finalCategory || !gender || !hasStock || !care_guide || !composition_fabric || !shipping_info || !exchange) {
-      let errorMessage = 'Please fill all required fields, upload at least one image, and specify stock for at least one size.';
+    if (!name || !description || !price || !strike_price || imageFiles.length === 0 || !finalCategory || !gender || !hasStock || !care_guide || !composition_fabric || !shipping_info || !exchange) {
+      let errorMessage = 'Please fill all required fields, upload at least one image, specify stock for at least one size, and provide a strike price.';
       if (newProduct.category === 'Other' && !finalCategory) {
         errorMessage = 'Please enter a name for the custom category.';
       } else if (!newProduct.category) {
@@ -94,41 +137,40 @@ const AddProduct = () => {
       setToast({ message: errorMessage, type: 'error' });
       return;
     }
-  
+
     setIsSubmitting(true);
     setToast(null);
     setUploadProgress(0);
     console.log('Starting product submission');
-  
+
     const timeout = setTimeout(() => {
       setIsSubmitting(false);
       setToast({
         message: 'Operation timed out. Please check your connection and try again.',
         type: 'error',
       });
-    }, 60000); // 60 seconds
-  
+    }, 60000);
+
     try {
-      // Verify session
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         console.error('No active session');
         throw new Error('User not authenticated. Please log in again.');
       }
-  
+
       const mediaUrls = [];
       const totalFiles = imageFiles.length;
       let filesUploaded = 0;
-  
+
       const uploadWithTimeout = async (file, fileName) => {
-        const timeout = 30000; // 30 seconds
+        const timeout = 30000;
         const timeoutPromise = new Promise((_, reject) =>
           setTimeout(() => reject(new Error(`Upload timed out for ${file.name}`)), timeout)
         );
         const uploadPromise = supabase.storage.from('product-images').upload(fileName, file);
         return Promise.race([uploadPromise, timeoutPromise]);
       };
-  
+
       for (const file of imageFiles) {
         console.log(`File: ${file.name}, Size: ${file.size} bytes, Type: ${file.type}`);
         if (file.size > 10 * 1024 * 1024) {
@@ -141,16 +183,16 @@ const AddProduct = () => {
         const fileName = `product-media/${Date.now()}-${Math.random().toString(36).substring(2)}.${ext}`;
         console.log(`Uploading file: ${fileName}`);
         const { error: uploadError } = await uploadWithTimeout(file, fileName);
-  
+
         if (uploadError) {
           console.error('Upload Error:', uploadError.message);
           throw new Error(`Failed to upload file: ${file.name}`);
         }
-  
+
         const { data: urlData } = supabase.storage
           .from('product-images')
           .getPublicUrl(fileName);
-  
+
         if (!urlData || !urlData.publicUrl) {
           console.error('No public URL for:', fileName);
           throw new Error(`Failed to get public URL for ${file.name}`);
@@ -164,40 +206,40 @@ const AddProduct = () => {
         });
         console.log(`File uploaded: ${fileName}, Progress: ${(filesUploaded / totalFiles) * 100}%`);
       }
-  
+
       console.log('Inserting product into database');
       const { error: insertError } = await supabase.from('products').insert([
         {
           name,
           description,
           price: parseFloat(price),
-          strike_price: strike_price ? parseFloat(strike_price) : null, // Store strike_price as float or null if empty
+          strike_price: parseFloat(strike_price),
           media_urls: mediaUrls,
           category: finalCategory,
           gender,
-          size: JSON.stringify(size), // Store size object as JSON string
+          size: JSON.stringify(size),
           care_guide,
           composition_fabric,
           shipping_info,
           exchange,
         },
       ]);
-  
+
       if (insertError) {
         console.error('Insert Error:', insertError.message);
         throw new Error('Failed to add product to database.');
       }
-  
+
       console.log('Product added successfully');
       setToast({ message: 'Product added successfully!', type: 'success' });
       setNewProduct({
         name: '',
         description: '',
         price: '',
-        strike_price: '', // Reset strike_price
+        strike_price: '',
         category: '',
         gender: '',
-        size: sizes.reduce((acc, size) => ({ ...acc, [size]: 0 }), {}), // Reset to initial state
+        size: sizes.reduce((acc, size) => ({ ...acc, [size]: 0 }), {}),
         care_guide: '',
         composition_fabric: '',
         shipping_info: '',
@@ -207,6 +249,10 @@ const AddProduct = () => {
       setCustomCategory('');
       const fileInput = document.getElementById('product-image-input');
       if (fileInput) fileInput.value = '';
+      
+      localStorage.removeItem('addProductForm');
+      localStorage.removeItem('addProductCustomCategory');
+      localStorage.removeItem('addProductImageFiles');
     } catch (error) {
       console.error('Error adding product:', error.message, error.stack);
       setToast({
@@ -232,10 +278,20 @@ const AddProduct = () => {
 
       <div style={formBox}>
         <label style={labelStyle}>Name <span style={asterisk}>*</span></label>
-        <input required value={newProduct.name} onChange={e => setNewProduct({ ...newProduct, name: e.target.value })} style={inputStyle} />
+        <input 
+          required 
+          value={newProduct.name} 
+          onChange={e => setNewProduct({ ...newProduct, name: e.target.value })} 
+          style={inputStyle} 
+        />
 
         <label style={labelStyle}>Description <span style={asterisk}>*</span></label>
-        <textarea required value={newProduct.description} onChange={e => setNewProduct({ ...newProduct, description: e.target.value })} style={{ ...inputStyle, height: '80px' }} />
+        <textarea 
+          required 
+          value={newProduct.description} 
+          onChange={e => setNewProduct({ ...newProduct, description: e.target.value })} 
+          style={{ ...inputStyle, height: '80px' }} 
+        />
 
         <label style={labelStyle}>Care Guide <span style={asterisk}>*</span></label>
         <textarea
@@ -274,17 +330,26 @@ const AddProduct = () => {
         />
 
         <label style={labelStyle}>Price <span style={asterisk}>*</span></label>
-        <input type="number" required min="0" step="0.01" value={newProduct.price} onChange={e => setNewProduct({ ...newProduct, price: e.target.value })} style={inputStyle} />
+        <input 
+          type="number" 
+          required 
+          min="0" 
+          step="0.01" 
+          value={newProduct.price} 
+          onChange={e => setNewProduct({ ...newProduct, price: e.target.value })} 
+          style={inputStyle} 
+        />
 
-        <label style={labelStyle}>Strike Price</label>
+        <label style={labelStyle}>Strike Price <span style={asterisk}>*</span></label>
         <input
           type="number"
+          required
           min="0"
           step="0.01"
           value={newProduct.strike_price}
           onChange={e => setNewProduct({ ...newProduct, strike_price: e.target.value })}
           style={inputStyle}
-          placeholder="Enter original price (optional)"
+          placeholder="Enter original price"
         />
 
         <label style={labelStyle}>Images and Video (Recommended: h 600, w 400) <span style={asterisk}>*</span></label>
@@ -327,7 +392,12 @@ const AddProduct = () => {
         )}
 
         <label style={labelStyle}>Gender <span style={asterisk}>*</span></label>
-        <select required value={newProduct.gender} onChange={e => setNewProduct({ ...newProduct, gender: e.target.value })} style={inputStyle}>
+        <select 
+          required 
+          value={newProduct.gender} 
+          onChange={e => setNewProduct({ ...newProduct, gender: e.target.value })} 
+          style={inputStyle}
+        >
           <option value="">Select Gender</option>
           {genders.map((g, i) => <option key={i} value={g}>{g}</option>)}
         </select>
@@ -397,7 +467,7 @@ const AddProduct = () => {
   );
 };
 
-// Styles (Keep relevant styles or import from a shared file)
+// Styles
 const inputStyle = {
   width: '100%',
   padding: '10px',
