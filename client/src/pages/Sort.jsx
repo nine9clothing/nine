@@ -110,15 +110,25 @@ const Sort = () => {
           white-space: nowrap !important;
           font-family: 'Louvette Semi Bold', sans-serif !important;
         }
-        .productPrice {
-          font-size: 14px !important;
-          color: #Ffa500 !important;
-          font-weight: bold !important;
-          text-align: left !important;
-          margin-top: 2px !important;
-          margin-bottom: 8px !important;
-          font-family: 'Louvette Semi Bold', sans-serif !important;
-        }
+       .productPrice {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  margin-top: 2px !important;
+  margin-bottom: 8px !important;
+}
+.productPrice .strikePrice {
+  font-size: 10px !important;
+  color: #ccc !important;
+  text-decoration: line-through !important;
+  font-family: 'Louvette Semi Bold', sans-serif !important;
+}
+.productPrice .currentPrice {
+  font-size: 10px !important;
+  color: #Ffa500 !important;
+  font-weight: bold !important;
+  font-family: 'Louvette Semi Bold', sans-serif !important;
+}
         .wishlistButton {
           position: absolute !important;
           top: 10px !important;
@@ -425,9 +435,16 @@ const Sort = () => {
                       />
                     </div>
                     <h3 className="productName" style={styles.productName}>{product.name}</h3>
-                    <p className="productPrice" style={styles.productPrice}>
-                      ₹{product.price}
-                    </p>
+                   <div className="productPrice" style={styles.productPrice}>
+                    {product.strike_price ? (
+                      <>
+                        <span style={styles.strikePrice}>₹{product.strike_price}</span>
+                        <span style={styles.currentPrice}>₹{product.price}</span>
+                      </>
+                    ) : (
+                      <span style={styles.currentPrice}>₹{product.price}</span>
+                    )}
+                  </div>
                     {isMobile && (
                       <button
                         onClick={(e) => handleAddToCart(e, product.id)}
@@ -649,14 +666,25 @@ const styles = {
     textOverflow: 'ellipsis',
     fontFamily: "'Louvette Semi Bold', sans-serif",
   },
-  productPrice: {
-    fontWeight: 'bold',
-    fontSize: '1.1rem',
-    color: 'white',
-    marginTop: 'auto',
-    paddingTop: '5px',
-    fontFamily: "'Louvette Semi Bold', sans-serif",
-  },
+productPrice: {
+  display: 'flex',
+  alignItems: 'center',
+  gap: '10px',
+  marginTop: 'auto',
+  paddingTop: '5px',
+},
+strikePrice: {
+  fontSize: '0.9rem',
+  color: '#ccc',
+  textDecoration: 'line-through',
+  fontFamily: "'Louvette Semi Bold', sans-serif",
+},
+currentPrice: {
+  fontWeight: 'bold',
+  fontSize: '1rem',
+  color: 'white',
+  fontFamily: "'Louvette Semi Bold', sans-serif",
+},
   addToCartButton: {
     display: 'none',
     alignItems: 'center',

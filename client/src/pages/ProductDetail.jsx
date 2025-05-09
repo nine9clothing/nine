@@ -1015,6 +1015,10 @@ const ProductDetail = () => {
       setToastMessage({ message: 'Please select a size before adding to cart.', type: 'error' });
       return;
     }
+    if (sizeStock[selectedSize] === 0) {
+      setToastMessage({ message: `Size ${selectedSize} is out of stock.`, type: 'error' });
+      return;
+    }
     const productWithDetails = { ...product, selectedSize, quantity };
     addToCart(productWithDetails);
     setToastMessage({ message: `${product.name} (${selectedSize} x${quantity}) added to cart!`, type: 'success' });
@@ -1023,6 +1027,10 @@ const ProductDetail = () => {
   const handleBuyNow = () => {
     if (!selectedSize) {
       setToastMessage({ message: 'Please select a size before proceeding.', type: 'error' });
+      return;
+    }
+    if (sizeStock[selectedSize] === 0) {
+      setToastMessage({ message: `Size ${selectedSize} is out of stock.`, type: 'error' });
       return;
     }
     const productWithDetails = { ...product, selectedSize, quantity };
@@ -1107,13 +1115,16 @@ const ProductDetail = () => {
     return <p>Product not found.</p>;
   }
 
-  const availableSizes = (product.size || '')
-    .split(',')
-    .map(s => s.trim())
-    .filter(s => s);
+  // Parse size field (JSON string) to get stock quantities
+  let sizeStock = {};
+  try {
+    sizeStock = JSON.parse(product.size || '{}');
+  } catch (error) {
+    console.error('Error parsing size JSON:', error.message);
+    sizeStock = {};
+  }
 
   const allSizes = ["XS", "S", "M", "L", "XL", "XXL", "XXXL"];
-
   const media = Array.isArray(product.media_urls) ? product.media_urls : [];
   const isWished = wishlist.includes(product?.id);
 
@@ -1136,7 +1147,15 @@ const ProductDetail = () => {
       <Navbar showLogo={true} />
       <div style={isMobile ? styles.mobileContainer : styles.container}>
         <div style={isMobile ? styles.mobileContentWrapper : styles.contentWrapper}>
-          <div style={styles.imageWrapper}>
+        <div style={styles.imageWrapper}>
+  {media.length > 1 ? (
+    <Slider {...sliderSettings} ref={sliderRef} style={{ width: '100%', position: 'relative' }}>
+      {media.map((url, index) => {
+        const isImage = url.match(/\.(jpeg|jpg|png|gif|webp)$/i);
+        const isVideo = url.match(/\.(mp4|webm|ogg)$/i);
+
+        return (
+          <div key={index} style={{ position: 'relative' }}>
             {user && (
               <button
                 onClick={() => toggleWishlist(product.id)}
@@ -1150,62 +1169,75 @@ const ProductDetail = () => {
                 <FaHeart />
               </button>
             )}
-            {media.length > 1 ? (
-              <Slider {...sliderSettings} ref={sliderRef} style={{ width: '100%' }}>
-                {media.map((url, index) => {
-                  if (url.match(/\.(jpeg|jpg|png|gif|webp)$/i)) {
-                    return (
-                      <div key={index}>
-                        <img src={url} alt={`Product ${index}`} style={isMobile ? styles.mobileProductImage : styles.productImage} />
-                      </div>
-                    );
-                  } else if (url.match(/\.(mp4|webm|ogg)$/i)) {
-                    return (
-                      <div key={index}>
-                        <video
-                          ref={(el) => (videoRefs.current[index] = el)}
-                          muted
-                          playsInline
-                          controls
-                          preload="metadata"
-                          style={isMobile ? styles.mobileProductImage : styles.productImage}
-                        >
-                          <source src={url} />
-                        </video>
-                      </div>
-                    );
-                  }
-                  return null;
-                })}
-              </Slider>
-            ) : media.length === 1 ? (
-              media[0].match(/\.(jpeg|jpg|png|gif|webp)$/i) ? (
-                <img src={media[0]} alt="Product" style={isMobile ? styles.mobileProductImage : styles.productImage} />
-              ) : media[0].match(/\.(mp4|webm|ogg)$/i) ? (
-                <video
-                  muted
-                  playsInline
-                  controls
-                  preload="metadata"
-                  style={isMobile ? styles.mobileProductImage : styles.productImage}
-                >
-                  <source src={media[0]} />
-                </video>
-              ) : null
-            ) : (
-              <div
-                style={{
-                  ...styles.productImage,
-                  background: '#333',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}
+            {isImage ? (
+              <img
+                src={url}
+                alt={`Product ${index}`}
+                style={isMobile ? styles.mobileProductImage : styles.productImage}
+              />
+            ) : isVideo ? (
+              <video
+                ref={(el) => (videoRefs.current[index] = el)}
+                muted
+                playsInline
+                controls
+                preload="metadata"
+                style={isMobile ? styles.mobileProductImage : styles.productImage}
               >
-                <span style={{color: '#fff'}}>No media available</span>
-              </div>
-            )}
+                <source src={url} />
+              </video>
+            ) : null}
           </div>
+        );
+      })}
+    </Slider>
+  ) : media.length === 1 ? (
+    <div style={{ position: 'relative' }}>
+      {user && (
+        <button
+          onClick={() => toggleWishlist(product.id)}
+          style={{
+            ...styles.wishlistButton,
+            ...(isMobile ? styles.mobileWishlistButton : {}),
+            color: isWished ? 'red' : 'white',
+          }}
+          title={isWished ? 'Remove from wishlist' : 'Add to wishlist'}
+        >
+          <FaHeart />
+        </button>
+      )}
+      {media[0].match(/\.(jpeg|jpg|png|gif|webp)$/i) ? (
+        <img
+          src={media[0]}
+          alt="Product"
+          style={isMobile ? styles.mobileProductImage : styles.productImage}
+        />
+      ) : media[0].match(/\.(mp4|webm|ogg)$/i) ? (
+        <video
+          muted
+          playsInline
+          controls
+          preload="metadata"
+          style={isMobile ? styles.mobileProductImage : styles.productImage}
+        >
+          <source src={media[0]} />
+        </video>
+      ) : null}
+    </div>
+  ) : (
+    <div
+      style={{
+        ...styles.productImage,
+        background: '#333',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      <span style={{ color: '#fff' }}>No media available</span>
+    </div>
+  )}
+</div>
 
           <div style={styles.detailsWrapper}>
             <h2 style={isMobile ? styles.mobileName : styles.name}>{product.name}</h2>
@@ -1219,7 +1251,7 @@ const ProductDetail = () => {
             </div>
             <div style={isMobile ? styles.mobileSizeOptions : styles.sizeOptions}>
               {allSizes.map((size) => {
-                const isAvailable = availableSizes.includes(size);
+                const isAvailable = sizeStock[size] > 0;
                 const isSelected = selectedSize === size;
                 return (
                   <div key={size} style={{ position: 'relative' }}>
@@ -1234,8 +1266,8 @@ const ProductDetail = () => {
                       }}
                       style={{
                         ...(isMobile ? styles.mobileSizeButton : styles.sizeButton),
-                        ...(isSelected ? styles.sizeButtonSelected : {}),
-                        ...(!isAvailable ? styles.disabledSizeButton : {})
+                        ...(isSelected && isAvailable ? styles.sizeButtonSelected : {}),
+                        ...(!isAvailable ? styles.disabledSizeButton : {}),
                       }}
                       disabled={!isAvailable && !user}
                     >
@@ -1245,6 +1277,11 @@ const ProductDetail = () => {
                 );
               })}
             </div>
+            {selectedSize && sizeStock[selectedSize] > 0 && (
+              <p style={{ color: 'green', marginTop: '10px', fontSize: '14px' }}>
+                {sizeStock[selectedSize]} in stock for size {selectedSize}
+              </p>
+            )}
 
             <div style={{ marginTop: isMobile ? '20px' : '20px' }}>
               <strong style={styles.label}>Select Quantity:</strong>
@@ -1253,7 +1290,7 @@ const ProductDetail = () => {
                 onChange={(e) => setQuantity(Number(e.target.value))}
                 style={styles.quantitySelect}
               >
-                {[...Array(10)].map((_, i) => (
+                {[...Array(Math.min(10, sizeStock[selectedSize] || 10))].map((_, i) => (
                   <option key={i + 1} value={i + 1}>
                     {i + 1}
                   </option>
@@ -1682,8 +1719,8 @@ const styles = {
     fontWeight: 'bold',
     border: '1px solid white',
     backgroundColor: '#000',
-    width: '45px',
-    height: '45px',
+    width: '40px',
+    height: '40px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -1923,3 +1960,6 @@ const styles = {
 };
 
 export default ProductDetail;
+
+
+

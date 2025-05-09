@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase'; 
 import ToastMessage from '../../ToastMessage'; 
 
@@ -17,20 +17,31 @@ const AddProduct = () => {
     name: '',
     description: '',
     price: '',
+    strike_price: '', // Added strike_price field
     category: '',
     gender: '',
-    size: [],
+    size: {}, // Object to store size:stock pairs
     care_guide: '', 
     composition_fabric: '', 
     shipping_info: '', 
     exchange: '', 
   });
 
-  const toggleSize = (selected) => {
-    const updated = newProduct.size.includes(selected)
-      ? newProduct.size.filter(s => s !== selected)
-      : [...newProduct.size, selected];
-    setNewProduct({ ...newProduct, size: updated });
+  // Initialize size availability with 0 stock for each size
+  useEffect(() => {
+    const initialSizes = sizes.reduce((acc, size) => {
+      acc[size] = 0;
+      return acc;
+    }, {});
+    setNewProduct((prev) => ({ ...prev, size: initialSizes }));
+  }, []);
+
+  const handleSizeStockChange = (size, value) => {
+    const stockValue = Math.max(0, parseInt(value) || 0); // Ensure non-negative integers
+    setNewProduct({
+      ...newProduct,
+      size: { ...newProduct.size, [size]: stockValue },
+    });
   };
 
   const handleCategoryChange = (e) => {
@@ -52,12 +63,13 @@ const AddProduct = () => {
     }
   
     const finalCategory = newProduct.category === 'Other' ? customCategory.trim() : newProduct.category;
-    const { name, description, price, gender, size, care_guide, composition_fabric, shipping_info, exchange } = newProduct;
+    const { name, description, price, strike_price, gender, size, care_guide, composition_fabric, shipping_info, exchange } = newProduct;
   
     console.log('Validation inputs:', {
       name,
       description,
       price,
+      strike_price,
       imageFiles: imageFiles.length,
       finalCategory,
       gender,
@@ -68,8 +80,11 @@ const AddProduct = () => {
       exchange,
     });
   
-    if (!name || !description || !price || imageFiles.length === 0 || !finalCategory || !gender || size.length === 0 || !care_guide || !composition_fabric || !shipping_info || !exchange) {
-      let errorMessage = 'Please fill all required fields and upload at least one image.';
+    // Check if at least one size has stock > 0
+    const hasStock = Object.values(size).some(stock => stock > 0);
+
+    if (!name || !description || !price || imageFiles.length === 0 || !finalCategory || !gender || !hasStock || !care_guide || !composition_fabric || !shipping_info || !exchange) {
+      let errorMessage = 'Please fill all required fields, upload at least one image, and specify stock for at least one size.';
       if (newProduct.category === 'Other' && !finalCategory) {
         errorMessage = 'Please enter a name for the custom category.';
       } else if (!newProduct.category) {
@@ -156,10 +171,11 @@ const AddProduct = () => {
           name,
           description,
           price: parseFloat(price),
+          strike_price: strike_price ? parseFloat(strike_price) : null, // Store strike_price as float or null if empty
           media_urls: mediaUrls,
           category: finalCategory,
           gender,
-          size: size.join(','),
+          size: JSON.stringify(size), // Store size object as JSON string
           care_guide,
           composition_fabric,
           shipping_info,
@@ -178,9 +194,10 @@ const AddProduct = () => {
         name: '',
         description: '',
         price: '',
+        strike_price: '', // Reset strike_price
         category: '',
         gender: '',
-        size: [],
+        size: sizes.reduce((acc, size) => ({ ...acc, [size]: 0 }), {}), // Reset to initial state
         care_guide: '',
         composition_fabric: '',
         shipping_info: '',
@@ -203,6 +220,7 @@ const AddProduct = () => {
       console.log('Submission complete, isSubmitting set to false');
     }
   };
+
   return (
     <div style={{ padding: '20px' }}>
       <h2 style={{ 
@@ -258,6 +276,17 @@ const AddProduct = () => {
         <label style={labelStyle}>Price <span style={asterisk}>*</span></label>
         <input type="number" required min="0" step="0.01" value={newProduct.price} onChange={e => setNewProduct({ ...newProduct, price: e.target.value })} style={inputStyle} />
 
+        <label style={labelStyle}>Strike Price</label>
+        <input
+          type="number"
+          min="0"
+          step="0.01"
+          value={newProduct.strike_price}
+          onChange={e => setNewProduct({ ...newProduct, strike_price: e.target.value })}
+          style={inputStyle}
+          placeholder="Enter original price (optional)"
+        />
+
         <label style={labelStyle}>Images and Video (Recommended: h 600, w 400) <span style={asterisk}>*</span></label>
         <input
           id="product-image-input"
@@ -303,26 +332,28 @@ const AddProduct = () => {
           {genders.map((g, i) => <option key={i} value={g}>{g}</option>)}
         </select>
 
-        <label style={labelStyle}>Size <span style={asterisk}>*</span></label>
+        <label style={labelStyle}>Size Availability <span style={asterisk}>*</span></label>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginBottom: '10px' }}>
           {sizes.map((size) => (
-            <button
-              key={size}
-              onClick={() => toggleSize(size)}
-              style={{
-                padding: '6px 12px',
-                borderRadius: '20px',
-                border: '1px solid #ccc',
-                backgroundColor: newProduct.size.includes(size) ? '#000' : '#fff',
-                color: newProduct.size.includes(size) ? '#fff' : '#000',
-                cursor: 'pointer'
-              }}
-              type="button" 
-            >
-              {size}
-            </button>
+            <div key={size} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <label style={{ fontSize: '0.9rem', minWidth: '30px' }}>{size}</label>
+              <input
+                type="number"
+                min="0"
+                value={newProduct.size[size] || 0}
+                onChange={(e) => handleSizeStockChange(size, e.target.value)}
+                style={{
+                  ...inputStyle,
+                  width: '80px',
+                  padding: '6px',
+                  marginBottom: '0',
+                }}
+                placeholder="Stock"
+              />
+            </div>
           ))}
         </div>
+
         {isSubmitting ? (
           <div style={{ marginTop: '10px' }}>
             <div style={{
