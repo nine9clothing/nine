@@ -254,8 +254,8 @@ export const CartProvider = ({ children }) => {
           style={{
             padding: '8px 10px',
             backgroundColor: 'transparent',
-            color: '#Ffa500',
-            border: '1px solidrgb(0, 0, 0)',
+            color: 'black ',
+            border: '1px solid black',
             borderRadius: '4px',
             cursor: 'pointer',
             textDecoration: 'underline',

@@ -1718,7 +1718,7 @@ const Home = () => {
         </div>
       </section>
 
-      <section
+      {/* <section
         style={{
           padding: isMobile ? "40px 15px" : "80px 40px",
           background: "black",
@@ -1872,7 +1872,7 @@ const Home = () => {
             Own your Story. Wear your Art. Join the Tribe.
           </p>
         </div>
-      </section>
+      </section> */}
 
       <style>
         {`
