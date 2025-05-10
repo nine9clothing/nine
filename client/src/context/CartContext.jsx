@@ -247,17 +247,18 @@ export const CartProvider = ({ children }) => {
 
   if (!isCartLoaded || authLoading) {
     return (
-      <div style={{ padding: '20px', textAlign: 'center' }}>
+        <div style={{ backgroundColor: 'black', height: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'center', color: 'white', paddingTop: '20px' }}>
         <p>Loading...</p>
         <button
           onClick={() => window.location.reload()}
           style={{
-            padding: '8px 16px',
+            padding: '8px 10px',
             backgroundColor: 'transparent',
-            color: 'black',
-            border: '1px solid #Ffa500',
+            color: '#Ffa500',
+            border: '1px solidrgb(0, 0, 0)',
             borderRadius: '4px',
             cursor: 'pointer',
+            textDecoration: 'underline',
           }}
         >
           Refresh

@@ -1109,7 +1109,11 @@ const ProductDetail = () => {
     </div>
   );
 
-  if (loading) return <p>Loading product...</p>;
+  if (loading) return (
+    <div style={{ backgroundColor: 'black', color: 'white', height: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+      <p></p>
+    </div>
+  );
   if (!product) {
     console.log('Product is null, possible fetch issue:', product);
     return <p>Product not found.</p>;
@@ -1147,7 +1151,21 @@ const ProductDetail = () => {
       <Navbar showLogo={true} />
       <div style={isMobile ? styles.mobileContainer : styles.container}>
         <div style={isMobile ? styles.mobileContentWrapper : styles.contentWrapper}>
-        <div style={styles.imageWrapper}>
+      <div style={styles.imageWrapper}>
+  {user && (
+    <button
+      onClick={() => toggleWishlist(product.id)}
+      style={{
+        ...styles.wishlistButton,
+        ...(isMobile ? styles.mobileWishlistButton : {}),
+        color: isWished ? 'red' : 'white',
+        zIndex: 200,
+      }}
+      title={isWished ? 'Remove from wishlist' : 'Add to wishlist'}
+    >
+      <FaHeart />
+    </button>
+  )}
   {media.length > 1 ? (
     <Slider {...sliderSettings} ref={sliderRef} style={{ width: '100%', position: 'relative' }}>
       {media.map((url, index) => {
@@ -1156,19 +1174,6 @@ const ProductDetail = () => {
 
         return (
           <div key={index} style={{ position: 'relative' }}>
-            {user && (
-              <button
-                onClick={() => toggleWishlist(product.id)}
-                style={{
-                  ...styles.wishlistButton,
-                  ...(isMobile ? styles.mobileWishlistButton : {}),
-                  color: isWished ? 'red' : 'white',
-                }}
-                title={isWished ? 'Remove from wishlist' : 'Add to wishlist'}
-              >
-                <FaHeart />
-              </button>
-            )}
             {isImage ? (
               <img
                 src={url}
@@ -1193,19 +1198,6 @@ const ProductDetail = () => {
     </Slider>
   ) : media.length === 1 ? (
     <div style={{ position: 'relative' }}>
-      {user && (
-        <button
-          onClick={() => toggleWishlist(product.id)}
-          style={{
-            ...styles.wishlistButton,
-            ...(isMobile ? styles.mobileWishlistButton : {}),
-            color: isWished ? 'red' : 'white',
-          }}
-          title={isWished ? 'Remove from wishlist' : 'Add to wishlist'}
-        >
-          <FaHeart />
-        </button>
-      )}
       {media[0].match(/\.(jpeg|jpg|png|gif|webp)$/i) ? (
         <img
           src={media[0]}
@@ -1238,7 +1230,6 @@ const ProductDetail = () => {
     </div>
   )}
 </div>
-
           <div style={styles.detailsWrapper}>
             <h2 style={isMobile ? styles.mobileName : styles.name}>{product.name}</h2>
             <p style={isMobile ? styles.mobileDetail : styles.detail}><strong>Price:</strong> ₹{product.price}</p>

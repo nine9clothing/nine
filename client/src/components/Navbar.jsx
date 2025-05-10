@@ -186,6 +186,24 @@ const Navbar = ({ showLogo }) => {
     };
   }, []);
 
+useEffect(() => {
+  let wasHidden = false; 
+
+  const handleVisibilityChange = () => {
+    if (document.visibilityState === 'visible') {
+      if (wasHidden) {
+        console.log('Tab is visible, refreshing page...');
+        window.location.reload(); 
+      }
+    } else {
+      wasHidden = true; 
+    }
+  };
+
+  document.addEventListener('visibilitychange', handleVisibilityChange);
+  return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+}, []);
+
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {

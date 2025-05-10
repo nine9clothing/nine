@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { Outlet, useNavigate, Link, useLocation } from 'react-router-dom';
-import { supabase } from '../lib/supabase'; 
+import { supabase } from '../lib/supabase';
 import {
   FaBars, FaTimes, FaTachometerAlt, FaBoxOpen, FaPlusSquare,
   FaListAlt, FaChartLine, FaEnvelope, FaSignOutAlt, FaVideo,
-  FaAngleDown, FaAngleRight, FaShoppingCart, FaRegEye, FaExchangeAlt,FaBell, FaNewspaper, FaOpencart, FaQrcode, FaImage 
+  FaAngleDown, FaAngleRight, FaShoppingCart, FaRegEye, FaExchangeAlt, FaBell, FaNewspaper, FaOpencart, FaQrcode, FaImage
 } from 'react-icons/fa';
-import logo from '../assets/nine9_logo.jpg'; 
+import logo from '../assets/nine9_logo.jpg';
 
 const AdminLayout = () => {
   const [isAdmin, setIsAdmin] = useState(false);
@@ -23,45 +23,63 @@ const AdminLayout = () => {
 
   const colors = {
     primary: '#007bff',
-    primaryLight: '#e6f2ff', 
-    sidebarBg: '#111827', 
+    primaryLight: '#e6f2ff',
+    sidebarBg: '#111827',
     sidebarLinkText: '#d1d5db',
-    sidebarNestedBg: '#0c111b', 
-    sidebarLinkHoverBg: '#1f2937', 
+    sidebarNestedBg: '#0c111b',
+    sidebarLinkHoverBg: '#1f2937',
     sidebarLinkActiveBg: '#1f2937',
     sidebarLinkActiveText: '#ffffff',
-    activeBorderColor: '#3b82f6', 
+    activeBorderColor: '#3b82f6',
     headerBg: '#ffffff',
-    headerText: '#1f2937', 
-    mainBg: '#f9fafb', 
-    logoutBtnBg: '#ef4444', 
-    logoutBtnHoverBg: '#dc2626', 
-    borderColor: '#e5e7eb', 
+    headerText: '#1f2937',
+    mainBg: '#f9fafb',
+    logoutBtnBg: '#ef4444',
+    logoutBtnHoverBg: '#dc2626',
+    borderColor: '#e5e7eb',
     iconColor: '#9ca3af',
-    iconActiveColor: '#ffffff', 
+    iconActiveColor: '#ffffff',
   };
 
-  const sidebarWidth = '250px'; 
+  const sidebarWidth = '250px';
   const headerHeight = '65px';
   const fontFamily = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif';
 
-  // --- useEffect Hooks (Logic remains the same) ---
-   useEffect(() => {
+  // --- useEffect Hooks ---
+  useEffect(() => {
     const checkAdmin = async () => {
       setLoading(true);
       try {
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        if (sessionError || !session?.user) { navigate('/login'); return; }
+        if (sessionError || !session?.user) {
+          navigate('/login');
+          return;
+        }
         const user = session.user;
-        const { data: adminData, error: adminError } = await supabase.from('admins').select('id').eq('id', user.id).maybeSingle();
-        if (adminError) { console.error(adminError); navigate('/'); return; }
-        if (adminData) { setIsAdmin(true); }
-        else { navigate('/'); }
-      } catch (error) { console.error(error); navigate('/'); }
-      finally { setLoading(false); }
+        const { data: adminData, error: adminError } = await supabase
+          .from('admins')
+          .select('id')
+          .eq('id', user.id)
+          .maybeSingle();
+        if (adminError) {
+          console.error('Admin check error:', adminError);
+          navigate('/');
+          return;
+        }
+        if (adminData) {
+          setIsAdmin(true);
+        } else {
+          navigate('/');
+        }
+      } catch (error) {
+        console.error('Unexpected error:', error);
+        navigate('/');
+      } finally {
+        setLoading(false);
+      }
     };
     checkAdmin();
-  }, []);
+  }, [navigate]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -73,7 +91,7 @@ const AdminLayout = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, [isSidebarOpen]);
 
-  // Check if current path is in a section to auto-expand it
+  // Auto-expand sections based on current path
   useEffect(() => {
     const currentPath = location.pathname;
     if (currentPath.includes('/admin/product')) {
@@ -87,8 +105,40 @@ const AdminLayout = () => {
     }
   }, [location.pathname]);
 
-  // --- Handlers (Logic remains the same) ---
-  const handleLogout = async () => { await supabase.auth.signOut(); navigate('/login'); };
+  // Refresh page when tab becomes visible
+  useEffect(() => {
+    let wasHidden = false; // Track if the tab was previously hidden
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        if (wasHidden) {
+          console.log('Tab is visible, refreshing page...');
+          window.location.reload(); // Refresh the page
+        }
+      } else {
+        wasHidden = true; // Mark as hidden when tab is not visible
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, []);
+
+  // --- Handlers ---
+  const handleLogout = async () => {
+    console.log('handleLogout triggered');
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error('Logout error:', error.message);
+      }
+      navigate('/login');
+    } catch (err) {
+      console.error('Unexpected logout error:', err.message || err);
+      navigate('/login');
+    }
+  };
+
   const handleToggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
   const closeSidebar = () => setIsSidebarOpen(false);
   const isActive = (path) => location.pathname === path || location.pathname.startsWith(path + '/');
@@ -121,10 +171,10 @@ const AdminLayout = () => {
       width: '100%',
       zIndex: 1001,
       borderBottom: `1px solid ${colors.borderColor}`,
-      boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)', 
+      boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
     },
     logoContainer: { display: 'flex', alignItems: 'center' },
-    logo: { height: '35px', marginRight: '12px', verticalAlign: 'middle' }, 
+    logo: { height: '35px', marginRight: '12px', verticalAlign: 'middle' },
     logoText: {
       fontSize: '1.2rem',
       color: colors.headerText,
@@ -133,13 +183,18 @@ const AdminLayout = () => {
     },
     rightHeader: { display: 'flex', alignItems: 'center', gap: '15px' },
     barsIcon: {
-      fontSize: '1.6rem', background: 'none', border: 'none',
-      color: colors.headerText, cursor: 'pointer', padding: '5px',
-      display: 'flex', alignItems: 'center',
+      fontSize: '1.6rem',
+      background: 'none',
+      border: 'none',
+      color: colors.headerText,
+      cursor: 'pointer',
+      padding: '5px',
+      display: 'flex',
+      alignItems: 'center',
     },
     logoutBtn: {
-      background: 'transparent', 
-      color: colors.logoutBtnBg, 
+      background: 'transparent',
+      color: colors.logoutBtnBg,
       border: `1px solid ${colors.logoutBtnBg}`,
       padding: '9px 18px',
       borderRadius: '6px',
@@ -151,28 +206,41 @@ const AdminLayout = () => {
       transition: 'background-color 0.2s ease, color 0.2s ease',
     },
     sidebar: {
-      position: 'fixed', top: headerHeight, left: 0, width: sidebarWidth,
-      height: `calc(100vh - ${headerHeight})`, backgroundColor: colors.sidebarBg,
-      color: colors.sidebarLinkText, padding: '25px 0', // Increased top/bottom padding
-      display: 'flex', flexDirection: 'column', zIndex: 1000,
+      position: 'fixed',
+      top: headerHeight,
+      left: 0,
+      width: sidebarWidth,
+      height: `calc(100vh - ${headerHeight})`,
+      backgroundColor: colors.sidebarBg,
+      color: colors.sidebarLinkText,
+      padding: '25px 0',
+      display: 'flex',
+      flexDirection: 'column',
+      zIndex: 1000,
       boxShadow: '2px 0 6px rgba(0,0,0,0.1)',
-      overflowY: 'auto', // Add scrolling for long menus
+      overflowY: 'auto',
     },
     sidebarContent: { display: 'flex', flexDirection: 'column', height: '100%' },
-    nav: { display: 'flex', flexDirection: 'column', gap: '4px', flexGrow: 1, padding: '0 15px' }, 
+    nav: { display: 'flex', flexDirection: 'column', gap: '4px', flexGrow: 1, padding: '0 15px' },
     link: {
-      color: colors.sidebarLinkText, padding: '13px 20px',
-      borderRadius: '6px', textAlign: 'left', textDecoration: 'none',
-      fontWeight: '500', display: 'flex', alignItems: 'center', gap: '14px', 
+      color: colors.sidebarLinkText,
+      padding: '13px 20px',
+      borderRadius: '6px',
+      textAlign: 'left',
+      textDecoration: 'none',
+      fontWeight: '500',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '14px',
       transition: 'background-color 0.2s ease, color 0.2s ease',
-      borderLeft: '4px solid transparent', 
-      marginLeft: '-4px', 
+      borderLeft: '4px solid transparent',
+      marginLeft: '-4px',
     },
     activeLink: {
       backgroundColor: colors.sidebarLinkActiveBg,
       color: colors.sidebarLinkActiveText,
       fontWeight: '600',
-      borderLeft: `4px solid ${colors.activeBorderColor}`, 
+      borderLeft: `4px solid ${colors.activeBorderColor}`,
     },
     sectionHeader: {
       color: colors.sidebarLinkText,
@@ -204,11 +272,11 @@ const AdminLayout = () => {
       transition: 'max-height 0.3s ease',
     },
     expandedNestedContainer: {
-      maxHeight: '200px', // Adjust based on content
+      maxHeight: '200px',
     },
     nestedLink: {
       color: colors.sidebarLinkText,
-      padding: '10px 20px 10px 30px', // More padding on left
+      padding: '10px 20px 10px 30px',
       borderRadius: '6px',
       textAlign: 'left',
       textDecoration: 'none',
@@ -228,10 +296,10 @@ const AdminLayout = () => {
       borderLeft: `4px solid ${colors.activeBorderColor}`,
     },
     linkIcon: {
-      fontSize: '1.2rem', 
-      width: '22px', 
+      fontSize: '1.2rem',
+      width: '22px',
       textAlign: 'center',
-      color: colors.iconColor, 
+      color: colors.iconColor,
       transition: 'color 0.2s ease',
     },
     nestedLinkIcon: {
@@ -242,57 +310,77 @@ const AdminLayout = () => {
       transition: 'color 0.2s ease',
     },
     activeLinkIcon: {
-       color: colors.iconActiveColor, 
+      color: colors.iconActiveColor,
     },
     mobileSidebar: {
-      position: 'fixed', top: 0, left: isSidebarOpen ? '0' : `-${sidebarWidth}`,
-      height: '100vh', width: sidebarWidth, backgroundColor: colors.sidebarBg,
-      color: colors.sidebarLinkText, padding: '0 0 20px 0', // No top padding, use header
-      zIndex: 1002, transition: 'left 0.3s ease-in-out',
-      boxShadow: '3px 0 10px rgba(0,0,0,0.2)', display: 'flex', flexDirection: 'column',
-      overflowY: 'auto', // Add scrolling for mobile
+      position: 'fixed',
+      top: 0,
+      left: isSidebarOpen ? '0' : `-${sidebarWidth}`,
+      height: '100vh',
+      width: sidebarWidth,
+      backgroundColor: colors.sidebarBg,
+      color: colors.sidebarLinkText,
+      padding: '0 0 20px 0',
+      zIndex: 1002,
+      transition: 'left 0.3s ease-in-out',
+      boxShadow: '3px 0 10px rgba(0,0,0,0.2)',
+      display: 'flex',
+      flexDirection: 'column',
+      overflowY: 'auto',
     },
     mobileSidebarHeader: {
-        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-        padding: '0 20px', // Horizontal padding only
-        height: headerHeight, // Match main header height
-        borderBottom: `1px solid #374151`, // Separator inside sidebar
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      padding: '0 20px',
+      height: headerHeight,
+      borderBottom: `1px solid #374151`,
     },
     mobileLogoContainer: { display: 'flex', alignItems: 'center' },
     mobileLogo: { height: '30px', marginRight: '10px' },
     mobileLogoText: { fontSize: '1.2rem', color: colors.sidebarLinkActiveText, fontWeight: '600', margin: 0 },
     closeIcon: { color: colors.sidebarLinkText, fontSize: '1.8rem', cursor: 'pointer' },
     overlay: {
-      position: 'fixed', top: 0, left: 0, height: '100%', width: '100%',
-      background: 'rgba(0,0,0,0.6)', 
-      zIndex: 999, opacity: isSidebarOpen ? 1 : 0, visibility: isSidebarOpen ? 'visible' : 'hidden',
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      height: '100%',
+      width: '100%',
+      background: 'rgba(0,0,0,0.6)',
+      zIndex: 999,
+      opacity: isSidebarOpen ? 1 : 0,
+      visibility: isSidebarOpen ? 'visible' : 'hidden',
       transition: 'opacity 0.3s ease-in-out, visibility 0.3s ease-in-out',
     },
     main: {
-      flex: 1, marginTop: headerHeight, padding: '35px', 
+      flex: 1,
+      marginTop: headerHeight,
+      padding: '35px',
       marginLeft: !isMobile ? sidebarWidth : '0',
       transition: 'margin-left 0.3s ease-in-out',
     },
-    loadingContainer: { 
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        minHeight: '100vh', 
-        fontSize: '1.3rem',
-        color: '#4b5563',
-        fontFamily: fontFamily,
+    loadingContainer: {
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      minHeight: '100vh',
+      fontSize: '1.3rem',
+      color: '#4b5563',
+      fontFamily: fontFamily,
     },
   };
 
   if (loading) return <div style={styles.loadingContainer}>Loading Admin Dashboard...</div>;
-  if (!isAdmin) return null; 
+  if (!isAdmin) return null;
 
   return (
     <div style={styles.pageWrapper}>
       <header style={styles.header}>
         <div style={styles.logoContainer}>
           {isMobile ? (
-            <button style={styles.barsIcon} onClick={handleToggleSidebar}> <FaBars /> </button>
+            <button style={styles.barsIcon} onClick={handleToggleSidebar}>
+              <FaBars />
+            </button>
           ) : (
             <>
               <img src={logo} alt="Logo" style={styles.logo} />
@@ -301,21 +389,20 @@ const AdminLayout = () => {
           )}
         </div>
         <div style={styles.rightHeader}>
-          
-          {isMobile && <h1 style={{...styles.logoText, fontSize: '1.2rem', marginLeft: '10px'}}>Admin</h1>}
+          {isMobile && <h1 style={{ ...styles.logoText, fontSize: '1.2rem', marginLeft: '10px' }}>Admin</h1>}
           <button onClick={handleLogout} style={styles.logoutBtn}>
-             <FaSignOutAlt /> Logout
+            <FaSignOutAlt /> Logout
           </button>
         </div>
       </header>
 
       {!isMobile && (
         <aside style={styles.sidebar}>
-          <SidebarContent 
-            styles={styles} 
-            colors={colors} 
-            isActive={isActive} 
-            onLinkClick={closeSidebar} 
+          <SidebarContent
+            styles={styles}
+            colors={colors}
+            isActive={isActive}
+            onLinkClick={closeSidebar}
             expandedSections={expandedSections}
             toggleSection={toggleSection}
           />
@@ -326,17 +413,17 @@ const AdminLayout = () => {
         <>
           <div style={styles.overlay} onClick={closeSidebar} />
           <div style={styles.mobileSidebar}>
-             <div style={styles.mobileSidebarHeader}>
-                 <div style={styles.mobileLogoContainer}>
-                      <img src={logo} alt="Logo" style={styles.mobileLogo} />
-                      <span style={styles.mobileLogoText}>Menu</span>
-                 </div>
-                 <FaTimes style={styles.closeIcon} onClick={closeSidebar} />
-             </div>
-            <SidebarContent 
-              styles={styles} 
-              colors={colors} 
-              isActive={isActive} 
+            <div style={styles.mobileSidebarHeader}>
+              <div style={styles.mobileLogoContainer}>
+                <img src={logo} alt="Logo" style={styles.mobileLogo} />
+                <span style={styles.mobileLogoText}>Menu</span>
+              </div>
+              <FaTimes style={styles.closeIcon} onClick={closeSidebar} />
+            </div>
+            <SidebarContent
+              styles={styles}
+              colors={colors}
+              isActive={isActive}
               onLinkClick={closeSidebar}
               expandedSections={expandedSections}
               toggleSection={toggleSection}
@@ -348,7 +435,7 @@ const AdminLayout = () => {
       <main style={styles.main}>
         <Outlet />
       </main>
-    </div >
+    </div>
   );
 };
 
@@ -357,11 +444,10 @@ const SidebarContent = ({ styles, colors, isActive, onLinkClick = () => {}, expa
     { path: '/admin/dashboard', icon: FaTachometerAlt, label: 'Dashboard' },
     { path: '/admin/insights', icon: FaChartLine, label: 'Insights' },
     { path: '/admin/messages', icon: FaEnvelope, label: 'Messages' },
-    { path: '/admin/notifysize', icon: FaBell, label: 'Notify Size' }, 
-    { path: '/admin/subscription', icon: FaNewspaper, label: 'Subscription' }, 
-    { path: '/admin/cartleftover', icon: FaOpencart, label: 'Cart Status'}, 
+    { path: '/admin/notifysize', icon: FaBell, label: 'Notify Size' },
+    { path: '/admin/subscription', icon: FaNewspaper, label: 'Subscription' },
+    { path: '/admin/cartleftover', icon: FaOpencart, label: 'Cart Status' },
     { path: '/admin/heroimage', icon: FaImage, label: 'Home Images' },
-
   ];
 
   const sections = {
@@ -393,7 +479,7 @@ const SidebarContent = ({ styles, colors, isActive, onLinkClick = () => {}, expa
       icon: FaQrcode,
       label: 'Promocodes',
       items: [
-        { path: '/admin/promocode', icon: FaPlusSquare, label: 'Add Promo Code'}, 
+        { path: '/admin/promocode', icon: FaPlusSquare, label: 'Add Promo Code' },
         { path: '/admin/viewpromocode', icon: FaRegEye, label: 'View Promo Codes' },
       ]
     }
@@ -412,7 +498,7 @@ const SidebarContent = ({ styles, colors, isActive, onLinkClick = () => {}, expa
               style={active ? { ...styles.link, ...styles.activeLink } : styles.link}
               onClick={onLinkClick}
             >
-              <link.icon style={active ? {...styles.linkIcon, ...styles.activeLinkIcon} : styles.linkIcon} />
+              <link.icon style={active ? { ...styles.linkIcon, ...styles.activeLinkIcon } : styles.linkIcon} />
               {link.label}
             </Link>
           );
@@ -421,10 +507,10 @@ const SidebarContent = ({ styles, colors, isActive, onLinkClick = () => {}, expa
         {Object.entries(sections).map(([key, section]) => {
           const anyChildActive = section.items.some(item => isActive(item.path));
           const isExpanded = expandedSections[key];
-          
+
           return (
             <div key={key}>
-              <div 
+              <div
                 style={{
                   ...styles.sectionHeader,
                   ...(anyChildActive || isExpanded ? styles.activeSectionHeader : {})
@@ -432,20 +518,20 @@ const SidebarContent = ({ styles, colors, isActive, onLinkClick = () => {}, expa
                 onClick={() => toggleSection(key)}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                  <section.icon 
-                    style={anyChildActive ? 
-                      {...styles.linkIcon, ...styles.activeLinkIcon} : 
+                  <section.icon
+                    style={anyChildActive ?
+                      { ...styles.linkIcon, ...styles.activeLinkIcon } :
                       styles.linkIcon
-                    } 
+                    }
                   />
                   {section.label}
                 </div>
-                {isExpanded ? 
-                  <FaAngleDown style={{ fontSize: '1rem' }} /> : 
+                {isExpanded ?
+                  <FaAngleDown style={{ fontSize: '1rem' }} /> :
                   <FaAngleRight style={{ fontSize: '1rem' }} />
                 }
               </div>
-              
+
               <div style={{
                 ...styles.nestedContainer,
                 ...(isExpanded ? styles.expandedNestedContainer : {})
@@ -456,17 +542,17 @@ const SidebarContent = ({ styles, colors, isActive, onLinkClick = () => {}, expa
                     <Link
                       key={item.path}
                       to={item.path}
-                      style={active ? 
-                        { ...styles.nestedLink, ...styles.activeNestedLink } : 
+                      style={active ?
+                        { ...styles.nestedLink, ...styles.activeNestedLink } :
                         styles.nestedLink
                       }
                       onClick={onLinkClick}
                     >
-                      <item.icon 
-                        style={active ? 
-                          {...styles.nestedLinkIcon, ...styles.activeLinkIcon} : 
+                      <item.icon
+                        style={active ?
+                          { ...styles.nestedLinkIcon, ...styles.activeLinkIcon } :
                           styles.nestedLinkIcon
-                        } 
+                        }
                       />
                       {item.label}
                     </Link>

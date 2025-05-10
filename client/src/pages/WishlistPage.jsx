@@ -135,7 +135,7 @@ const styles = {
     fontSize: window.innerWidth <= 768 ? '2rem' : '2rem',
     marginBottom: '10px',
     color: '#Ffa500',
-    marginTop: '1px',
+    marginTop: '0px',
     textAlign: 'center',
   },
   loadingText: {

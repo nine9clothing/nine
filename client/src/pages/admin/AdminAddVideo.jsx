@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { supabase } from '../../lib/supabase'; 
-import ToastMessage from '../../ToastMessage'; 
+import React, { useState, useEffect } from 'react';
+import { supabase } from '../../lib/supabase';
+import ToastMessage from '../../ToastMessage';
 
 const AddVideo = () => {
   const [videoFile, setVideoFile] = useState(null);
@@ -8,12 +8,42 @@ const AddVideo = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
 
-  const [newVideo, setNewVideo] = useState({
-    title: '',
-    description: ''
+  const [newVideo, setNewVideo] = useState(() => {
+    const savedVideo = localStorage.getItem('addVideoForm');
+    if (savedVideo) {
+      return JSON.parse(savedVideo);
+    }
+    return {
+      title: '',
+      description: '',
+    };
   });
 
-  const MAX_FILE_SIZE = 100 * 1024 * 1024; 
+  const MAX_FILE_SIZE = 100 * 1024 * 1024;
+
+  useEffect(() => {
+    const savedVideoFile = localStorage.getItem('addVideoFile');
+    if (savedVideoFile) {
+      setToast({
+        message: 'Video file was not persisted due to page refresh. Please re-upload the file.',
+        type: 'warning',
+      });
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('addVideoForm', JSON.stringify(newVideo));
+    if (videoFile) {
+      const videoFileMetadata = {
+        name: videoFile.name,
+        size: videoFile.size,
+        type: videoFile.type,
+      };
+      localStorage.setItem('addVideoFile', JSON.stringify(videoFileMetadata));
+    } else {
+      localStorage.removeItem('addVideoFile');
+    }
+  }, [newVideo, videoFile]);
 
   const handleAddVideo = async () => {
     if (isSubmitting) return;
@@ -37,7 +67,7 @@ const AddVideo = () => {
 
     try {
       const ext = videoFile.name.split('.').pop();
-      const bucketName = 'home-video'; 
+      const bucketName = 'home-video';
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${ext}`;
       console.log('Uploading to bucket:', bucketName);
       console.log('Uploading file:', fileName);
@@ -52,11 +82,11 @@ const AddVideo = () => {
       const { error: uploadError } = await supabase.storage
         .from(bucketName)
         .upload(fileName, videoFile, {
-          upsert: false 
+          upsert: false,
         });
 
       clearInterval(progressInterval);
-      
+
       if (uploadError) {
         console.error('Upload Error:', uploadError.message || uploadError);
         if (uploadError.message.includes('The bucket does not exist')) {
@@ -65,7 +95,7 @@ const AddVideo = () => {
         throw new Error('Failed to upload the video: ' + (uploadError.message || 'Unknown error'));
       }
 
-      setUploadProgress(95); 
+      setUploadProgress(95);
       console.log('Upload successful, getting public URL...');
       const { data: urlData } = supabase.storage
         .from(bucketName)
@@ -80,18 +110,20 @@ const AddVideo = () => {
       console.log('Public URL obtained:', mediaUrl);
 
       console.log('Inserting into database...', { title, description, media_url: mediaUrl });
-      const { error: insertError } = await supabase.from('videos').insert([{
-        title,
-        description,
-        media_url: mediaUrl
-      }]);
+      const { error: insertError } = await supabase.from('videos').insert([
+        {
+          title,
+          description,
+          media_url: mediaUrl,
+        },
+      ]);
 
       if (insertError) {
         console.error('Insert Error:', insertError.message || insertError);
         throw new Error('Failed to add video to database: ' + (insertError.message || 'Unknown error'));
       }
 
-      setUploadProgress(100); 
+      setUploadProgress(100);
       console.log('Video added successfully!');
       setToast({ message: 'Video added successfully!', type: 'success' });
       setNewVideo({ title: '', description: '' });
@@ -99,28 +131,52 @@ const AddVideo = () => {
       const fileInput = document.getElementById('video-input');
       if (fileInput) fileInput.value = '';
 
+      localStorage.removeItem('addVideoForm');
+      localStorage.removeItem('addVideoFile');
     } catch (error) {
       console.error('Error in handleAddVideo:', error);
       setToast({ message: error.message || 'An unexpected error occurred.', type: 'error' });
     } finally {
       console.log('Submission process completed, resetting isSubmitting...');
       setIsSubmitting(false);
-      setTimeout(() => setUploadProgress(0), 2000); 
+      setTimeout(() => setUploadProgress(0), 2000);
     }
   };
 
   return (
     <div style={{ padding: '20px' }}>
-      <h2 style={{ marginBottom: '20px', fontSize: window.innerWidth <= 768 ? '2.0rem' : '2.2rem', fontWeight: 500, fontFamily: "'Oswald', sans-serif" }}>Add New Video for Home Page</h2>
+      <h2
+        style={{
+          marginBottom: '20px',
+          fontSize: window.innerWidth <= 768 ? '2.0rem' : '2.2rem',
+          fontWeight: 500,
+          fontFamily: "'Oswald', sans-serif",
+        }}
+      >
+        Add New Video for Home Page
+      </h2>
 
       <div style={formBox}>
-        <label style={labelStyle}>Title <span style={asterisk}>*</span></label>
-        <input required value={newVideo.title} onChange={e => setNewVideo({ ...newVideo, title: e.target.value })} style={inputStyle} />
+        <label style={labelStyle}>
+          Title <span style={asterisk}>*</span>
+        </label>
+        <input
+          required
+          value={newVideo.title}
+          onChange={e => setNewVideo({ ...newVideo, title: e.target.value })}
+          style={inputStyle}
+        />
 
         <label style={labelStyle}>Description</label>
-        <textarea value={newVideo.description} onChange={e => setNewVideo({ ...newVideo, description: e.target.value })} style={{ ...inputStyle, height: '80px' }} />
+        <textarea
+          value={newVideo.description}
+          onChange={e => setNewVideo({ ...newVideo, description: e.target.value })}
+          style={{ ...inputStyle, height: '80px' }}
+        />
 
-        <label style={labelStyle}>Video File (Recommended: MP4, max 100MB) <span style={asterisk}>*</span></label>
+        <label style={labelStyle}>
+          Video File (Recommended: MP4, max 80MB) <span style={asterisk}>*</span>
+        </label>
         <input
           id="video-input"
           type="file"
@@ -156,7 +212,9 @@ const AddVideo = () => {
               <div style={spinner}></div>
               <span style={{ marginLeft: '10px' }}>Uploading...</span>
             </div>
-          ) : 'Add Video'}
+          ) : (
+            'Add Video'
+          )}
         </button>
       </div>
 
@@ -203,18 +261,18 @@ const formBox = {
   padding: '25px',
   marginBottom: '30px',
   borderRadius: '10px',
-  boxShadow: '0 2px 6px rgba(0,0,0,0.05)'
+  boxShadow: '0 2px 6px rgba(0,0,0,0.05)',
 };
 
 const labelStyle = {
   fontWeight: '500',
   marginBottom: '5px',
-  display: 'block'
+  display: 'block',
 };
 
 const asterisk = {
   color: 'red',
-  marginLeft: '2px'
+  marginLeft: '2px',
 };
 
 const progressBarContainer = {
@@ -222,13 +280,13 @@ const progressBarContainer = {
   height: '10px',
   backgroundColor: '#e0e0e0',
   borderRadius: '5px',
-  overflow: 'hidden'
+  overflow: 'hidden',
 };
 
 const progressBarFill = {
   height: '100%',
   backgroundColor: '#4CAF50',
-  transition: 'width 0.3s ease'
+  transition: 'width 0.3s ease',
 };
 
 const spinnerContainer = {

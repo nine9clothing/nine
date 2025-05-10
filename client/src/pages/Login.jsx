@@ -469,6 +469,7 @@
 // };
 
 // export default Login;
+
 import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
@@ -488,6 +489,7 @@ const Login = () => {
   const [regPhone, setRegPhone] = useState('');
   const [loadingAuth, setLoadingAuth] = useState(false);
   const [toastMessage, setToastMessage] = useState(null);
+  const [showPassword, setShowPassword] = useState(false); 
   const navigate = useNavigate();
   const [hoveredLink, setHoveredLink] = useState(null);
 
@@ -679,6 +681,10 @@ const Login = () => {
     }
   };
 
+  const toggleShowPassword = () => {
+    setShowPassword(!showPassword);
+  };
+
   const containerStyle = {
     display: 'flex',
     alignItems: 'center',
@@ -699,7 +705,7 @@ const Login = () => {
 
   const headingStyle = {
     fontSize: '2rem',
-    marginTop:'10px',
+    marginTop: '10px',
     marginBottom: '20px',
     textAlign: 'center',
     color: 'black',
@@ -718,15 +724,35 @@ const Login = () => {
     fontFamily: "'Louvette Semi Bold', sans-serif",
   };
 
+  const inputContainerStyle = {
+    position: 'relative',
+    width: '100%',
+  };
+
   const inputStyle = {
     width: '100%',
-    padding: '12px 15px',
+    padding: '12px 80px 12px 15px', // Extra padding for text toggle
     marginBottom: '15px',
     fontSize: '1rem',
     borderRadius: '4px',
     border: '1px solid #ddd',
     transition: 'all 0.3s ease',
     fontFamily: "'Louvette Semi Bold', sans-serif",
+  };
+
+  const togglePasswordStyle = {
+    position: 'absolute',
+    right: '10px',
+    top: '55%',
+    transform: 'translateY(-50%)',
+    background: 'none',
+    border: 'none',
+    cursor: 'pointer',
+    fontSize: '0.9rem',
+    color: '#333',
+    padding: '5px 10px',
+    fontFamily: "'Louvette Semi Bold', sans-serif",
+    touchAction: 'manipulation', 
   };
 
   const buttonStyle = {
@@ -767,12 +793,50 @@ const Login = () => {
     marginBottom: '15px',
   };
 
+  // Responsive styles and disable browser's default eye icon
+  const styles = `
+    /* Disable browser's default password reveal icon */
+    input[type="password"]::-ms-reveal,
+    input[type="password"]::-ms-clear {
+      display: none;
+    }
+    /* General reset for other browsers */
+    input[type="password"] {
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+    }
+
+    @media (max-width: 600px) {
+      .card {
+        padding: 20px;
+        max-width: 90%;
+      }
+      .heading {
+        font-size: 1.5rem;
+      }
+      .input {
+        font-size: 0.9rem;
+        padding: 10px 70px 10px 12px; /* Adjust for toggle */
+      }
+      .toggle-password {
+        font-size: 0.8rem;
+        padding: 5px 8px;
+      }
+      .button {
+        font-size: 0.9rem;
+        padding: 10px;
+      }
+    }
+  `;
+
   return (
     <div style={{ fontFamily: "'Roboto', sans-serif" }}>
+      <style>{styles}</style>
       <Navbar showLogo={true} />
       <div style={containerStyle}>
-        <div style={cardStyle}>
-          <h2 style={headingStyle}>{isLogin ? 'Login' : 'Register'}</h2>
+        <div style={cardStyle} className="card">
+          <h2 style={headingStyle} className="heading">{isLogin ? 'Login' : 'Register'}</h2>
           <form onSubmit={handleAuth} style={formStyle}>
             <label htmlFor="email" style={labelStyle}>
               Email
@@ -784,22 +848,33 @@ const Login = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               style={inputStyle}
+              className="input"
             />
 
             {isLogin && !useOtp && (
-              <>
+              <div style={inputContainerStyle}>
                 <label htmlFor="password" style={labelStyle}>
                   Password
                 </label>
                 <input
                   id="password"
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   placeholder="e.g. Enter your password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   style={inputStyle}
+                  className="input"
                 />
-              </>
+                <button
+                  type="button"
+                  onClick={toggleShowPassword}
+                  style={togglePasswordStyle}
+                  className="toggle-password"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? 'Hide' : 'Show'}
+                </button>
+              </div>
             )}
 
             {!isLogin && (
@@ -814,6 +889,7 @@ const Login = () => {
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   style={inputStyle}
+                  className="input"
                 />
 
                 <label htmlFor="birthday" style={labelStyle}>
@@ -826,6 +902,7 @@ const Login = () => {
                   onChange={(e) => setBirthday(e.target.value)}
                   style={inputStyle}
                   max={new Date().toISOString().split('T')[0]}
+                  className="input"
                 />
 
                 <label htmlFor="phone" style={labelStyle}>
@@ -838,19 +915,32 @@ const Login = () => {
                   value={regPhone}
                   onChange={(e) => setRegPhone(e.target.value)}
                   style={inputStyle}
+                  className="input"
                 />
 
-                <label htmlFor="regPassword" style={labelStyle}>
-                  Set Password
-                </label>
-                <input
-                  id="regPassword"
-                  type="password"
-                  placeholder="e.g. Abc123!@#"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  style={inputStyle}
-                />
+                <div style={inputContainerStyle}>
+                  <label htmlFor="regPassword" style={labelStyle}>
+                    Set Password
+                  </label>
+                  <input
+                    id="regPassword"
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="e.g. Abc123!@#"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    style={inputStyle}
+                    className="input"
+                  />
+                  <button
+                    type="button"
+                    onClick={toggleShowPassword}
+                    style={togglePasswordStyle}
+                    className="toggle-password"
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showPassword ? 'Hide' : 'Show'}
+                  </button>
+                </div>
               </>
             )}
 
@@ -880,6 +970,7 @@ const Login = () => {
               }}
               onMouseEnter={() => setHoveredLink('submit')}
               onMouseLeave={() => setHoveredLink(null)}
+              className="button"
             >
               {loadingAuth
                 ? isLogin
