@@ -14,8 +14,7 @@ const ComingSoon = () => {
   const handleIconMouseEnter = (index) => setHoveredIcon(index);
   const handleIconMouseLeave = () => setHoveredIcon(null);
 
-  const targetDate = new Date('2025-05-09T21:00:00+05:30').getTime(); // 9 PM IST
-
+const targetDate = new Date('2025-05-10T21:09:00+05:30').getTime(); // Updated to 9:09 PM, May 10, 2025
   useEffect(() => {
     const calculateTimeLeft = () => {
       const now = new Date().getTime();
