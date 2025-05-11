@@ -1119,19 +1119,20 @@
 
 // export default Checkout;
 
+
 import React, { useContext, useEffect, useState } from 'react';
 import { CartContext } from '../context/CartContext.jsx';
-import { AuthContext } from '../context/AuthContext';
+import { AuthContext } from '../context/AuthContext'; 
 import { supabase } from '../lib/supabase';
 import Navbar from '../components/Navbar';
 import { useNavigate, useLocation } from 'react-router-dom';
 import ToastMessage from '../ToastMessage';
-import Footer from "../pages/Footer";
+import Footer from "../pages/Footer";      
 import axios from 'axios';
 
 const Checkout = () => {
   const { cartItems, clearCart } = useContext(CartContext);
-  const { user, loading } = useContext(AuthContext);
+  const { user, loading } = useContext(AuthContext); 
   const [addresses, setAddresses] = useState([]);
   const [selectedAddressId, setSelectedAddressId] = useState('');
   const [loadingOrder, setLoadingOrder] = useState(false);
@@ -1160,73 +1161,24 @@ const Checkout = () => {
   const pointsToRedeem = location.state?.pointsToRedeem || 0;
   const pointsDiscount = location.state?.pointsDiscount || 0;
   const totalAfterDiscount = location.state?.total || subtotal - (discount + pointsDiscount);
-  const codFee = paymentMethod === 'Cash on Delivery' ? 10 : 0;
+  const codFee = paymentMethod === 'Cash on Delivery' ? 10 : 0; // ₹10 fee for COD
   const totalWithShipping = totalAfterDiscount + (selectedShippingOption?.rate || 0) + codFee;
   const shippingDiscount = selectedShippingOption?.rate || 0; // TEMPORARY FOR SHIPPING DISCOUNT
   const totalForDisplay = totalWithShipping - shippingDiscount; // TEMPORARY FOR SHIPPING DISCOUNT
 
+  // New state to track pending order after payment
   const [pendingOrder, setPendingOrder] = useState(null);
-  const [isPaymentInProgress, setIsPaymentInProgress] = useState(false); // Track payment flow
-  const [isPaymentCompleted, setIsPaymentCompleted] = useState(false); // Track payment completion
 
   // Check for pending order data on page load
   useEffect(() => {
     const storedOrder = localStorage.getItem('pendingOrder');
     const storedPaymentId = localStorage.getItem('paymentId');
-    const storedTimestamp = localStorage.getItem('paymentTimestamp');
-    if (storedOrder && storedPaymentId && storedTimestamp) {
+    if (storedOrder && storedPaymentId) {
       const orderData = JSON.parse(storedOrder);
       setPendingOrder({ ...orderData, paymentId: storedPaymentId });
-      // Only complete order if the timestamp is recent (within 5 minutes)
-      const timeDiff = (Date.now() - parseInt(storedTimestamp)) / 1000 / 60;
-      if (timeDiff < 5) {
-        completeOrderFromStorage(orderData, storedPaymentId);
-      } else {
-        setToastMessage({ message: 'Payment session expired. Please try again.', type: 'error' });
-        localStorage.removeItem('pendingOrder');
-        localStorage.removeItem('paymentId');
-        localStorage.removeItem('paymentTimestamp');
-        localStorage.removeItem('isPaymentCompleted');
-      }
+      completeOrderFromStorage(orderData, storedPaymentId);
     }
   }, []);
-
-  // Retain page reload on visibility change, skip during payment
-  useEffect(() => {
-    let wasHidden = false;
-
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        if (wasHidden && !isPaymentInProgress) {
-          console.log('Tab is visible, refreshing page...');
-          // Store a flag to prevent multiple reloads
-          const lastReload = localStorage.getItem('lastReloadTimestamp');
-          const now = Date.now();
-          if (!lastReload || (now - parseInt(lastReload) > 1000)) { // Prevent rapid reloads
-            localStorage.setItem('lastReloadTimestamp', now.toString());
-            window.location.reload();
-          }
-        }
-      } else {
-        wasHidden = true;
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [isPaymentInProgress]);
-
-  // Trigger reload after payment completion
-  useEffect(() => {
-    if (isPaymentCompleted) {
-      const isReloadTriggered = localStorage.getItem('reloadTriggered');
-      if (!isReloadTriggered) {
-        localStorage.setItem('reloadTriggered', 'true');
-        localStorage.setItem('lastReloadTimestamp', Date.now().toString());
-        window.location.reload();
-      }
-    }
-  }, [isPaymentCompleted]);
 
   useEffect(() => {
     if (!loading && cartItems.length === 0 && !location.state) {
@@ -1266,21 +1218,21 @@ const Checkout = () => {
 
   const checkShippingOptions = async (pincode) => {
     if (!pincode) return;
-
+    
     setLoadingShipping(true);
     setShippingError(null);
     try {
       const totalWeight = cartItems.reduce((weight, item) => {
         return weight + (0.35 * item.quantity);
       }, 0);
-
+      
       const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/shiprocket/check-serviceability`, {
         pickup_postcode: warehousePincode,
         delivery_postcode: pincode,
         weight: totalWeight,
         cod: true
       });
-
+      
       if (response.data.status === 'success' && response.data.data.serviceability) {
         const availableCouriers = response.data.data.available_couriers || [];
         const cheapestOption = availableCouriers.sort((a, b) => a.rate - b.rate)[0];
@@ -1364,6 +1316,7 @@ const Checkout = () => {
     setSelectedAddressId(newId);
   };
 
+  // Store order data in localStorage
   const storeOrderData = () => {
     if (!user || !selectedAddressId || !selectedShippingOption || !paymentMethod) {
       return false;
@@ -1394,13 +1347,11 @@ const Checkout = () => {
     };
 
     localStorage.setItem('pendingOrder', JSON.stringify(orderData));
-    localStorage.setItem('paymentTimestamp', Date.now().toString());
     return true;
   };
 
   const handleOnlinePayment = async () => {
     setLoadingOrder(true);
-    setIsPaymentInProgress(true); // Set payment in progress
     try {
       const selectedAddress = addresses.find(addr => addr.id.toString() === selectedAddressId);
       if (!selectedAddress) {
@@ -1419,6 +1370,7 @@ const Checkout = () => {
         throw new Error('Razorpay key not configured');
       }
 
+      // Store order data before initiating payment
       if (!storeOrderData()) {
         throw new Error('Failed to store order data');
       }
@@ -1450,40 +1402,30 @@ const Checkout = () => {
             });
             const verifyResult = verifyResponse.data;
             if (verifyResult.status === 'success') {
+              // Store payment ID in localStorage
               localStorage.setItem('paymentId', response.razorpay_payment_id);
-              localStorage.setItem('isPaymentCompleted', 'true');
-              setIsPaymentCompleted(true); // Trigger reload via useEffect
-              setIsPaymentInProgress(false);
+              // Complete the order using stored data
+              const storedOrder = JSON.parse(localStorage.getItem('pendingOrder'));
+              if (storedOrder) {
+                await completeOrder(response.razorpay_payment_id, storedOrder);
+              } else {
+                throw new Error('No pending order data found');
+              }
             } else {
               setToastMessage({ message: 'Payment verification failed: ' + verifyResult.message, type: 'error' });
               setLoadingOrder(false);
-              setIsPaymentInProgress(false);
-              localStorage.removeItem('pendingOrder');
-              localStorage.removeItem('paymentId');
-              localStorage.removeItem('paymentTimestamp');
-              localStorage.removeItem('isPaymentCompleted');
             }
           } catch (error) {
             setToastMessage({ message: 'Payment verification failed: ' + error.message, type: 'error' });
             setLoadingOrder(false);
-            setIsPaymentInProgress(false);
-            localStorage.removeItem('pendingOrder');
-            localStorage.removeItem('paymentId');
-            localStorage.removeItem('paymentTimestamp');
-            localStorage.removeItem('isPaymentCompleted');
           }
         },
         modal: {
           ondismiss: function () {
             setLoadingOrder(false);
-            setIsPaymentInProgress(false);
             navigate('/checkout', {
               state: { subtotal, discount, pointsToRedeem, pointsDiscount, total: totalAfterDiscount, appliedPromo: location.state?.appliedPromo }
             });
-            localStorage.removeItem('pendingOrder');
-            localStorage.removeItem('paymentId');
-            localStorage.removeItem('paymentTimestamp');
-            localStorage.removeItem('isPaymentCompleted');
           }
         },
         prefill: {
@@ -1498,53 +1440,37 @@ const Checkout = () => {
       rzp.on('payment.failed', function (response) {
         setToastMessage({ message: `Payment failed: ${response.error.description}`, type: 'error' });
         setLoadingOrder(false);
-        setIsPaymentInProgress(false);
         localStorage.removeItem('pendingOrder');
         localStorage.removeItem('paymentId');
-        localStorage.removeItem('paymentTimestamp');
-        localStorage.removeItem('isPaymentCompleted');
       });
       rzp.on('payment.error', function (response) {
         setToastMessage({ message: `Checkout error: ${response.error.description}`, type: 'error' });
         setLoadingOrder(false);
-        setIsPaymentInProgress(false);
         localStorage.removeItem('pendingOrder');
         localStorage.removeItem('paymentId');
-        localStorage.removeItem('paymentTimestamp');
-        localStorage.removeItem('isPaymentCompleted');
       });
       rzp.open();
     } catch (error) {
       setToastMessage({ message: 'Failed to initiate payment: ' + error.message, type: 'error' });
       setLoadingOrder(false);
-      setIsPaymentInProgress(false);
       localStorage.removeItem('pendingOrder');
       localStorage.removeItem('paymentId');
-      localStorage.removeItem('paymentTimestamp');
-      localStorage.removeItem('isPaymentCompleted');
     }
   };
 
   const completeOrderFromStorage = async (orderData, paymentId) => {
     try {
       setLoadingOrder(true);
-      // Validate session
-      const { data: { session }, error } = await supabase.auth.getSession();
-      if (error || !session) {
-        setToastMessage({ message: 'Session expired. Please log in again.', type: 'error' });
-        navigate('/login');
-        return;
-      }
       await completeOrder(paymentId, orderData);
     } catch (error) {
       setToastMessage({ message: 'Failed to complete order from stored data: ' + error.message, type: 'error' });
     } finally {
       setLoadingOrder(false);
-      setIsPaymentInProgress(false);
     }
   };
 
   const completeOrder = async (paymentId = null, orderData = null) => {
+    // Use stored order data if provided, otherwise use current state
     const data = orderData || {
       userId: user.id,
       cartItems,
@@ -1566,42 +1492,22 @@ const Checkout = () => {
 
     if (!data.cartItems.length) {
       setToastMessage({ message: 'Your cart is empty.', type: 'error' });
-      localStorage.removeItem('pendingOrder');
-      localStorage.removeItem('paymentId');
-      localStorage.removeItem('paymentTimestamp');
-      localStorage.removeItem('isPaymentCompleted');
       return;
     }
     if (!data.userId) {
       setToastMessage({ message: 'Please log in.', type: 'error' });
-      localStorage.removeItem('pendingOrder');
-      localStorage.removeItem('paymentId');
-      localStorage.removeItem('paymentTimestamp');
-      localStorage.removeItem('isPaymentCompleted');
       return;
     }
     if (!data.selectedAddress) {
       setToastMessage({ message: 'Selected address not found.', type: 'error' });
-      localStorage.removeItem('pendingOrder');
-      localStorage.removeItem('paymentId');
-      localStorage.removeItem('paymentTimestamp');
-      localStorage.removeItem('isPaymentCompleted');
       return;
     }
     if (!data.selectedShippingOption) {
       setToastMessage({ message: 'No shipping method available for this address.', type: 'error' });
-      localStorage.removeItem('pendingOrder');
-      localStorage.removeItem('paymentId');
-      localStorage.removeItem('paymentTimestamp');
-      localStorage.removeItem('isPaymentCompleted');
       return;
     }
     if (!data.paymentMethod) {
       setToastMessage({ message: 'Please select a payment method.', type: 'error' });
-      localStorage.removeItem('pendingOrder');
-      localStorage.removeItem('paymentId');
-      localStorage.removeItem('paymentTimestamp');
-      localStorage.removeItem('isPaymentCompleted');
       return;
     }
 
@@ -1680,6 +1586,7 @@ const Checkout = () => {
         throw new Error(`Failed to save order in Supabase: ${error.message}`);
       }
 
+      // Update stock in the products table for each ordered item
       for (const item of orderItems) {
         const { sku, selectedSize, units } = item;
 
@@ -1797,10 +1704,6 @@ const Checkout = () => {
       navigate('/success');
       localStorage.removeItem('pendingOrder');
       localStorage.removeItem('paymentId');
-      localStorage.removeItem('paymentTimestamp');
-      localStorage.removeItem('isPaymentCompleted');
-      localStorage.removeItem('reloadTriggered');
-      localStorage.removeItem('lastReloadTimestamp');
     } catch (error) {
       console.error('Order placement error:', error);
       let errorMessage = 'Failed to place order';
@@ -1834,10 +1737,6 @@ const Checkout = () => {
             navigate('/success');
             localStorage.removeItem('pendingOrder');
             localStorage.removeItem('paymentId');
-            localStorage.removeItem('paymentTimestamp');
-            localStorage.removeItem('isPaymentCompleted');
-            localStorage.removeItem('reloadTriggered');
-            localStorage.removeItem('lastReloadTimestamp');
             return;
           }
         }
@@ -1849,8 +1748,6 @@ const Checkout = () => {
       setToastMessage({ message: errorMessage, type: 'error' });
     } finally {
       setLoadingOrder(false);
-      setIsPaymentInProgress(false);
-      setIsPaymentCompleted(false);
     }
   };
 
@@ -1859,15 +1756,14 @@ const Checkout = () => {
       setToastMessage({ message: 'Please select a payment method.', type: 'error' });
       return;
     }
-    setLoadingOrder(true);
     if (paymentMethod === 'Paid Online') {
       await handleOnlinePayment();
     } else {
       if (!storeOrderData()) {
         setToastMessage({ message: 'Failed to store order data.', type: 'error' });
-        setLoadingOrder(false);
         return;
       }
+      setLoadingOrder(true);
       await completeOrder(null);
     }
   };
@@ -2003,10 +1899,10 @@ const Checkout = () => {
             <div style={styles.paymentOptions}>
               <div style={styles.paymentOption}>
                 <input 
-                  type="radio" 
+                  type="checkbox" 
                   id="cashOnDelivery" 
                   name="payment" 
-                  value="Cash on Delivery"
+                  value="Cashthemed-checkbox"
                   checked={paymentMethod === 'Cash on Delivery'}
                   onChange={() => setPaymentMethod('Cash on Delivery')}
                   disabled={loadingOrder}
@@ -2015,7 +1911,7 @@ const Checkout = () => {
               </div>
               <div style={styles.paymentOption}>
                 <input 
-                  type="radio" 
+                  type="checkbox" 
                   id="paidOnline" 
                   name="payment" 
                   value="Paid Online"
@@ -2081,12 +1977,6 @@ const Checkout = () => {
               <span style={{ fontWeight: '600', fontSize: '1.2rem' }}>₹{totalForDisplay.toFixed(2)}</span>
             </div>
           </div>
-
-          {loadingOrder && (
-            <div style={{ textAlign: 'center', padding: '20px' }}>
-              <p>Processing your order, please wait...</p>
-            </div>
-          )}
 
           <button 
             onClick={handleConfirmOrder} 
@@ -2326,7 +2216,7 @@ const styles = {
   addressForm: {
     marginTop: '20px',
     padding: '14px',
-    fontFamily: "'Louvette Semi Bold', sans-serif",
+    fontFamily: "'Louvette Semi Bold', sans-serif", 
     backgroundColor: '#333333',
     borderRadius: '10px',
   },
@@ -2334,7 +2224,7 @@ const styles = {
     width: '100%',
     padding: '10px',
     backgroundColor: '#22c55e',
-    fontFamily: "'Louvette Semi Bold', sans-serif",
+    fontFamily: "'Louvette Semi Bold', sans-serif", 
     color: '#ffffff',
     borderRadius: '8px',
     border: 'none',
