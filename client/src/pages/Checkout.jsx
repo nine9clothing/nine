@@ -1119,20 +1119,19 @@
 
 // export default Checkout;
 
-
 import React, { useContext, useEffect, useState } from 'react';
 import { CartContext } from '../context/CartContext.jsx';
-import { AuthContext } from '../context/AuthContext'; 
+import { AuthContext } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 import Navbar from '../components/Navbar';
 import { useNavigate, useLocation } from 'react-router-dom';
 import ToastMessage from '../ToastMessage';
-import Footer from "../pages/Footer";      
+import Footer from '../pages/Footer';
 import axios from 'axios';
 
 const Checkout = () => {
   const { cartItems, clearCart } = useContext(CartContext);
-  const { user, loading } = useContext(AuthContext); 
+  const { user, loading } = useContext(AuthContext);
   const [addresses, setAddresses] = useState([]);
   const [selectedAddressId, setSelectedAddressId] = useState('');
   const [loadingOrder, setLoadingOrder] = useState(false);
@@ -1161,7 +1160,7 @@ const Checkout = () => {
   const pointsToRedeem = location.state?.pointsToRedeem || 0;
   const pointsDiscount = location.state?.pointsDiscount || 0;
   const totalAfterDiscount = location.state?.total || subtotal - (discount + pointsDiscount);
-  const codFee = paymentMethod === 'Cash on Delivery' ? 10 : 0; // ₹10 fee for COD
+  const codFee = paymentMethod === 'Cash on Delivery' ? 10 : 0;
   const totalWithShipping = totalAfterDiscount + (selectedShippingOption?.rate || 0) + codFee;
   const shippingDiscount = selectedShippingOption?.rate || 0; // TEMPORARY FOR SHIPPING DISCOUNT
   const totalForDisplay = totalWithShipping - shippingDiscount; // TEMPORARY FOR SHIPPING DISCOUNT
@@ -1218,21 +1217,21 @@ const Checkout = () => {
 
   const checkShippingOptions = async (pincode) => {
     if (!pincode) return;
-    
+
     setLoadingShipping(true);
     setShippingError(null);
     try {
       const totalWeight = cartItems.reduce((weight, item) => {
         return weight + (0.35 * item.quantity);
       }, 0);
-      
+
       const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/shiprocket/check-serviceability`, {
         pickup_postcode: warehousePincode,
         delivery_postcode: pincode,
         weight: totalWeight,
         cod: true
       });
-      
+
       if (response.data.status === 'success' && response.data.data.serviceability) {
         const availableCouriers = response.data.data.available_couriers || [];
         const cheapestOption = availableCouriers.sort((a, b) => a.rate - b.rate)[0];
@@ -1470,6 +1469,15 @@ const Checkout = () => {
   };
 
   const completeOrder = async (paymentId = null, orderData = null) => {
+    // Check if session needs to be refreshed
+    const sessionRefresh = localStorage.getItem('sessionRefresh');
+    if (!sessionRefresh) {
+      localStorage.setItem('sessionRefresh', 'true');
+      window.location.reload();
+      return;
+    }
+    localStorage.removeItem('sessionRefresh'); // Clear flag after reload
+
     // Use stored order data if provided, otherwise use current state
     const data = orderData || {
       userId: user.id,
@@ -1793,7 +1801,7 @@ const Checkout = () => {
                       </option>
                     ))}
                   </select>
-                  
+
                   {selectedAddressId && (
                     <div style={styles.selectedAddressBox}>
                       {(() => {
@@ -1813,7 +1821,7 @@ const Checkout = () => {
               ) : (
                 <p style={styles.emptyText}>No saved addresses found.</p>
               )}
-              
+
               <button
                 onClick={() => setShowAddAddressForm(!showAddAddressForm)}
                 style={styles.addAddressBtn}
@@ -1898,10 +1906,10 @@ const Checkout = () => {
             <h3 style={styles.cardTitle}>Payment Method</h3>
             <div style={styles.paymentOptions}>
               <div style={styles.paymentOption}>
-                <input 
-                  type="checkbox" 
-                  id="cashOnDelivery" 
-                  name="payment" 
+                <input
+                  type="checkbox"
+                  id="cashOnDelivery"
+                  name="payment"
                   value="Cashthemed-checkbox"
                   checked={paymentMethod === 'Cash on Delivery'}
                   onChange={() => setPaymentMethod('Cash on Delivery')}
@@ -1910,10 +1918,10 @@ const Checkout = () => {
                 <label htmlFor="cashOnDelivery" style={styles.paymentLabel}>Cash on Delivery (₹10 COD Fee)</label>
               </div>
               <div style={styles.paymentOption}>
-                <input 
-                  type="checkbox" 
-                  id="paidOnline" 
-                  name="payment" 
+                <input
+                  type="checkbox"
+                  id="paidOnline"
+                  name="payment"
                   value="Paid Online"
                   checked={paymentMethod === 'Paid Online'}
                   onChange={() => setPaymentMethod('Paid Online')}
@@ -1933,7 +1941,7 @@ const Checkout = () => {
                   <span style={styles.orderItemPrice}>₹{item.price * item.quantity}</span>
                 </div>
                 <span style={styles.orderItemMeta}>
-                  Size: {item.selectedSize} | Qty: {item.quantity} 
+                  Size: {item.selectedSize} | Qty: {item.quantity}
                 </span>
               </div>
             ))}
@@ -1978,9 +1986,9 @@ const Checkout = () => {
             </div>
           </div>
 
-          <button 
-            onClick={handleConfirmOrder} 
-            disabled={loadingOrder || !selectedAddressId || !selectedShippingOption || !paymentMethod} 
+          <button
+            onClick={handleConfirmOrder}
+            disabled={loadingOrder || !selectedAddressId || !selectedShippingOption || !paymentMethod}
             style={{
               ...styles.confirmOrderBtn,
               opacity: (!selectedAddressId || !selectedShippingOption || !paymentMethod || loadingOrder) ? 0.6 : 1
@@ -1988,8 +1996,8 @@ const Checkout = () => {
           >
             {loadingOrder ? 'Confirming...' : `Confirm Order - ₹${totalForDisplay.toFixed(2)}`}
           </button>
-          
-          <button 
+
+          <button
             onClick={() => navigate('/cart')}
             style={styles.backToCartBtn}
             disabled={loadingOrder}
@@ -2216,7 +2224,7 @@ const styles = {
   addressForm: {
     marginTop: '20px',
     padding: '14px',
-    fontFamily: "'Louvette Semi Bold', sans-serif", 
+    fontFamily: "'Louvette Semi Bold', sans-serif",
     backgroundColor: '#333333',
     borderRadius: '10px',
   },
@@ -2224,7 +2232,7 @@ const styles = {
     width: '100%',
     padding: '10px',
     backgroundColor: '#22c55e',
-    fontFamily: "'Louvette Semi Bold', sans-serif", 
+    fontFamily: "'Louvette Semi Bold', sans-serif",
     color: '#ffffff',
     borderRadius: '8px',
     border: 'none',
