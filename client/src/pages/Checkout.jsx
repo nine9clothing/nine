@@ -1583,7 +1583,7 @@ const Checkout = () => {
           const { data: promoDetails, error: promoDetailsError } = await supabase
             .from('promocodes')
             .select('used')
-            .eq('id',promoId)
+            .eq('id', promoId)
             .single();
 
           if (promoDetailsError) {

@@ -187,21 +187,22 @@ const Navbar = ({ showLogo }) => {
   }, []);
 
 useEffect(() => {
-  let wasHidden = false;
-  const handleVisibilityChange = () => {
-    const isCheckoutPage = window.location.pathname.includes('/checkout');
-    if (document.visibilityState === 'visible') {
-      if (wasHidden && !isCheckoutPage) {
-        console.log('Tab is visible, refreshing page...');
-        window.location.reload();
+    let wasHidden = false;
+    const handleVisibilityChange = () => {
+      const isCheckoutPage = window.location.pathname.includes('/checkout');
+      if (document.visibilityState === 'visible') {
+        if (wasHidden && !isCheckoutPage) {
+          console.log('Tab is visible, refreshing page...');
+          window.location.reload();
+        }
+      } else {
+        wasHidden = true;
       }
-    } else {
-      wasHidden = true;
-    }
-  };
-  document.addEventListener('visibilitychange', handleVisibilityChange);
-  return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
 }, []);
+  
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
