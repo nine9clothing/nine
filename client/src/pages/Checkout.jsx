@@ -1119,20 +1119,19 @@
 
 // export default Checkout;
 
-
 import React, { useContext, useEffect, useState } from 'react';
 import { CartContext } from '../context/CartContext.jsx';
-import { AuthContext } from '../context/AuthContext'; 
+import { AuthContext } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 import Navbar from '../components/Navbar';
 import { useNavigate, useLocation } from 'react-router-dom';
 import ToastMessage from '../ToastMessage';
-import Footer from "../pages/Footer";      
+import Footer from "../pages/Footer";
 import axios from 'axios';
 
 const Checkout = () => {
   const { cartItems, clearCart } = useContext(CartContext);
-  const { user, loading } = useContext(AuthContext); 
+  const { user, loading } = useContext(AuthContext);
   const [addresses, setAddresses] = useState([]);
   const [selectedAddressId, setSelectedAddressId] = useState('');
   const [loadingOrder, setLoadingOrder] = useState(false);
@@ -1161,24 +1160,49 @@ const Checkout = () => {
   const pointsToRedeem = location.state?.pointsToRedeem || 0;
   const pointsDiscount = location.state?.pointsDiscount || 0;
   const totalAfterDiscount = location.state?.total || subtotal - (discount + pointsDiscount);
-  const codFee = paymentMethod === 'Cash on Delivery' ? 10 : 0; // ₹10 fee for COD
+  const codFee = paymentMethod === 'Cash on Delivery' ? 10 : 0;
   const totalWithShipping = totalAfterDiscount + (selectedShippingOption?.rate || 0) + codFee;
   const shippingDiscount = selectedShippingOption?.rate || 0; // TEMPORARY FOR SHIPPING DISCOUNT
   const totalForDisplay = totalWithShipping - shippingDiscount; // TEMPORARY FOR SHIPPING DISCOUNT
 
-  // New state to track pending order after payment
   const [pendingOrder, setPendingOrder] = useState(null);
+  const [isPaymentCompleted, setIsPaymentCompleted] = useState(false); // Track payment completion
 
   // Check for pending order data on page load
   useEffect(() => {
+    console.log('Checking for stored order data on page load...');
     const storedOrder = localStorage.getItem('pendingOrder');
     const storedPaymentId = localStorage.getItem('paymentId');
-    if (storedOrder && storedPaymentId) {
+    const storedTimestamp = localStorage.getItem('paymentTimestamp');
+    if (storedOrder && storedPaymentId && storedTimestamp) {
+      console.log('Found stored order data:', { storedOrder, storedPaymentId, storedTimestamp });
       const orderData = JSON.parse(storedOrder);
       setPendingOrder({ ...orderData, paymentId: storedPaymentId });
-      completeOrderFromStorage(orderData, storedPaymentId);
+      // Only complete order if timestamp is recent (within 5 minutes)
+      const timeDiff = (Date.now() - parseInt(storedTimestamp)) / 1000 / 60;
+      if (timeDiff < 5) {
+        console.log('Timestamp is recent, completing order...');
+        completeOrderFromStorage(orderData, storedPaymentId);
+      } else {
+        console.warn('Payment session expired');
+        setToastMessage({ message: 'Payment session expired. Please try again.', type: 'error' });
+        clearLocalStorage();
+      }
     }
   }, []);
+
+  // Trigger reload after payment completion
+  useEffect(() => {
+    if (isPaymentCompleted) {
+      console.log('Payment completed, triggering page reload...');
+      const isReloadTriggered = localStorage.getItem('reloadTriggered');
+      if (!isReloadTriggered) {
+        localStorage.setItem('reloadTriggered', 'true');
+        localStorage.setItem('lastReloadTimestamp', Date.now().toString());
+        window.location.reload();
+      }
+    }
+  }, [isPaymentCompleted]);
 
   useEffect(() => {
     if (!loading && cartItems.length === 0 && !location.state) {
@@ -1188,26 +1212,32 @@ const Checkout = () => {
 
   useEffect(() => {
     const restoreSessionAndFetchAddresses = async () => {
+      console.log('Restoring session and fetching addresses...');
       const { data: { session }, error } = await supabase.auth.getSession();
       if (error) {
+        console.error('Session error:', error);
         setToastMessage({ message: 'Failed to load session. Please log in again.', type: 'error' });
         navigate('/login');
         return;
       }
 
       if (!loading && !user) {
+        console.warn('No user found, redirecting to login');
         navigate('/login');
         return;
       }
 
       if (!loading && user) {
+        console.log('Fetching addresses for user:', user.id);
         const { data, error } = await supabase
           .from('user_addresses')
           .select('*')
           .eq('user_id', user.id);
         if (!error) {
           setAddresses(data);
+          console.log('Addresses fetched:', data);
         } else {
+          console.error('Addresses fetch error:', error);
           setToastMessage({ message: `Failed to fetch addresses: ${error.message}`, type: 'error' });
         }
       }
@@ -1218,21 +1248,19 @@ const Checkout = () => {
 
   const checkShippingOptions = async (pincode) => {
     if (!pincode) return;
-    
+
     setLoadingShipping(true);
     setShippingError(null);
+    console.log('Checking shipping options for pincode:', pincode);
     try {
-      const totalWeight = cartItems.reduce((weight, item) => {
-        return weight + (0.35 * item.quantity);
-      }, 0);
-      
+      const totalWeight = cartItems.reduce((weight, item) => weight + (0.35 * item.quantity), 0);
       const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/shiprocket/check-serviceability`, {
         pickup_postcode: warehousePincode,
         delivery_postcode: pincode,
         weight: totalWeight,
         cod: true
       });
-      
+
       if (response.data.status === 'success' && response.data.data.serviceability) {
         const availableCouriers = response.data.data.available_couriers || [];
         const cheapestOption = availableCouriers.sort((a, b) => a.rate - b.rate)[0];
@@ -1319,11 +1347,13 @@ const Checkout = () => {
   // Store order data in localStorage
   const storeOrderData = () => {
     if (!user || !selectedAddressId || !selectedShippingOption || !paymentMethod) {
+      console.warn('Cannot store order data: missing required fields');
       return false;
     }
 
     const selectedAddress = addresses.find(addr => addr.id.toString() === selectedAddressId);
     if (!selectedAddress) {
+      console.warn('Selected address not found');
       return false;
     }
 
@@ -1346,8 +1376,20 @@ const Checkout = () => {
       orderId: `ORDER_${Date.now()}`,
     };
 
+    console.log('Storing order data in localStorage:', orderData);
     localStorage.setItem('pendingOrder', JSON.stringify(orderData));
+    localStorage.setItem('paymentTimestamp', Date.now().toString());
     return true;
+  };
+
+  // Clear localStorage
+  const clearLocalStorage = () => {
+    console.log('Clearing localStorage...');
+    localStorage.removeItem('pendingOrder');
+    localStorage.removeItem('paymentId');
+    localStorage.removeItem('paymentTimestamp');
+    localStorage.removeItem('reloadTriggered');
+    localStorage.removeItem('lastReloadTimestamp');
   };
 
   const handleOnlinePayment = async () => {
@@ -1395,6 +1437,7 @@ const Checkout = () => {
         order_id: order.id,
         handler: async function (response) {
           try {
+            console.log('Payment successful, verifying payment:', response);
             const verifyResponse = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/razorpay/verify-payment`, {
               razorpay_order_id: response.razorpay_order_id,
               razorpay_payment_id: response.razorpay_payment_id,
@@ -1402,27 +1445,27 @@ const Checkout = () => {
             });
             const verifyResult = verifyResponse.data;
             if (verifyResult.status === 'success') {
-              // Store payment ID in localStorage
+              console.log('Payment verified, storing payment ID:', response.razorpay_payment_id);
               localStorage.setItem('paymentId', response.razorpay_payment_id);
-              // Complete the order using stored data
-              const storedOrder = JSON.parse(localStorage.getItem('pendingOrder'));
-              if (storedOrder) {
-                await completeOrder(response.razorpay_payment_id, storedOrder);
-              } else {
-                throw new Error('No pending order data found');
-              }
+              localStorage.setItem('isPaymentCompleted', 'true');
+              setIsPaymentCompleted(true); // Trigger reload
             } else {
               setToastMessage({ message: 'Payment verification failed: ' + verifyResult.message, type: 'error' });
               setLoadingOrder(false);
+              clearLocalStorage();
             }
           } catch (error) {
+            console.error('Payment verification error:', error);
             setToastMessage({ message: 'Payment verification failed: ' + error.message, type: 'error' });
             setLoadingOrder(false);
+            clearLocalStorage();
           }
         },
         modal: {
           ondismiss: function () {
+            console.log('Razorpay modal dismissed');
             setLoadingOrder(false);
+            clearLocalStorage();
             navigate('/checkout', {
               state: { subtotal, discount, pointsToRedeem, pointsDiscount, total: totalAfterDiscount, appliedPromo: location.state?.appliedPromo }
             });
@@ -1436,41 +1479,51 @@ const Checkout = () => {
         theme: { color: '#Ffa500' }
       };
 
+      console.log('Opening Razorpay modal...');
       const rzp = new window.Razorpay(options);
       rzp.on('payment.failed', function (response) {
+        console.error('Payment failed:', response);
         setToastMessage({ message: `Payment failed: ${response.error.description}`, type: 'error' });
         setLoadingOrder(false);
-        localStorage.removeItem('pendingOrder');
-        localStorage.removeItem('paymentId');
+        clearLocalStorage();
       });
       rzp.on('payment.error', function (response) {
+        console.error('Payment error:', response);
         setToastMessage({ message: `Checkout error: ${response.error.description}`, type: 'error' });
         setLoadingOrder(false);
-        localStorage.removeItem('pendingOrder');
-        localStorage.removeItem('paymentId');
+        clearLocalStorage();
       });
       rzp.open();
     } catch (error) {
+      console.error('Failed to initiate payment:', error);
       setToastMessage({ message: 'Failed to initiate payment: ' + error.message, type: 'error' });
       setLoadingOrder(false);
-      localStorage.removeItem('pendingOrder');
-      localStorage.removeItem('paymentId');
+      clearLocalStorage();
     }
   };
 
   const completeOrderFromStorage = async (orderData, paymentId) => {
     try {
       setLoadingOrder(true);
+      console.log('Completing order from storage with data:', orderData, 'and paymentId:', paymentId);
+      // Validate session
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error || !session) {
+        console.error('Invalid session:', error);
+        setToastMessage({ message: 'Session expired. Please log in again.', type: 'error' });
+        navigate('/login');
+        return;
+      }
       await completeOrder(paymentId, orderData);
     } catch (error) {
-      setToastMessage({ message: 'Failed to complete order from stored data: ' + error.message, type: 'error' });
+      console.error('Failed to complete order from storage:', error);
+      setToastMessage({ message: 'Failed to complete order: ' + error.message, type: 'error' });
     } finally {
       setLoadingOrder(false);
     }
   };
 
   const completeOrder = async (paymentId = null, orderData = null) => {
-    // Use stored order data if provided, otherwise use current state
     const data = orderData || {
       userId: user.id,
       cartItems,
@@ -1490,24 +1543,31 @@ const Checkout = () => {
       orderId: `ORDER_${Date.now()}`
     };
 
+    console.log('Completing order with data:', data);
+
     if (!data.cartItems.length) {
       setToastMessage({ message: 'Your cart is empty.', type: 'error' });
+      clearLocalStorage();
       return;
     }
     if (!data.userId) {
       setToastMessage({ message: 'Please log in.', type: 'error' });
+      clearLocalStorage();
       return;
     }
     if (!data.selectedAddress) {
       setToastMessage({ message: 'Selected address not found.', type: 'error' });
+      clearLocalStorage();
       return;
     }
     if (!data.selectedShippingOption) {
       setToastMessage({ message: 'No shipping method available for this address.', type: 'error' });
+      clearLocalStorage();
       return;
     }
     if (!data.paymentMethod) {
       setToastMessage({ message: 'Please select a payment method.', type: 'error' });
+      clearLocalStorage();
       return;
     }
 
@@ -1553,9 +1613,11 @@ const Checkout = () => {
         courier_id: data.selectedShippingOption.courier_company_id,
       };
 
+      console.log('Sending Shiprocket payload:', shiprocketPayload);
       const shiprocketResponse = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/shiprocket/order`, shiprocketPayload, {
         headers: { 'Content-Type': 'application/json' },
       });
+      console.log('Shiprocket response:', shiprocketResponse.data);
 
       const { data: orderData, error } = await supabase.from('orders').insert([{
         user_id: data.userId,
@@ -1585,8 +1647,8 @@ const Checkout = () => {
       if (error) {
         throw new Error(`Failed to save order in Supabase: ${error.message}`);
       }
+      console.log('Order saved in Supabase:', orderData);
 
-      // Update stock in the products table for each ordered item
       for (const item of orderItems) {
         const { sku, selectedSize, units } = item;
 
@@ -1702,8 +1764,7 @@ const Checkout = () => {
       clearCart();
       setToastMessage({ message: 'Order placed successfully! Check Shiprocket dashboard.', type: 'success' });
       navigate('/success');
-      localStorage.removeItem('pendingOrder');
-      localStorage.removeItem('paymentId');
+      clearLocalStorage();
     } catch (error) {
       console.error('Order placement error:', error);
       let errorMessage = 'Failed to place order';
@@ -1735,8 +1796,7 @@ const Checkout = () => {
             clearCart();
             setToastMessage({ message: 'Order created in Shiprocket but failed to save initially. Check dashboard.', type: 'warning' });
             navigate('/success');
-            localStorage.removeItem('pendingOrder');
-            localStorage.removeItem('paymentId');
+            clearLocalStorage();
             return;
           }
         }
@@ -1756,14 +1816,15 @@ const Checkout = () => {
       setToastMessage({ message: 'Please select a payment method.', type: 'error' });
       return;
     }
+    setLoadingOrder(true);
     if (paymentMethod === 'Paid Online') {
       await handleOnlinePayment();
     } else {
       if (!storeOrderData()) {
         setToastMessage({ message: 'Failed to store order data.', type: 'error' });
+        setLoadingOrder(false);
         return;
       }
-      setLoadingOrder(true);
       await completeOrder(null);
     }
   };
@@ -1899,10 +1960,10 @@ const Checkout = () => {
             <div style={styles.paymentOptions}>
               <div style={styles.paymentOption}>
                 <input 
-                  type="checkbox" 
+                  type="radio" 
                   id="cashOnDelivery" 
                   name="payment" 
-                  value="Cashthemed-checkbox"
+                  value="Cash on Delivery"
                   checked={paymentMethod === 'Cash on Delivery'}
                   onChange={() => setPaymentMethod('Cash on Delivery')}
                   disabled={loadingOrder}
@@ -1911,7 +1972,7 @@ const Checkout = () => {
               </div>
               <div style={styles.paymentOption}>
                 <input 
-                  type="checkbox" 
+                  type="radio" 
                   id="paidOnline" 
                   name="payment" 
                   value="Paid Online"
@@ -1977,6 +2038,12 @@ const Checkout = () => {
               <span style={{ fontWeight: '600', fontSize: '1.2rem' }}>₹{totalForDisplay.toFixed(2)}</span>
             </div>
           </div>
+
+          {loadingOrder && (
+            <div style={{ textAlign: 'center', padding: '20px' }}>
+              <p>Processing your order, please wait...</p>
+            </div>
+          )}
 
           <button 
             onClick={handleConfirmOrder} 
@@ -2216,7 +2283,7 @@ const styles = {
   addressForm: {
     marginTop: '20px',
     padding: '14px',
-    fontFamily: "'Louvette Semi Bold', sans-serif", 
+    fontFamily: "'Louvette Semi Bold', sans-serif",
     backgroundColor: '#333333',
     borderRadius: '10px',
   },
@@ -2224,7 +2291,7 @@ const styles = {
     width: '100%',
     padding: '10px',
     backgroundColor: '#22c55e',
-    fontFamily: "'Louvette Semi Bold', sans-serif", 
+    fontFamily: "'Louvette Semi Bold', sans-serif",
     color: '#ffffff',
     borderRadius: '8px',
     border: 'none',
