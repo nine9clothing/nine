@@ -185,40 +185,24 @@ const Navbar = ({ showLogo }) => {
       clearInterval(refreshInterval);
     };
   }, []);
+
   useEffect(() => {
-    let wasHiddenInitially = document.hidden; // Capture initial hidden state
+    let wasHidden = false; 
 
     const handleVisibilityChange = () => {
-      // Check if current page is checkout or success page (to prevent reload after successful order)
-      const isCheckoutRelatedPage = location.pathname.startsWith('/checkout') || location.pathname.startsWith('/success');
-
       if (document.visibilityState === 'visible') {
-        if (wasHiddenInitially && !isCheckoutRelatedPage) {
-          console.log('Tab became visible (was hidden initially), not on checkout/success page, refreshing...');
-          window.location.reload();
+        if (wasHidden) {
+          console.log('Tab is visible, refreshing page...');
+          window.location.reload(); 
         }
-        wasHiddenInitially = false; // Reset after first visibility or if it became visible
       } else {
-        wasHiddenInitially = true;
+        wasHidden = true; 
       }
     };
 
-    // Check immediately if the tab was hidden and became visible if the component mounts when visible
-    if (!document.hidden && wasHiddenInitially && !(location.pathname.startsWith('/checkout') || location.pathname.startsWith('/success'))) {
-        // This case handles if the page loads initially visible but was 'hidden' conceptually before JS ran
-        // Or if the component re-mounts. Let's simplify and primarily rely on the event.
-    }
-
-
     document.addEventListener('visibilitychange', handleVisibilityChange);
-    // Initialize wasHidden based on the state when the listener is attached
-    wasHiddenInitially = document.hidden;
-
-
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
-  }, [location.pathname]); // Re-run effect if path changes
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
