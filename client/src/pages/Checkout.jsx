@@ -1119,20 +1119,19 @@
 
 // export default Checkout;
 
-
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState, useCallback } from 'react';
 import { CartContext } from '../context/CartContext.jsx';
-import { AuthContext } from '../context/AuthContext'; 
+import { AuthContext } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 import Navbar from '../components/Navbar';
 import { useNavigate, useLocation } from 'react-router-dom';
 import ToastMessage from '../ToastMessage';
-import Footer from "../pages/Footer";      
+import Footer from '../pages/Footer';
 import axios from 'axios';
 
 const Checkout = () => {
   const { cartItems, clearCart } = useContext(CartContext);
-  const { user, loading } = useContext(AuthContext); 
+  const { user, loading } = useContext(AuthContext);
   const [addresses, setAddresses] = useState([]);
   const [selectedAddressId, setSelectedAddressId] = useState('');
   const [loadingOrder, setLoadingOrder] = useState(false);
@@ -1145,13 +1144,13 @@ const Checkout = () => {
     pincode: '',
     phone: ''
   });
-
   const [shippingOptions, setShippingOptions] = useState([]);
   const [selectedShippingOption, setSelectedShippingOption] = useState(null);
   const [loadingShipping, setLoadingShipping] = useState(false);
   const [shippingError, setShippingError] = useState(null);
   const [warehousePincode] = useState('421003');
   const [paymentMethod, setPaymentMethod] = useState('');
+  const [paymentInitiated, setPaymentInitiated] = useState(false);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -1161,13 +1160,29 @@ const Checkout = () => {
   const pointsToRedeem = location.state?.pointsToRedeem || 0;
   const pointsDiscount = location.state?.pointsDiscount || 0;
   const totalAfterDiscount = location.state?.total || subtotal - (discount + pointsDiscount);
-  const codFee = paymentMethod === 'Cash on Delivery' ? 10 : 0; // ₹10 fee for COD
+  const codFee = paymentMethod === 'Cash on Delivery' ? 10 : 0;
   const totalWithShipping = totalAfterDiscount + (selectedShippingOption?.rate || 0) + codFee;
   const shippingDiscount = selectedShippingOption?.rate || 0; // TEMPORARY FOR SHIPPING DISCOUNT
   const totalForDisplay = totalWithShipping - shippingDiscount; // TEMPORARY FOR SHIPPING DISCOUNT
 
-  // New state to track pending order after payment
+  // State to track pending order after payment
   const [pendingOrder, setPendingOrder] = useState(null);
+
+  // Restore session
+  const restoreSession = useCallback(async () => {
+    const { data: { session }, error } = await supabase.auth.getSession();
+    if (error) {
+      setToastMessage({ message: 'Failed to restore session. Please log in again.', type: 'error' });
+      navigate('/login');
+      return false;
+    }
+    if (!session) {
+      setToastMessage({ message: 'No active session. Please log in.', type: 'error' });
+      navigate('/login');
+      return false;
+    }
+    return true;
+  }, [navigate]);
 
   // Check for pending order data on page load
   useEffect(() => {
@@ -1180,59 +1195,51 @@ const Checkout = () => {
     }
   }, []);
 
+  // Redirect to cart if no items or state
   useEffect(() => {
     if (!loading && cartItems.length === 0 && !location.state) {
       navigate('/cart');
     }
   }, [cartItems.length, location.state, navigate, loading]);
 
+  // Fetch addresses after ensuring session
   useEffect(() => {
-    const restoreSessionAndFetchAddresses = async () => {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      if (error) {
-        setToastMessage({ message: 'Failed to load session. Please log in again.', type: 'error' });
-        navigate('/login');
-        return;
-      }
+    const fetchAddresses = async () => {
+      const sessionValid = await restoreSession();
+      if (!sessionValid || !user) return;
 
-      if (!loading && !user) {
-        navigate('/login');
-        return;
-      }
-
-      if (!loading && user) {
-        const { data, error } = await supabase
-          .from('user_addresses')
-          .select('*')
-          .eq('user_id', user.id);
-        if (!error) {
-          setAddresses(data);
-        } else {
-          setToastMessage({ message: `Failed to fetch addresses: ${error.message}`, type: 'error' });
-        }
+      const { data, error } = await supabase
+        .from('user_addresses')
+        .select('*')
+        .eq('user_id', user.id);
+      if (!error) {
+        setAddresses(data);
+      } else {
+        setToastMessage({ message: `Failed to fetch addresses: ${error.message}`, type: 'error' });
       }
     };
 
-    restoreSessionAndFetchAddresses();
-  }, [user, loading, navigate]);
+    if (!loading && user) {
+      fetchAddresses();
+    } else if (!loading && !user) {
+      navigate('/login');
+    }
+  }, [user, loading, navigate, restoreSession]);
 
   const checkShippingOptions = async (pincode) => {
     if (!pincode) return;
-    
+
     setLoadingShipping(true);
     setShippingError(null);
     try {
-      const totalWeight = cartItems.reduce((weight, item) => {
-        return weight + (0.35 * item.quantity);
-      }, 0);
-      
+      const totalWeight = cartItems.reduce((weight, item) => weight + (0.35 * item.quantity), 0);
       const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/shiprocket/check-serviceability`, {
         pickup_postcode: warehousePincode,
         delivery_postcode: pincode,
         weight: totalWeight,
         cod: true
       });
-      
+
       if (response.data.status === 'success' && response.data.data.serviceability) {
         const availableCouriers = response.data.data.available_couriers || [];
         const cheapestOption = availableCouriers.sort((a, b) => a.rate - b.rate)[0];
@@ -1295,17 +1302,7 @@ const Checkout = () => {
       return;
     }
 
-    const fetchAddresses = async () => {
-      const { data: updatedAddresses, error } = await supabase
-        .from('user_addresses')
-        .select('*')
-        .eq('user_id', user.id);
-      if (!error) {
-        setAddresses(updatedAddresses);
-      }
-    };
-
-    await fetchAddresses();
+    setAddresses(prev => [...prev, ...data]);
     setShowAddAddressForm(false);
     setNewAddress({ name: '', address: '', city: '', pincode: '', phone: '' });
     setToastMessage({ message: 'Address added successfully! Please select it from the dropdown.', type: 'success' });
@@ -1395,6 +1392,7 @@ const Checkout = () => {
         order_id: order.id,
         handler: async function (response) {
           try {
+            // Verify payment
             const verifyResponse = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/razorpay/verify-payment`, {
               razorpay_order_id: response.razorpay_order_id,
               razorpay_payment_id: response.razorpay_payment_id,
@@ -1402,8 +1400,13 @@ const Checkout = () => {
             });
             const verifyResult = verifyResponse.data;
             if (verifyResult.status === 'success') {
-              // Store payment ID in localStorage
+              // Store payment ID
               localStorage.setItem('paymentId', response.razorpay_payment_id);
+              // Restore session before completing order
+              const sessionValid = await restoreSession();
+              if (!sessionValid) {
+                throw new Error('Session restoration failed');
+              }
               // Complete the order using stored data
               const storedOrder = JSON.parse(localStorage.getItem('pendingOrder'));
               if (storedOrder) {
@@ -1413,10 +1416,12 @@ const Checkout = () => {
               }
             } else {
               setToastMessage({ message: 'Payment verification failed: ' + verifyResult.message, type: 'error' });
-              setLoadingOrder(false);
             }
           } catch (error) {
             setToastMessage({ message: 'Payment verification failed: ' + error.message, type: 'error' });
+            localStorage.removeItem('pendingOrder');
+            localStorage.removeItem('paymentId');
+          } finally {
             setLoadingOrder(false);
           }
         },
@@ -1461,6 +1466,11 @@ const Checkout = () => {
   const completeOrderFromStorage = async (orderData, paymentId) => {
     try {
       setLoadingOrder(true);
+      // Restore session before completing order
+      const sessionValid = await restoreSession();
+      if (!sessionValid) {
+        throw new Error('Session restoration failed');
+      }
       await completeOrder(paymentId, orderData);
     } catch (error) {
       setToastMessage({ message: 'Failed to complete order from stored data: ' + error.message, type: 'error' });
@@ -1514,6 +1524,25 @@ const Checkout = () => {
     const order_id = data.orderId;
 
     try {
+      // Check if order already exists to prevent duplicates
+      const { data: existingOrder, error: checkError } = await supabase
+        .from('orders')
+        .select('order_id')
+        .eq('order_id', order_id)
+        .single();
+
+      if (existingOrder) {
+        setToastMessage({ message: 'Order already processed.', type: 'info' });
+        clearCart();
+        navigate('/success');
+        localStorage.removeItem('pendingOrder');
+        localStorage.removeItem('paymentId');
+        return;
+      }
+      if (checkError && checkError.code !== 'PGRST116') {
+        throw new Error(`Error checking existing order: ${checkError.message}`);
+      }
+
       const orderItems = data.cartItems.map((item, index) => ({
         name: item.name,
         sku: item.id || `SKU_${item.name.replace(/\s+/g, '_')}_${index}_${item.selectedSize || 'NOSIZE'}`,
@@ -1586,7 +1615,7 @@ const Checkout = () => {
         throw new Error(`Failed to save order in Supabase: ${error.message}`);
       }
 
-      // Update stock in the products table for each ordered item
+      // Update stock in the products table
       for (const item of orderItems) {
         const { sku, selectedSize, units } = item;
 
@@ -1603,12 +1632,12 @@ const Checkout = () => {
             .single();
 
           if (productError) {
-            console.error(`Error fetching product with SKU ${sku} from products table:`, productError);
+            console.error(`Error fetching product with SKU ${sku}:`, productError);
             continue;
           }
 
           if (!productData) {
-            console.warn(`Product with SKU ${sku} not found in products table, skipping stock update.`);
+            console.warn(`Product with SKU ${sku} not found, skipping stock update.`);
             continue;
           }
 
@@ -1616,7 +1645,7 @@ const Checkout = () => {
           const currentStock = currentSizes[selectedSize] || 0;
 
           if (currentStock < units) {
-            console.warn(`Insufficient stock for SKU ${sku} (Size: ${selectedSize}). Current stock: ${currentStock}, Ordered: ${units}`);
+            console.warn(`Insufficient stock for SKU ${sku} (Size: ${selectedSize}). Current: ${currentStock}, Ordered: ${units}`);
             continue;
           }
 
@@ -1631,9 +1660,7 @@ const Checkout = () => {
             .eq('id', sku);
 
           if (updateError) {
-            console.error(`Error updating stock for product with SKU ${sku}:`, updateError);
-          } else {
-            console.log(`Stock updated for SKU ${sku} (Size: ${selectedSize}): ${currentStock} -> ${updatedSizes[selectedSize]}`);
+            console.error(`Error updating stock for SKU ${sku}:`, updateError);
           }
         } catch (stockUpdateError) {
           console.error(`Error during stock update for SKU ${sku}:`, stockUpdateError);
@@ -1650,7 +1677,6 @@ const Checkout = () => {
       if (data.appliedPromo) {
         try {
           const promoId = data.appliedPromo.id;
-
           const { data: promoDetails, error: promoDetailsError } = await supabase
             .from('promocodes')
             .select('used')
@@ -1658,7 +1684,7 @@ const Checkout = () => {
             .single();
 
           if (promoDetailsError) {
-            console.error('Error fetching promo details from promocodes:', promoDetailsError);
+            console.error('Error fetching promo details:', promoDetailsError);
             throw promoDetailsError;
           }
           const currentOverallUsed = promoDetails.used;
@@ -1669,7 +1695,7 @@ const Checkout = () => {
             .eq('id', promoId);
 
           if (overallUpdateError) {
-            console.error('Error updating overall promo used count:', overallUpdateError);
+            console.error('Error updating promo used count:', overallUpdateError);
           }
 
           const { data: userUsageData, error: userUsageFetchError } = await supabase
@@ -1680,7 +1706,7 @@ const Checkout = () => {
             .single();
 
           if (userUsageFetchError && userUsageFetchError.code !== 'PGRST116') {
-            console.error('Error fetching user-specific promo usage:', userUsageFetchError);
+            console.error('Error fetching user promo usage:', userUsageFetchError);
           } else if (userUsageData) {
             const { error: userUpdateError } = await supabase
               .from('promo_usage')
@@ -1756,15 +1782,25 @@ const Checkout = () => {
       setToastMessage({ message: 'Please select a payment method.', type: 'error' });
       return;
     }
-    if (paymentMethod === 'Paid Online') {
-      await handleOnlinePayment();
-    } else {
-      if (!storeOrderData()) {
-        setToastMessage({ message: 'Failed to store order data.', type: 'error' });
-        return;
+    if (paymentInitiated) return; // Prevent multiple clicks
+    setPaymentInitiated(true);
+
+    try {
+      const sessionValid = await restoreSession();
+      if (!sessionValid) return;
+
+      if (paymentMethod === 'Paid Online') {
+        await handleOnlinePayment();
+      } else {
+        if (!storeOrderData()) {
+          setToastMessage({ message: 'Failed to store order data.', type: 'error' });
+          return;
+        }
+        setLoadingOrder(true);
+        await completeOrder(null);
       }
-      setLoadingOrder(true);
-      await completeOrder(null);
+    } finally {
+      setPaymentInitiated(false);
     }
   };
 
@@ -1793,7 +1829,7 @@ const Checkout = () => {
                       </option>
                     ))}
                   </select>
-                  
+
                   {selectedAddressId && (
                     <div style={styles.selectedAddressBox}>
                       {(() => {
@@ -1813,7 +1849,7 @@ const Checkout = () => {
               ) : (
                 <p style={styles.emptyText}>No saved addresses found.</p>
               )}
-              
+
               <button
                 onClick={() => setShowAddAddressForm(!showAddAddressForm)}
                 style={styles.addAddressBtn}
@@ -1898,11 +1934,11 @@ const Checkout = () => {
             <h3 style={styles.cardTitle}>Payment Method</h3>
             <div style={styles.paymentOptions}>
               <div style={styles.paymentOption}>
-                <input 
-                  type="checkbox" 
-                  id="cashOnDelivery" 
-                  name="payment" 
-                  value="Cashthemed-checkbox"
+                <input
+                  type="checkbox"
+                  id="cashOnDelivery"
+                  name="payment"
+                  value="Cash on Delivery"
                   checked={paymentMethod === 'Cash on Delivery'}
                   onChange={() => setPaymentMethod('Cash on Delivery')}
                   disabled={loadingOrder}
@@ -1910,10 +1946,10 @@ const Checkout = () => {
                 <label htmlFor="cashOnDelivery" style={styles.paymentLabel}>Cash on Delivery (₹10 COD Fee)</label>
               </div>
               <div style={styles.paymentOption}>
-                <input 
-                  type="checkbox" 
-                  id="paidOnline" 
-                  name="payment" 
+                <input
+                  type="checkbox"
+                  id="paidOnline"
+                  name="payment"
                   value="Paid Online"
                   checked={paymentMethod === 'Paid Online'}
                   onChange={() => setPaymentMethod('Paid Online')}
@@ -1933,7 +1969,7 @@ const Checkout = () => {
                   <span style={styles.orderItemPrice}>₹{item.price * item.quantity}</span>
                 </div>
                 <span style={styles.orderItemMeta}>
-                  Size: {item.selectedSize} | Qty: {item.quantity} 
+                  Size: {item.selectedSize} | Qty: {item.quantity}
                 </span>
               </div>
             ))}
@@ -1978,18 +2014,18 @@ const Checkout = () => {
             </div>
           </div>
 
-          <button 
-            onClick={handleConfirmOrder} 
-            disabled={loadingOrder || !selectedAddressId || !selectedShippingOption || !paymentMethod} 
+          <button
+            onClick={handleConfirmOrder}
+            disabled={loadingOrder || !selectedAddressId || !selectedShippingOption || !paymentMethod || paymentInitiated}
             style={{
               ...styles.confirmOrderBtn,
-              opacity: (!selectedAddressId || !selectedShippingOption || !paymentMethod || loadingOrder) ? 0.6 : 1
+              opacity: (!selectedAddressId || !selectedShippingOption || !paymentMethod || loadingOrder || paymentInitiated) ? 0.6 : 1
             }}
           >
             {loadingOrder ? 'Confirming...' : `Confirm Order - ₹${totalForDisplay.toFixed(2)}`}
           </button>
-          
-          <button 
+
+          <button
             onClick={() => navigate('/cart')}
             style={styles.backToCartBtn}
             disabled={loadingOrder}
@@ -2216,7 +2252,7 @@ const styles = {
   addressForm: {
     marginTop: '20px',
     padding: '14px',
-    fontFamily: "'Louvette Semi Bold', sans-serif", 
+    fontFamily: "'Louvette Semi Bold', sans-serif",
     backgroundColor: '#333333',
     borderRadius: '10px',
   },
@@ -2224,7 +2260,7 @@ const styles = {
     width: '100%',
     padding: '10px',
     backgroundColor: '#22c55e',
-    fontFamily: "'Louvette Semi Bold', sans-serif", 
+    fontFamily: "'Louvette Semi Bold', sans-serif",
     color: '#ffffff',
     borderRadius: '8px',
     border: 'none',
