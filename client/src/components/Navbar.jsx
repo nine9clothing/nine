@@ -185,18 +185,20 @@ const Navbar = ({ showLogo }) => {
       clearInterval(refreshInterval);
     };
   }, []);
-
 useEffect(() => {
-  let wasHidden = false; 
+  let wasHidden = false;
 
   const handleVisibilityChange = () => {
+    // Check if current page is checkout
+    const isCheckoutPage = window.location.pathname.includes('/checkout');
+
     if (document.visibilityState === 'visible') {
-      if (wasHidden) {
+      if (wasHidden && !isCheckoutPage) {
         console.log('Tab is visible, refreshing page...');
-        window.location.reload(); 
+        window.location.reload();
       }
     } else {
-      wasHidden = true; 
+      wasHidden = true;
     }
   };
 

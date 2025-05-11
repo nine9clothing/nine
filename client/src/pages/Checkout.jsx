@@ -1471,7 +1471,8 @@ const completeOrder = async (paymentId = null) => {
         },
         shipping: { is_billing: true },
         items: orderItems,
-        sub_total: totalWithShipping,
+        sub_total: totalForDisplay,
+        // sub_total: totalWithShipping, TEMPORARY FOR SHIPPING DISCOUNT
         dimensions: { length: 16, breadth: 12, height: 16, weight: totalWeight },
         user_id: user.id,
         shipping_charges: selectedShippingOption.rate,
