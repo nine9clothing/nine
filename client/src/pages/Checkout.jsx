@@ -1311,219 +1311,378 @@ const Checkout = () => {
   //     setLoadingOrder(false);
   //   }
   // };
- 
-const handleOnlinePayment = async () => {
-  setLoadingOrder(true);
-  console.log('[Checkout DEBUG] Attempting Online Payment. Current State:', {
-    userId: user?.id,
-    selectedAddressId,
-    numAddresses: addresses.length,
-    cartItemCount: cartItems.length,
-    totalForDisplay,
-    VITE_RAZORPAY_KEY_ID_EXISTS: !!import.meta.env.VITE_RAZORPAY_KEY_ID,
-  });
+  const handleOnlinePayment = async () => {
+    setLoadingOrder(true);
+    try {
+      // console.log('handleOnlinePayment - addresses:', addresses);
+      // console.log('handleOnlinePayment - selectedAddressId:', selectedAddressId);
+      const selectedAddress = addresses.find(addr => addr.id.toString() === selectedAddressId);
+      // console.log('handleOnlinePayment - selectedAddress:', selectedAddress);
+  
+      if (!selectedAddress) {
+        throw new Error('Selected address not found');
+      }
+      if (!user?.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(user.email)) {
+        throw new Error('Invalid or missing email');
+      }
+      if (!selectedAddress.phone || !/^[6-9]\d{9}$/.test(selectedAddress.phone)) {
+        throw new Error('Invalid phone number: ' + selectedAddress.phone);
+      }
+      if (isNaN(totalWithShipping) || totalWithShipping <= 0) {
+        throw new Error('Invalid totalWithShipping: ' + totalWithShipping);
+      }
+      if (!import.meta.env.VITE_RAZORPAY_KEY_ID) {
+        throw new Error('Razorpay key not configured');
+      }
+  
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/razorpay/create-order`, {
+        // amount: totalWithShipping,    ////TEMPORARY COMMENTED FOR SHIPPING DISCOUNT
+        amount: totalForDisplay,
 
-  try {
-    const selectedAddress = addresses.find(addr => addr.id.toString() === selectedAddressId);
-    console.log('[Checkout DEBUG] Selected Address for Payment:', selectedAddress);
-
-    if (!selectedAddress) {
-      setToastMessage({ message: 'Selected address not found. Please re-select.', type: 'error' });
-      setLoadingOrder(false);
-      throw new Error('Selected address not found');
-    }
-    // ... (other pre-checks as you have them) ...
-
-    const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/razorpay/create-order`, {
-      amount: totalForDisplay,
-      currency: 'INR',
-      receipt: `order_rcptid_${Date.now()}`
-    });
-    console.log('[Checkout DEBUG] Razorpay create-order response:', response.data);
-
-    const order = response.data;
-    if (order.error) {
-      throw new Error('Error creating Razorpay order: ' + order.error);
-    }
-
-    const options = {
-      key: import.meta.env.VITE_RAZORPAY_KEY_ID,
-      amount: order.amount,
-      currency: order.currency,
-      name: 'Nine9',
-      description: 'Purchase of Clothing Items',
-      order_id: order.id,
-      handler: async function (rzpResponse) { // rzpResponse is from Razorpay
-        console.log('[Checkout DEBUG] Razorpay Handler INVOKED. RzpResponse:', rzpResponse);
-        // setLoadingOrder(true); // Already true from handleOnlinePayment start
-
-        // It's CRITICAL that `completeOrder` uses the correct, current state.
-        // The values like `user`, `cartItems`, `selectedAddressId`, `addresses`
-        // are captured by this closure. If the component re-rendered and these changed,
-        // this handler would use the values from when `handleOnlinePayment` was called.
-        // Context values (`user`, `cartItems`) should be fine. `useState` values need care.
-
-        console.log('[Checkout DEBUG] State values at handler invocation:', {
-            capturedUserId: user?.id, // from closure
-            capturedSelectedAddressId: selectedAddressId, // from closure
-            capturedNumAddresses: addresses.length, // from closure
-            capturedCartItemCount: cartItems.length, // from closure (via context, should be OK)
-        });
-
-        try {
-          const verifyResponse = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/razorpay/verify-payment`, {
-            razorpay_order_id: rzpResponse.razorpay_order_id,
-            razorpay_payment_id: rzpResponse.razorpay_payment_id,
-            razorpay_signature: rzpResponse.razorpay_signature
-          });
-          const verifyResult = verifyResponse.data;
-          console.log('[Checkout DEBUG] Payment Verification Result:', verifyResult);
-
-          if (verifyResult.status === 'success') {
-            console.log('[Checkout DEBUG] Payment verified successfully. Calling completeOrder with paymentId:', rzpResponse.razorpay_payment_id);
-            await completeOrder(rzpResponse.razorpay_payment_id);
-          } else {
-            console.error('[Checkout DEBUG] Payment verification FAILED:', verifyResult.message);
-            setToastMessage({ message: 'Payment verification failed: ' + verifyResult.message, type: 'error' });
+        currency: 'INR',
+        receipt: `order_rcptid_${Date.now()}`
+      });
+  
+      const order = response.data;
+      if (order.error) {
+        throw new Error('Error creating Razorpay order: ' + order.error);
+      }
+  
+      const options = {
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+        amount: order.amount,
+        currency: order.currency,
+        name: 'Nine9',
+        description: 'Purchase of Clothing Items',
+        order_id: order.id,
+        handler: async function (response) {
+          try {
+            const verifyResponse = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/razorpay/verify-payment`, {
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature
+            });
+            const verifyResult = verifyResponse.data;
+            if (verifyResult.status === 'success') {
+              await completeOrder(response.razorpay_payment_id);
+            } else {
+              setToastMessage({ message: 'Payment verification failed: ' + verifyResult.message, type: 'error' });
+              setLoadingOrder(false);
+            }
+          } catch (error) {
+            // console.error('Verification error:', error);
+            setToastMessage({ message: 'Payment verification failed: ' + error.message, type: 'error' });
             setLoadingOrder(false);
           }
-        } catch (verificationError) {
-          console.error('[Checkout DEBUG] Error in Razorpay Handler (verification/completeOrder call):', verificationError);
-          setToastMessage({ message: 'Error processing payment: ' + verificationError.message, type: 'error' });
-          setLoadingOrder(false);
-        }
-      },
-      modal: {
-        ondismiss: function () {
-          console.log('[Checkout DEBUG] Razorpay Modal DISMISSED BY USER.');
-          setLoadingOrder(false);
-          // No navigation here if not needed, or ensure state is minimal
-          // navigate('/checkout', { replace: true }); // Or back to cart
-        }
-      },
-      prefill: {
-        name: user?.user_metadata?.full_name || 'Customer Name',
-        email: user.email,
-        contact: selectedAddress.phone
-      },
-      theme: { color: '#Ffa500' }
-    };
-
-    console.log('[Checkout DEBUG] Razorpay options prepared. Calling rzp.open()');
-    const rzp = new window.Razorpay(options);
-
-    rzp.on('payment.failed', function (failureResponse) {
-      console.error('[Checkout DEBUG] Razorpay payment.failed event:', failureResponse);
-      setToastMessage({ message: `Payment failed: ${failureResponse.error?.description || 'Unknown error'}. Reason: ${failureResponse.error?.reason || 'N/A'}`, type: 'error' });
+        },
+        modal: {
+          ondismiss: function () {
+            setLoadingOrder(false);
+            navigate('/checkout', {
+              state: { subtotal, discount, pointsToRedeem, pointsDiscount, total: totalAfterDiscount, appliedPromo }
+            });
+          }
+        },
+        prefill: {
+          name: user?.user_metadata?.full_name || 'Customer Name',
+          email: user.email,
+          contact: selectedAddress.phone
+        },
+        theme: { color: '#Ffa500' }
+      };
+  
+      const rzp = new window.Razorpay(options);
+      rzp.on('payment.failed', function (response) {
+        // console.error('Payment failed:', response.error);
+        setToastMessage({ message: `Payment failed: ${response.error.description}`, type: 'error' });
+        setLoadingOrder(false);
+      });
+      rzp.on('payment.error', function (response) {
+        // console.error('Checkout error:', response.error);
+        setToastMessage({ message: `Checkout error: ${response.error.description}`, type: 'error' });
+        setLoadingOrder(false);
+      });
+      rzp.open();
+    } catch (error) {
+      // console.error('Online payment error:', error);
+      setToastMessage({ message: 'Failed to initiate payment: ' + error.message, type: 'error' });
       setLoadingOrder(false);
-    });
-    // Note: 'payment.error' is not a standard Razorpay event. 'payment.failed' covers client-side errors.
-
-    rzp.open();
-
-  } catch (error) {
-    console.error('[Checkout DEBUG] Error in handleOnlinePayment (before rzp.open or in create-order):', error);
-    setToastMessage({ message: 'Failed to initiate payment: ' + error.message, type: 'error' });
-    setLoadingOrder(false);
-  }
-};
-
+    }
+  };
 const completeOrder = async (paymentId = null) => {
-  console.log(`[Checkout DEBUG] completeOrder CALLED. Payment ID: ${paymentId}, Payment Method: ${paymentMethod}`);
-  console.log('[Checkout DEBUG] completeOrder initial state:', {
-      cartItemsLength: cartItems.length,
-      userId: user?.id,
-      selectedAddressId,
-      selectedShippingRate: selectedShippingOption?.rate,
-      paymentMethod,
-  });
-
-  // Your existing checks... make sure they log if they fail
-  if (cartItems.length === 0) {
-    console.error('[Checkout DEBUG] completeOrder FAIL: Cart is empty.');
-    setToastMessage({ message: 'Your cart is empty.', type: 'error' });
-    setLoadingOrder(false); // Make sure to set loading false
-    return;
-  }
-  // ... add console.error logs for each pre-condition failure ...
-  if (!selectedAddressId) {
-    console.error('[Checkout DEBUG] completeOrder FAIL: No delivery address selected.');
-    setToastMessage({ message: 'Please select a delivery address.', type: 'error' });
-    setLoadingOrder(false);
-    return;
-  }
-  // ... and so on for other checks.
-
-  const selectedAddress = addresses.find(addr => addr.id.toString() === selectedAddressId);
-  if (!selectedAddress) {
-      console.error('[Checkout DEBUG] completeOrder FAIL: Selected address object not found from ID:', selectedAddressId);
-      setToastMessage({ message: 'Selected address data is missing. Please try again.', type: 'error' });
-      setLoadingOrder(false);
+    if (cartItems.length === 0) {
+      setToastMessage({ message: 'Your cart is empty.', type: 'error' });
       return;
-  }
-
-  // ... (rest of your completeOrder logic) ...
-
-  try {
-    console.log('[Checkout DEBUG] Starting order processing (Shiprocket, Supabase)...');
-    // ... (your Shiprocket and Supabase calls) ...
-    // Add specific logs before and after each major async operation (Shiprocket, Supabase insert, stock update)
-
-    // Example for Shiprocket:
-    console.log('[Checkout DEBUG] Calling Shiprocket API...');
-    const shiprocketResponse = await axios.post(/* ... */);
-    console.log('[Checkout DEBUG] Shiprocket API response:', shiprocketResponse.data);
-    
-    // Example for Supabase order insert:
-    console.log('[Checkout DEBUG] Inserting order into Supabase...');
-    const { data: orderData, error: orderError } = await supabase.from('orders').insert([/* ... */]).select();
-    if (orderError) {
-        console.error('[Checkout DEBUG] Supabase order insert FAILED:', orderError);
-        throw orderError; // Let the main catch handle it
     }
-    console.log('[Checkout DEBUG] Supabase order insert SUCCESS:', orderData);
-
-    // Stock update loop
-    for (const item of orderItems) {
-        console.log(`[Checkout DEBUG] Processing stock for item SKU: ${item.sku}, Size: ${item.selectedSize}`);
-        // ... your stock update logic with its own try/catch and logging ...
+    if (!user) {
+      setToastMessage({ message: 'Please log in.', type: 'error' });
+      return;
     }
-    
-    // Points redemption
-    if (pointsToRedeem > 0) {
-        console.log('[Checkout DEBUG] Redeeming points...');
-        // ...
+    if (!selectedAddressId) {
+      setToastMessage({ message: 'Please select a delivery address.', type: 'error' });
+      return;
+    }
+    if (!selectedShippingOption) {
+      setToastMessage({ message: 'No shipping method available for this address.', type: 'error' });
+      return;
+    }
+    if (!paymentMethod) {
+      setToastMessage({ message: 'Please select a payment method.', type: 'error' });
+      return;
+    }
+    const selectedAddress = addresses.find(addr => addr.id.toString() === selectedAddressId);
+    if (!selectedAddress) {
+      setToastMessage({ message: 'Selected address not found.', type: 'error' });
+      return;
     }
 
-    // Promo usage
-    if (location.state?.appliedPromo) {
-        console.log('[Checkout DEBUG] Updating promo usage...');
-        // ...
-    }
+    const order_id = `ORDER_${Date.now()}`;
 
-    clearCart();
-    setToastMessage({ message: 'Order placed successfully!', type: 'success' });
-    console.log('[Checkout DEBUG] Order SUCCESS. Navigating to /success');
-    navigate('/success');
+    try {
+      const orderItems = cartItems.map((item, index) => ({
+        name: item.name,
+        sku: item.id || `SKU_${item.name.replace(/\s+/g, '_')}_${index}_${item.selectedSize || 'NOSIZE'}`,
+        units: item.quantity,
+        selling_price: item.price,
+        discount: 0,
+        tax: 0,
+        hsn: '1234',
+        selectedSize: item.selectedSize,
+      }));
 
-  } catch (error) {
-    console.error('[Checkout DEBUG] CRITICAL ERROR in completeOrder:', error);
-    let errorMessage = 'Failed to place order';
-    if (error.response) {
-      errorMessage += `: ${error.response.status} - ${JSON.stringify(error.response.data?.error || error.response.data || error.response.statusText)}`;
-      console.error('[Checkout DEBUG] Error response data:', error.response.data);
-    } else if (error.request) {
-      errorMessage += ': No response from server';
-    } else {
-      errorMessage += `: ${error.message}`;
+      const totalWeight = cartItems.reduce((weight, item) => {
+        return weight + (0.35 * item.quantity);
+      }, 0);
+
+      const shiprocketPayload = {
+        order_id,
+        order_date: new Date().toISOString().split('T')[0] + ' ' + new Date().toTimeString().split(' ')[0],
+        pickup_location: 'warehouse-1',
+        billing: {
+          customer_name: selectedAddress.name.split(' ')[0] || 'Customer',
+          last_name: selectedAddress.name.split(' ').slice(1).join(' ') || '',
+          address: selectedAddress.address,
+          city: selectedAddress.city,
+          pincode: selectedAddress.pincode,
+          state: 'Maharashtra',
+          country: 'India',
+          email: user.email || 'customer@example.com',
+          phone: selectedAddress.phone,
+        },
+        shipping: { is_billing: true },
+        items: orderItems,
+        sub_total: totalForDisplay,
+        // sub_total: totalWithShipping, TEMPORARY FOR SHIPPING DISCOUNT
+        dimensions: { length: 16, breadth: 12, height: 16, weight: totalWeight },
+        user_id: user.id,
+        shipping_charges: selectedShippingOption.rate,
+        cod_fee: codFee, 
+        payment_method: paymentMethod === 'Cash on Delivery' ? 'COD' : 'Prepaid',
+        courier_id: selectedShippingOption.courier_company_id,
+      };
+
+      const shiprocketResponse = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/shiprocket/order`, shiprocketPayload, {
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      const { data, error } = await supabase.from('orders').insert([{
+        user_id: user.id,
+        order_id,
+        // total: totalWithShipping,//TEMPORARY FOR SHIPPING DISCOUNT
+        // total_amount: totalWithShipping,  //TEMPORARY FOR SHIPPING DISCOUNT
+        total: totalForDisplay,
+        total_amount: totalForDisplay,
+        discount: discount + pointsDiscount,
+        shipping_charges: selectedShippingOption.rate,
+        cod_fee: codFee,
+        items: orderItems,
+        status: 'placed',
+        shipping_name: selectedAddress.name,
+        shipping_phone: selectedAddress.phone,
+        shipping_address: selectedAddress.address,
+        shipping_city: selectedAddress.city,
+        shipping_pincode: selectedAddress.pincode,
+        shipping_details: shiprocketResponse.data.shiprocket_response || shiprocketResponse.data,
+        shipping_status: 'pending',
+        display_order_id: order_id,
+        courier_id: selectedShippingOption.courier_company_id,
+        courier_name: selectedShippingOption.courier_name,
+        estimated_delivery: selectedShippingOption.estimated_delivery_days,
+        payment_method: paymentMethod,
+        payment_id: paymentId,
+      }]).select();
+
+      if (error) {
+        console.error('Supabase insert error:', error);
+        throw new Error(`Failed to save order in Supabase: ${error.message}`);
+      }
+
+      // Update stock in the products table for each ordered item
+      for (const item of orderItems) {
+        const { sku, selectedSize, units } = item;
+
+        if (!selectedSize) {
+          console.warn(`No size selected for item with SKU ${sku}, skipping stock update.`);
+          continue;
+        }
+
+        try {
+          // Fetch the current stock for the product using SKU
+          const { data: productData, error: productError } = await supabase
+            .from('products')
+            .select('size')
+            .eq('id', sku) // Use SKU to match the product ID
+            .single();
+
+          if (productError) {
+            console.error(`Error fetching product with SKU ${sku} from products table:`, productError);
+            continue;
+          }
+
+          if (!productData) {
+            console.warn(`Product with SKU ${sku} not found in products table, skipping stock update.`);
+            continue;
+          }
+
+          const currentSizes = typeof productData.size === 'string' ? JSON.parse(productData.size) : productData.size || {};
+          const currentStock = currentSizes[selectedSize] || 0;
+
+          if (currentStock < units) {
+            console.warn(`Insufficient stock for SKU ${sku} (Size: ${selectedSize}). Current stock: ${currentStock}, Ordered: ${units}`);
+            continue;
+          }
+
+          // Update the stock for the selected size
+          const updatedSizes = {
+            ...currentSizes,
+            [selectedSize]: currentStock - units,
+          };
+
+          // Update the product in the database
+          const { error: updateError } = await supabase
+            .from('products')
+            .update({ size: updatedSizes })
+            .eq('id', sku); // Use SKU to match the product ID
+
+          if (updateError) {
+            console.error(`Error updating stock for product with SKU ${sku}:`, updateError);
+          } else {
+            console.log(`Stock updated for SKU ${sku} (Size: ${selectedSize}): ${currentStock} -> ${updatedSizes[selectedSize]}`);
+          }
+        } catch (stockUpdateError) {
+          console.error(`Error during stock update for SKU ${sku}:`, stockUpdateError);
+        }
+      }
+
+      if (pointsToRedeem > 0) {
+        const { error: redemptionError } = await supabase
+          .from('point_redemptions')
+          .insert({ user_id: user.id, points_redeemed: pointsToRedeem, discount_amount: pointsDiscount });
+        if (redemptionError) throw redemptionError;
+      }
+
+      if (location.state?.appliedPromo) {
+        try {
+          const promoId = location.state.appliedPromo.id;
+
+          const { data: promoDetails, error: promoDetailsError } = await supabase
+            .from('promocodes')
+            .select('used')
+            .eq('id', promoId)
+            .single();
+
+          if (promoDetailsError) {
+            console.error('Error fetching promo details from promocodes:', promoDetailsError);
+            throw promoDetailsError;
+          }
+          const currentOverallUsed = promoDetails.used;
+
+          const { error: overallUpdateError } = await supabase
+            .from('promocodes')
+            .update({ used: currentOverallUsed + 1 })
+            .eq('id', promoId);
+
+          if (overallUpdateError) {
+            console.error('Error updating overall promo used count:', overallUpdateError);
+          }
+
+          const { data: userUsageData, error: userUsageFetchError } = await supabase
+            .from('promo_usage')
+            .select('usage_count')
+            .eq('user_id', user.id)
+            .eq('promo_code_id', promoId)
+            .single();
+
+          if (userUsageFetchError && userUsageFetchError.code !== 'PGRST116') {
+            console.error('Error fetching user-specific promo usage:', userUsageFetchError);
+          } else if (userUsageData) {
+            const { error: userUpdateError } = await supabase
+              .from('promo_usage')
+              .update({ usage_count: userUsageData.usage_count + 1 })
+              .eq('user_id', user.id)
+              .eq('promo_code_id', promoId);
+            if (userUpdateError) console.error('Error updating user promo usage:', userUpdateError);
+          } else {
+            const { error: userInsertError } = await supabase
+              .from('promo_usage')
+              .insert({ user_id: user.id, promo_code_id: promoId, usage_count: 1 });
+            if (userInsertError) console.error('Error inserting user promo usage:', userInsertError);
+          }
+        } catch (promoError) {
+          console.error('Error processing promo code usage:', promoError);
+        }
+      }
+
+      clearCart();
+      setToastMessage({ message: 'Order placed successfully! Check Shiprocket dashboard.', type: 'success' });
+      navigate('/success');
+    } catch (error) {
+      console.error('Order placement error:', error);
+      let errorMessage = 'Failed to place order';
+      if (error.response) {
+        errorMessage += `: ${error.response.status} - ${error.response.data.error || error.response.statusText}`;
+        console.error('Error response:', error.response.data);
+        if (error.response.data.error === 'Failed to process order') {
+          const { data, error: supabaseError } = await supabase.from('orders').insert([{
+            user_id: user.id,
+            order_id,
+            // total: totalWithShipping,   //TEMPORARY FOR SHIPPING DISCOUNT
+            // total_amount: totalWithShipping,   //TEMPORARY FOR SHIPPING DISCOUNT
+            total: totalForDisplay,
+            total_amount: totalForDisplay,
+            discount: discount + pointsDiscount,
+            items: orderItems,
+            status: 'placed',
+            shipping_name: selectedAddress.name,
+            shipping_phone: selectedAddress.phone,
+            shipping_address: selectedAddress.address,
+            shipping_city: selectedAddress.city,
+            shipping_pincode: selectedAddress.pincode,
+            shipping_details: { error: error.response.data.error },
+            payment_method: paymentMethod,
+            payment_id: paymentId,
+          }]).select();
+          if (supabaseError) {
+            console.error('Supabase fallback insert error:', supabaseError);
+            errorMessage += ` (Fallback failed: ${supabaseError.message})`;
+          } else {
+            console.log('Order saved to Supabase via fallback:', data);
+            clearCart();
+            setToastMessage({ message: 'Order created in Shiprocket but failed to save initially. Check dashboard.', type: 'warning' });
+            navigate('/success');
+            return;
+          }
+        }
+      } else if (error.request) {
+        errorMessage += ': No response from server';
+      } else {
+        errorMessage += `: ${error.message}`;
+      }
+      setToastMessage({ message: errorMessage, type: 'error' });
+    } finally {
+      setLoadingOrder(false);
     }
-    setToastMessage({ message: errorMessage, type: 'error' });
-  } finally {
-    console.log('[Checkout DEBUG] completeOrder finally block. Setting loadingOrder to false.');
-    setLoadingOrder(false);
-  }
 };
-
   const handleConfirmOrder = async () => {
     if (!paymentMethod) {
       setToastMessage({ message: 'Please select a payment method.', type: 'error' });
