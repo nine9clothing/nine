@@ -1119,19 +1119,20 @@
 
 // export default Checkout;
 
+
 import React, { useContext, useEffect, useState } from 'react';
 import { CartContext } from '../context/CartContext.jsx';
-import { AuthContext } from '../context/AuthContext';
+import { AuthContext } from '../context/AuthContext'; 
 import { supabase } from '../lib/supabase';
 import Navbar from '../components/Navbar';
 import { useNavigate, useLocation } from 'react-router-dom';
 import ToastMessage from '../ToastMessage';
-import Footer from "../pages/Footer";
+import Footer from "../pages/Footer";      
 import axios from 'axios';
 
 const Checkout = () => {
   const { cartItems, clearCart } = useContext(CartContext);
-  const { user, loading } = useContext(AuthContext);
+  const { user, loading } = useContext(AuthContext); 
   const [addresses, setAddresses] = useState([]);
   const [selectedAddressId, setSelectedAddressId] = useState('');
   const [loadingOrder, setLoadingOrder] = useState(false);
@@ -1160,10 +1161,24 @@ const Checkout = () => {
   const pointsToRedeem = location.state?.pointsToRedeem || 0;
   const pointsDiscount = location.state?.pointsDiscount || 0;
   const totalAfterDiscount = location.state?.total || subtotal - (discount + pointsDiscount);
-  const codFee = paymentMethod === 'Cash on Delivery' ? 10 : 0;
+  const codFee = paymentMethod === 'Cash on Delivery' ? 10 : 0; // ₹10 fee for COD
   const totalWithShipping = totalAfterDiscount + (selectedShippingOption?.rate || 0) + codFee;
   const shippingDiscount = selectedShippingOption?.rate || 0; // TEMPORARY FOR SHIPPING DISCOUNT
-  const totalForDisplay = totalWithShipping - shippingDiscount;
+  const totalForDisplay = totalWithShipping - shippingDiscount; // TEMPORARY FOR SHIPPING DISCOUNT
+
+  // New state to track pending order after payment
+  const [pendingOrder, setPendingOrder] = useState(null);
+
+  // Check for pending order data on page load
+  useEffect(() => {
+    const storedOrder = localStorage.getItem('pendingOrder');
+    const storedPaymentId = localStorage.getItem('paymentId');
+    if (storedOrder && storedPaymentId) {
+      const orderData = JSON.parse(storedOrder);
+      setPendingOrder({ ...orderData, paymentId: storedPaymentId });
+      completeOrderFromStorage(orderData, storedPaymentId);
+    }
+  }, []);
 
   useEffect(() => {
     if (!loading && cartItems.length === 0 && !location.state) {
@@ -1173,127 +1188,51 @@ const Checkout = () => {
 
   useEffect(() => {
     const restoreSessionAndFetchAddresses = async () => {
-      try {
-        const { data: { session }, error } = await supabase.auth.getSession();
-        if (error) {
-          console.error('Session error:', error);
-          setToastMessage({ message: 'Failed to load session. Please log in again.', type: 'error' });
-          navigate('/login');
-          return;
-        }
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error) {
+        setToastMessage({ message: 'Failed to load session. Please log in again.', type: 'error' });
+        navigate('/login');
+        return;
+      }
 
-        if (!loading && !user) {
-          navigate('/login');
-          return;
-        }
+      if (!loading && !user) {
+        navigate('/login');
+        return;
+      }
 
-        if (!loading && user) {
-          const { data, error } = await supabase
-            .from('user_addresses')
-            .select('*')
-            .eq('user_id', user.id);
-          if (error) {
-            console.error('Address fetch error:', error);
-            setToastMessage({ message: `Failed to fetch addresses: ${error.message}`, type: 'error' });
-          } else {
-            setAddresses(data);
-          }
+      if (!loading && user) {
+        const { data, error } = await supabase
+          .from('user_addresses')
+          .select('*')
+          .eq('user_id', user.id);
+        if (!error) {
+          setAddresses(data);
+        } else {
+          setToastMessage({ message: `Failed to fetch addresses: ${error.message}`, type: 'error' });
         }
-      } catch (error) {
-        console.error('Unexpected error in restoreSessionAndFetchAddresses:', error);
-        setToastMessage({ message: 'An unexpected error occurred. Please try again.', type: 'error' });
       }
     };
 
     restoreSessionAndFetchAddresses();
   }, [user, loading, navigate]);
 
-  // Handle pending order on page load, focus, or visibility change
-  useEffect(() => {
-    const handlePendingOrder = async () => {
-      try {
-        const storedOrder = localStorage.getItem('pendingOrder');
-        const storedPaymentId = localStorage.getItem('paymentId');
-        const isPostPaymentReload = localStorage.getItem('postPaymentReload');
-
-        if (storedOrder && storedPaymentId && isPostPaymentReload === 'true') {
-          console.log('Processing pending order after reload...');
-          setToastMessage({ message: 'Processing your order...', type: 'info' });
-          const orderData = JSON.parse(storedOrder);
-
-          // Check if order already exists to prevent duplicates
-          const { data: existingOrder, error } = await supabase
-            .from('orders')
-            .select('order_id')
-            .eq('order_id', orderData.orderId)
-            .single();
-
-          if (error && error.code !== 'PGRST116') {
-            console.error('Error checking existing order:', error);
-            setToastMessage({ message: `Error checking order: ${error.message}`, type: 'error' });
-            localStorage.removeItem('pendingOrder');
-            localStorage.removeItem('paymentId');
-            localStorage.removeItem('postPaymentReload');
-            return;
-          }
-
-          if (!existingOrder) {
-            await completeOrder(storedPaymentId, orderData);
-          } else {
-            console.log('Order already processed:', orderData.orderId);
-            setToastMessage({ message: 'Order already processed.', type: 'info' });
-            clearCart();
-            navigate('/success');
-            localStorage.removeItem('pendingOrder');
-            localStorage.removeItem('paymentId');
-            localStorage.removeItem('postPaymentReload');
-          }
-        }
-      } catch (error) {
-        console.error('Error in handlePendingOrder:', error);
-        setToastMessage({ message: 'Failed to process pending order. Please try again.', type: 'error' });
-        localStorage.removeItem('pendingOrder');
-        localStorage.removeItem('paymentId');
-        localStorage.removeItem('postPaymentReload');
-      }
-    };
-
-    handlePendingOrder();
-
-    // Add focus and visibilitychange event listeners for mobile browsers
-    const onFocus = () => {
-      console.log('Window focused, checking pending order...');
-      handlePendingOrder();
-    };
-    const onVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        console.log('Page visible, checking pending order...');
-        handlePendingOrder();
-      }
-    };
-
-    window.addEventListener('focus', onFocus);
-    document.addEventListener('visibilitychange', onVisibilityChange);
-    return () => {
-      window.removeEventListener('focus', onFocus);
-      document.removeEventListener('visibilitychange', onVisibilityChange);
-    };
-  }, [navigate, clearCart]);
-
   const checkShippingOptions = async (pincode) => {
     if (!pincode) return;
-
+    
     setLoadingShipping(true);
     setShippingError(null);
     try {
-      const totalWeight = cartItems.reduce((weight, item) => weight + (0.35 * item.quantity), 0);
+      const totalWeight = cartItems.reduce((weight, item) => {
+        return weight + (0.35 * item.quantity);
+      }, 0);
+      
       const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/shiprocket/check-serviceability`, {
         pickup_postcode: warehousePincode,
         delivery_postcode: pincode,
         weight: totalWeight,
         cod: true
       });
-
+      
       if (response.data.status === 'success' && response.data.data.serviceability) {
         const availableCouriers = response.data.data.available_couriers || [];
         const cheapestOption = availableCouriers.sort((a, b) => a.rate - b.rate)[0];
@@ -1305,7 +1244,6 @@ const Checkout = () => {
         setShippingError('This pincode is not serviceable by our shipping partner');
       }
     } catch (error) {
-      console.error('Shipping options error:', error);
       setShippingOptions([]);
       setSelectedShippingOption(null);
       setShippingError('Failed to check shipping options. Please try again.');
@@ -1347,38 +1285,30 @@ const Checkout = () => {
       return;
     }
 
-    try {
-      const { data, error } = await supabase
-        .from('user_addresses')
-        .insert([{ user_id: user.id, name, address, city, pincode, phone }])
-        .select();
+    const { data, error } = await supabase
+      .from('user_addresses')
+      .insert([{ user_id: user.id, name, address, city, pincode, phone }])
+      .select();
 
-      if (error) {
-        console.error('Add address error:', error);
-        setToastMessage({ message: `Failed to add address: ${error.message}`, type: 'error' });
-        return;
-      }
-
-      const fetchAddresses = async () => {
-        const { data: updatedAddresses, error } = await supabase
-          .from('user_addresses')
-          .select('*')
-          .eq('user_id', user.id);
-        if (error) {
-          console.error('Fetch addresses error:', error);
-        } else {
-          setAddresses(updatedAddresses);
-        }
-      };
-
-      await fetchAddresses();
-      setShowAddAddressForm(false);
-      setNewAddress({ name: '', address: '', city: '', pincode: '', phone: '' });
-      setToastMessage({ message: 'Address added successfully! Please select it from the dropdown.', type: 'success' });
-    } catch (error) {
-      console.error('Unexpected error in handleAddAddress:', error);
-      setToastMessage({ message: 'Failed to add address. Please try again.', type: 'error' });
+    if (error) {
+      setToastMessage({ message: `Failed to add address: ${error.message}`, type: 'error' });
+      return;
     }
+
+    const fetchAddresses = async () => {
+      const { data: updatedAddresses, error } = await supabase
+        .from('user_addresses')
+        .select('*')
+        .eq('user_id', user.id);
+      if (!error) {
+        setAddresses(updatedAddresses);
+      }
+    };
+
+    await fetchAddresses();
+    setShowAddAddressForm(false);
+    setNewAddress({ name: '', address: '', city: '', pincode: '', phone: '' });
+    setToastMessage({ message: 'Address added successfully! Please select it from the dropdown.', type: 'success' });
   };
 
   const handleAddressChange = (e) => {
@@ -1386,15 +1316,14 @@ const Checkout = () => {
     setSelectedAddressId(newId);
   };
 
+  // Store order data in localStorage
   const storeOrderData = () => {
     if (!user || !selectedAddressId || !selectedShippingOption || !paymentMethod) {
-      console.warn('Invalid order data:', { user, selectedAddressId, selectedShippingOption, paymentMethod });
       return false;
     }
 
     const selectedAddress = addresses.find(addr => addr.id.toString() === selectedAddressId);
     if (!selectedAddress) {
-      console.warn('Selected address not found:', selectedAddressId);
       return false;
     }
 
@@ -1418,13 +1347,11 @@ const Checkout = () => {
     };
 
     localStorage.setItem('pendingOrder', JSON.stringify(orderData));
-    console.log('Order data stored in localStorage:', orderData.orderId);
     return true;
   };
 
   const handleOnlinePayment = async () => {
     setLoadingOrder(true);
-    setToastMessage({ message: 'Initiating payment...', type: 'info' });
     try {
       const selectedAddress = addresses.find(addr => addr.id.toString() === selectedAddressId);
       if (!selectedAddress) {
@@ -1443,6 +1370,7 @@ const Checkout = () => {
         throw new Error('Razorpay key not configured');
       }
 
+      // Store order data before initiating payment
       if (!storeOrderData()) {
         throw new Error('Failed to store order data');
       }
@@ -1462,13 +1390,11 @@ const Checkout = () => {
         key: import.meta.env.VITE_RAZORPAY_KEY_ID,
         amount: order.amount,
         currency: order.currency,
-        name: 'Clothing Brand',
+        name: 'Nine9',
         description: 'Purchase of Clothing Items',
         order_id: order.id,
         handler: async function (response) {
           try {
-            console.log('Payment response:', response);
-            setToastMessage({ message: 'Verifying payment...', type: 'info' });
             const verifyResponse = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/razorpay/verify-payment`, {
               razorpay_order_id: response.razorpay_order_id,
               razorpay_payment_id: response.razorpay_payment_id,
@@ -1476,33 +1402,27 @@ const Checkout = () => {
             });
             const verifyResult = verifyResponse.data;
             if (verifyResult.status === 'success') {
-              console.log('Payment verified successfully:', response.razorpay_payment_id);
+              // Store payment ID in localStorage
               localStorage.setItem('paymentId', response.razorpay_payment_id);
-              localStorage.setItem('postPaymentReload', 'true');
-              setToastMessage({ message: 'Payment successful! Processing order...', type: 'info' });
-              // Delay reload to ensure modal closes and toast is visible
-              setTimeout(() => {
-                console.log('Reloading page to process order...');
-                window.location.reload(true);
-              }, 1500);
+              // Complete the order using stored data
+              const storedOrder = JSON.parse(localStorage.getItem('pendingOrder'));
+              if (storedOrder) {
+                await completeOrder(response.razorpay_payment_id, storedOrder);
+              } else {
+                throw new Error('No pending order data found');
+              }
             } else {
-              throw new Error('Payment verification failed: ' + verifyResult.message);
+              setToastMessage({ message: 'Payment verification failed: ' + verifyResult.message, type: 'error' });
+              setLoadingOrder(false);
             }
           } catch (error) {
-            console.error('Payment verification error:', error);
-            setToastMessage({ message: `Payment verification failed: ${error.message}`, type: 'error' });
+            setToastMessage({ message: 'Payment verification failed: ' + error.message, type: 'error' });
             setLoadingOrder(false);
-            localStorage.removeItem('pendingOrder');
-            localStorage.removeItem('paymentId');
-            localStorage.removeItem('postPaymentReload');
           }
         },
         modal: {
           ondismiss: function () {
-            console.log('Razorpay modal dismissed');
             setLoadingOrder(false);
-            setToastMessage({ message: 'Payment cancelled. Please try again.', type: 'warning' });
-            // Keep pendingOrder in localStorage to allow retrying
             navigate('/checkout', {
               state: { subtotal, discount, pointsToRedeem, pointsDiscount, total: totalAfterDiscount, appliedPromo: location.state?.appliedPromo }
             });
@@ -1518,33 +1438,39 @@ const Checkout = () => {
 
       const rzp = new window.Razorpay(options);
       rzp.on('payment.failed', function (response) {
-        console.error('Payment failed:', response);
         setToastMessage({ message: `Payment failed: ${response.error.description}`, type: 'error' });
         setLoadingOrder(false);
         localStorage.removeItem('pendingOrder');
         localStorage.removeItem('paymentId');
-        localStorage.removeItem('postPaymentReload');
       });
       rzp.on('payment.error', function (response) {
-        console.error('Payment error:', response);
         setToastMessage({ message: `Checkout error: ${response.error.description}`, type: 'error' });
         setLoadingOrder(false);
         localStorage.removeItem('pendingOrder');
         localStorage.removeItem('paymentId');
-        localStorage.removeItem('postPaymentReload');
       });
       rzp.open();
     } catch (error) {
-      console.error('Payment initiation error:', error);
-      setToastMessage({ message: `Failed to initiate payment: ${error.message}`, type: 'error' });
+      setToastMessage({ message: 'Failed to initiate payment: ' + error.message, type: 'error' });
       setLoadingOrder(false);
       localStorage.removeItem('pendingOrder');
       localStorage.removeItem('paymentId');
-      localStorage.removeItem('postPaymentReload');
+    }
+  };
+
+  const completeOrderFromStorage = async (orderData, paymentId) => {
+    try {
+      setLoadingOrder(true);
+      await completeOrder(paymentId, orderData);
+    } catch (error) {
+      setToastMessage({ message: 'Failed to complete order from stored data: ' + error.message, type: 'error' });
+    } finally {
+      setLoadingOrder(false);
     }
   };
 
   const completeOrder = async (paymentId = null, orderData = null) => {
+    // Use stored order data if provided, otherwise use current state
     const data = orderData || {
       userId: user.id,
       cartItems,
@@ -1586,10 +1512,8 @@ const Checkout = () => {
     }
 
     const order_id = data.orderId;
-    console.log('Completing order:', order_id);
 
     try {
-      setToastMessage({ message: 'Placing order...', type: 'info' });
       const orderItems = data.cartItems.map((item, index) => ({
         name: item.name,
         sku: item.id || `SKU_${item.name.replace(/\s+/g, '_')}_${index}_${item.selectedSize || 'NOSIZE'}`,
@@ -1662,6 +1586,7 @@ const Checkout = () => {
         throw new Error(`Failed to save order in Supabase: ${error.message}`);
       }
 
+      // Update stock in the products table for each ordered item
       for (const item of orderItems) {
         const { sku, selectedSize, units } = item;
 
@@ -1678,12 +1603,12 @@ const Checkout = () => {
             .single();
 
           if (productError) {
-            console.error(`Error fetching product with SKU ${sku}:`, productError);
+            console.error(`Error fetching product with SKU ${sku} from products table:`, productError);
             continue;
           }
 
           if (!productData) {
-            console.warn(`Product with SKU ${sku} not found, skipping stock update.`);
+            console.warn(`Product with SKU ${sku} not found in products table, skipping stock update.`);
             continue;
           }
 
@@ -1691,7 +1616,7 @@ const Checkout = () => {
           const currentStock = currentSizes[selectedSize] || 0;
 
           if (currentStock < units) {
-            console.warn(`Insufficient stock for SKU ${sku} (Size: ${selectedSize}). Stock: ${currentStock}, Ordered: ${units}`);
+            console.warn(`Insufficient stock for SKU ${sku} (Size: ${selectedSize}). Current stock: ${currentStock}, Ordered: ${units}`);
             continue;
           }
 
@@ -1706,7 +1631,7 @@ const Checkout = () => {
             .eq('id', sku);
 
           if (updateError) {
-            console.error(`Error updating stock for SKU ${sku}:`, updateError);
+            console.error(`Error updating stock for product with SKU ${sku}:`, updateError);
           } else {
             console.log(`Stock updated for SKU ${sku} (Size: ${selectedSize}): ${currentStock} -> ${updatedSizes[selectedSize]}`);
           }
@@ -1719,10 +1644,7 @@ const Checkout = () => {
         const { error: redemptionError } = await supabase
           .from('point_redemptions')
           .insert({ user_id: data.userId, points_redeemed: data.pointsToRedeem, discount_amount: data.pointsDiscount });
-        if (redemptionError) {
-          console.error('Point redemption error:', redemptionError);
-          throw redemptionError;
-        }
+        if (redemptionError) throw redemptionError;
       }
 
       if (data.appliedPromo) {
@@ -1736,7 +1658,7 @@ const Checkout = () => {
             .single();
 
           if (promoDetailsError) {
-            console.error('Promo details error:', promoDetailsError);
+            console.error('Error fetching promo details from promocodes:', promoDetailsError);
             throw promoDetailsError;
           }
           const currentOverallUsed = promoDetails.used;
@@ -1747,7 +1669,7 @@ const Checkout = () => {
             .eq('id', promoId);
 
           if (overallUpdateError) {
-            console.error('Promo update error:', overallUpdateError);
+            console.error('Error updating overall promo used count:', overallUpdateError);
           }
 
           const { data: userUsageData, error: userUsageFetchError } = await supabase
@@ -1758,22 +1680,22 @@ const Checkout = () => {
             .single();
 
           if (userUsageFetchError && userUsageFetchError.code !== 'PGRST116') {
-            console.error('User promo usage fetch error:', userUsageFetchError);
+            console.error('Error fetching user-specific promo usage:', userUsageFetchError);
           } else if (userUsageData) {
             const { error: userUpdateError } = await supabase
               .from('promo_usage')
               .update({ usage_count: userUsageData.usage_count + 1 })
               .eq('user_id', data.userId)
               .eq('promo_code_id', promoId);
-            if (userUpdateError) console.error('User promo update error:', userUpdateError);
+            if (userUpdateError) console.error('Error updating user promo usage:', userUpdateError);
           } else {
             const { error: userInsertError } = await supabase
               .from('promo_usage')
               .insert({ user_id: data.userId, promo_code_id: promoId, usage_count: 1 });
-            if (userInsertError) console.error('User promo insert error:', userInsertError);
+            if (userInsertError) console.error('Error inserting user promo usage:', userInsertError);
           }
         } catch (promoError) {
-          console.error('Promo processing error:', promoError);
+          console.error('Error processing promo code usage:', promoError);
         }
       }
 
@@ -1782,13 +1704,12 @@ const Checkout = () => {
       navigate('/success');
       localStorage.removeItem('pendingOrder');
       localStorage.removeItem('paymentId');
-      localStorage.removeItem('postPaymentReload');
-      console.log('Order completed successfully:', order_id);
     } catch (error) {
       console.error('Order placement error:', error);
       let errorMessage = 'Failed to place order';
       if (error.response) {
         errorMessage += `: ${error.response.status} - ${error.response.data.error || error.response.statusText}`;
+        console.error('Error response:', error.response.data);
         if (error.response.data.error === 'Failed to process order') {
           const { data: fallbackData, error: supabaseError } = await supabase.from('orders').insert([{
             user_id: data.userId,
@@ -1810,12 +1731,12 @@ const Checkout = () => {
           if (supabaseError) {
             errorMessage += ` (Fallback failed: ${supabaseError.message})`;
           } else {
+            console.log('Order saved to Supabase via fallback:', fallbackData);
             clearCart();
             setToastMessage({ message: 'Order created in Shiprocket but failed to save initially. Check dashboard.', type: 'warning' });
             navigate('/success');
             localStorage.removeItem('pendingOrder');
             localStorage.removeItem('paymentId');
-            localStorage.removeItem('postPaymentReload');
             return;
           }
         }
@@ -1872,7 +1793,7 @@ const Checkout = () => {
                       </option>
                     ))}
                   </select>
-
+                  
                   {selectedAddressId && (
                     <div style={styles.selectedAddressBox}>
                       {(() => {
@@ -1892,7 +1813,7 @@ const Checkout = () => {
               ) : (
                 <p style={styles.emptyText}>No saved addresses found.</p>
               )}
-
+              
               <button
                 onClick={() => setShowAddAddressForm(!showAddAddressForm)}
                 style={styles.addAddressBtn}
@@ -1977,11 +1898,11 @@ const Checkout = () => {
             <h3 style={styles.cardTitle}>Payment Method</h3>
             <div style={styles.paymentOptions}>
               <div style={styles.paymentOption}>
-                <input
-                  type="radio"
-                  id="cashOnDelivery"
-                  name="payment"
-                  value="Cash on Delivery"
+                <input 
+                  type="checkbox" 
+                  id="cashOnDelivery" 
+                  name="payment" 
+                  value="Cashthemed-checkbox"
                   checked={paymentMethod === 'Cash on Delivery'}
                   onChange={() => setPaymentMethod('Cash on Delivery')}
                   disabled={loadingOrder}
@@ -1989,10 +1910,10 @@ const Checkout = () => {
                 <label htmlFor="cashOnDelivery" style={styles.paymentLabel}>Cash on Delivery (₹10 COD Fee)</label>
               </div>
               <div style={styles.paymentOption}>
-                <input
-                  type="radio"
-                  id="paidOnline"
-                  name="payment"
+                <input 
+                  type="checkbox" 
+                  id="paidOnline" 
+                  name="payment" 
                   value="Paid Online"
                   checked={paymentMethod === 'Paid Online'}
                   onChange={() => setPaymentMethod('Paid Online')}
@@ -2012,7 +1933,7 @@ const Checkout = () => {
                   <span style={styles.orderItemPrice}>₹{item.price * item.quantity}</span>
                 </div>
                 <span style={styles.orderItemMeta}>
-                  Size: {item.selectedSize} | Qty: {item.quantity}
+                  Size: {item.selectedSize} | Qty: {item.quantity} 
                 </span>
               </div>
             ))}
@@ -2057,9 +1978,9 @@ const Checkout = () => {
             </div>
           </div>
 
-          <button
-            onClick={handleConfirmOrder}
-            disabled={loadingOrder || !selectedAddressId || !selectedShippingOption || !paymentMethod}
+          <button 
+            onClick={handleConfirmOrder} 
+            disabled={loadingOrder || !selectedAddressId || !selectedShippingOption || !paymentMethod} 
             style={{
               ...styles.confirmOrderBtn,
               opacity: (!selectedAddressId || !selectedShippingOption || !paymentMethod || loadingOrder) ? 0.6 : 1
@@ -2067,8 +1988,8 @@ const Checkout = () => {
           >
             {loadingOrder ? 'Confirming...' : `Confirm Order - ₹${totalForDisplay.toFixed(2)}`}
           </button>
-
-          <button
+          
+          <button 
             onClick={() => navigate('/cart')}
             style={styles.backToCartBtn}
             disabled={loadingOrder}
@@ -2150,7 +2071,7 @@ const styles = {
     padding: '12px',
     backgroundColor: '#333333',
     borderRadius: '10px',
-    justifyContent: window.innerWidth <= 768 ? 'flex-start' : 'space_between',
+    justifyContent: window.innerWidth <= 768 ? 'flex-start' : 'space-between',
     alignItems: window.innerWidth <= 768 ? 'flex-start' : 'center',
     transition: 'background-color 0.2s ease-in-out',
   },
@@ -2295,7 +2216,7 @@ const styles = {
   addressForm: {
     marginTop: '20px',
     padding: '14px',
-    fontFamily: "'Louvette Semi Bold', sans-serif",
+    fontFamily: "'Louvette Semi Bold', sans-serif", 
     backgroundColor: '#333333',
     borderRadius: '10px',
   },
@@ -2303,7 +2224,7 @@ const styles = {
     width: '100%',
     padding: '10px',
     backgroundColor: '#22c55e',
-    fontFamily: "'Louvette Semi Bold', sans-serif",
+    fontFamily: "'Louvette Semi Bold', sans-serif", 
     color: '#ffffff',
     borderRadius: '8px',
     border: 'none',
