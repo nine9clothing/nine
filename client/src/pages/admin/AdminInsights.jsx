@@ -15,7 +15,7 @@ const AdminInsights = () => {
     setLoading(true);
     let { data: ordersData, error } = await supabase
       .from('orders')
-      .select('*, total, shipping_charges')
+      .select('*, total, shipping_charges, cod_fee')
       .not('display_order_id', 'is', null)
       .neq('display_order_id', '')
       .order('created_at', { ascending: false });
@@ -40,7 +40,6 @@ const AdminInsights = () => {
     });
     const uniqueOrders = Array.from(orderMap.values());
 
-    console.log('Number of unique orders with valid display_order_id:', uniqueOrders.length);
 
     // Apply filters to deduplicated orders
     let filtered = uniqueOrders;
@@ -49,13 +48,12 @@ const AdminInsights = () => {
     if (filterStatus) filtered = filtered.filter(o => o.shipping_status === filterStatus);
     if (filterCity) filtered = filtered.filter(o => o.shipping_city?.toLowerCase() === filterCity.toLowerCase());
 
-    console.log('Filtered orders:', filtered);
-    console.log('Number of filtered orders:', filtered.length);
-
     setOrders(filtered);
 
     const totalOrders = filtered.length;
-    const totalRevenue = filtered.reduce((acc, o) => acc + ((o.total || 0) - (o.shipping_charges || 0)), 0);
+    // const totalRevenue = filtered.reduce((acc, o) => acc + ((o.total || 0) - (o.shipping_charges || 0)), 0);
+    const totalRevenue = filtered.reduce((acc, o) => acc + ((o.total || 0) - (o.cod_fee || 0)), 0);
+
     const uniqueCustomers = new Set(filtered.map(o => o.user_id)).size;
     const latestOrderDate = filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0]?.created_at;
 

@@ -82,7 +82,7 @@ const AdminDashboard = () => {
       const since = subDays(new Date(), 6).toISOString();
       const { data, error } = await supabase
         .from('orders')
-        .select('total, shipping_charges, created_at, order_id, display_order_id')
+        .select('total, shipping_charges, created_at, order_id, display_order_id, cod_fee')
         .gte('created_at', since)
         .not('display_order_id', 'is', null)
         .neq('display_order_id', '')
@@ -108,12 +108,13 @@ const AdminDashboard = () => {
 
       const dailyTotals = uniqueOrders.reduce((acc, order) => {
         const date = format(new Date(order.created_at), 'MMM dd');
-        const netAmount = (order.total || 0) - (order.shipping_charges || 0);
+        const netAmount = (order.total || 0)-(order.cod_fee || 0);
+        // const netAmount = (order.total || 0) - (order.shipping_charges || 0);
+
         acc[date] = (acc[date] || 0) + Math.max(netAmount, 0);
         return acc;
       }, {});
 
-      console.log('Daily net totals (₹):', dailyTotals);
 
       const last7Days = [];
       for (let i = 6; i >= 0; i--) {
@@ -124,9 +125,6 @@ const AdminDashboard = () => {
           total: dailyTotals[formattedDate] || 0
         });
       }
-
-      console.log('Net revenue chart data:', last7Days);
-
       setDailyRevenueData(last7Days);
     } catch (error) {
       console.error('Revenue chart error:', error.message);
@@ -143,7 +141,7 @@ const AdminDashboard = () => {
       const since = subMonths(new Date(), 12).toISOString();
       const { data, error } = await supabase
         .from('orders')
-        .select('total, shipping_charges, created_at, order_id, display_order_id')
+        .select('total, shipping_charges, created_at, order_id, display_order_id, cod_fee')
         .gte('created_at', since)
         .not('display_order_id', 'is', null)
         .neq('display_order_id', '')
@@ -169,7 +167,9 @@ const AdminDashboard = () => {
 
       const monthlyTotals = uniqueOrders.reduce((acc, order) => {
         const month = format(new Date(order.created_at), 'MMM yyyy');
-        const netAmount = (order.total || 0) - (order.shipping_charges || 0);
+        const netAmount = (order.total || 0) - (order.cod_fee ||0);
+        // const netAmount = (order.total || 0) - (order.shipping_charges || 0);
+
         acc[month] = (acc[month] || 0) + Math.max(netAmount, 0);
         return acc;
       }, {});
