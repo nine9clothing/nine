@@ -7,7 +7,7 @@
 // import Footer from "../pages/Footer";
 
 // const CartCheckout = () => {
-//   const { cartItems, updateQuantity, removeFromCart, clearCart } = useContext(CartContext);
+//   const { cartItems, updateQuantity, removeFromCart, clearCart, updateCartItemPrice } = useContext(CartContext);
 //   const [user, setUser] = useState(null);
 //   const [loadingOrder, setLoadingOrder] = useState(false);
 //   const [toastMessage, setToastMessage] = useState(null);
@@ -56,6 +56,57 @@
   
 //     getUserAndPoints();
 //   }, []);
+
+//   useEffect(() => {
+//     const verifyProductPrices = async () => {
+//       if (cartItems.length === 0) return; // Skip if cart is empty
+
+//       try {
+//         // Fetch all product IDs from cartItems
+//         const productIds = cartItems.map(item => item.id);
+
+//         // Query the products table for the latest prices
+//         const { data: products, error } = await supabase
+//           .from('products')
+//           .select('id, price')
+//           .in('id', productIds);
+
+//         if (error) {
+//           throw new Error(`Failed to fetch product prices: ${error.message}`);
+//         }
+
+//         if (!products || products.length === 0) {
+//           setToastMessage({ message: 'No products found in the database.', type: 'error' });
+//           return;
+//         }
+
+//         // Check each cart item against the fetched prices
+//         cartItems.forEach(item => {
+//           const dbProduct = products.find(p => p.id === item.id);
+//           if (!dbProduct) {
+//             // Product no longer exists, remove it from cart
+//             removeFromCart(item.id, item.selectedSize);
+//             setToastMessage({
+//               message: `Product "${item.name}" is no longer available and has been removed from your cart.`,
+//               type: 'error'
+//             });
+//           } else if (dbProduct.price !== item.price) {
+//             // Price has changed, update it
+//             updateCartItemPrice(item.id, item.selectedSize, dbProduct.price);
+//             setToastMessage({
+//               message: `Price for "${item.name}" has been updated to ₹${dbProduct.price}.`,
+//               type: 'info'
+//             });
+//           }
+//         });
+//       } catch (error) {
+//         console.error('Error verifying product prices:', error.message);
+//         setToastMessage({ message: 'Failed to verify product prices.', type: 'error' });
+//       }
+//     };
+
+//     verifyProductPrices();
+//   }, [cartItems, removeFromCart, updateCartItemPrice]);
 
 //   useEffect(() => {
 //     if (redeemPoints) {
@@ -626,10 +677,14 @@ const CartCheckout = () => {
   const [points, setPoints] = useState(0);
   const [redeemPoints, setRedeemPoints] = useState(false);
   const [pointsDiscount, setPointsDiscount] = useState(0);
+  const [stockStatus, setStockStatus] = useState({});
+  const [previousStockStatus, setPreviousStockStatus] = useState({});
 
   const navigate = useNavigate();
   const subtotal = cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
   const totalAfterDiscount = subtotal - (discount + pointsDiscount);
+
+  const hasOutOfStockItems = Object.values(stockStatus).some(status => status === true);
 
   useEffect(() => {
     const getUserAndPoints = async () => {
@@ -639,25 +694,18 @@ const CartCheckout = () => {
         if (currentUser) {
           setUser(currentUser);
   
-          // Fetch loyalty_points from registered_details
           const { data: userData, error: userError } = await supabase
             .from('registered_details')
             .select('loyalty_points')
             .eq('id', currentUser.id)
             .single();
   
-          if (userError) {
-            throw new Error(`Failed to fetch loyalty points: ${userError.message}`);
-          }
-  
-          if (!userData || userData.loyalty_points == null) {
-            throw new Error('No loyalty points data found for user.');
-          }
+          if (userError) throw new Error(`Failed to fetch loyalty points: ${userError.message}`);
+          if (!userData || userData.loyalty_points == null) throw new Error('No loyalty points data found for user.');
   
           setPoints(userData.loyalty_points);
         }
       } catch (error) {
-        console.error('Error fetching user or points:', error.message);
         setToastMessage({ message: 'Failed to load user or points data.', type: 'error' });
       }
     };
@@ -666,54 +714,101 @@ const CartCheckout = () => {
   }, []);
 
   useEffect(() => {
-    const verifyProductPrices = async () => {
-      if (cartItems.length === 0) return; // Skip if cart is empty
+    const verifyProductPricesAndStock = async () => {
+      if (cartItems.length === 0) {
+        setStockStatus({});
+        setPreviousStockStatus({});
+        return;
+      }
 
       try {
-        // Fetch all product IDs from cartItems
         const productIds = cartItems.map(item => item.id);
-
-        // Query the products table for the latest prices
         const { data: products, error } = await supabase
           .from('products')
-          .select('id, price')
+          .select('id, price, size')
           .in('id', productIds);
 
-        if (error) {
-          throw new Error(`Failed to fetch product prices: ${error.message}`);
-        }
-
+        if (error) throw new Error(`Failed to fetch product data: ${error.message}`);
         if (!products || products.length === 0) {
           setToastMessage({ message: 'No products found in the database.', type: 'error' });
           return;
         }
 
-        // Check each cart item against the fetched prices
+        const newStockStatus = {};
+        let stockChangeMessage = null;
+
         cartItems.forEach(item => {
           const dbProduct = products.find(p => p.id === item.id);
+          const itemKey = `${item.id}-${item.selectedSize || 'NA'}`;
+
           if (!dbProduct) {
-            // Product no longer exists, remove it from cart
             removeFromCart(item.id, item.selectedSize);
             setToastMessage({
               message: `Product "${item.name}" is no longer available and has been removed from your cart.`,
               type: 'error'
             });
-          } else if (dbProduct.price !== item.price) {
-            // Price has changed, update it
-            updateCartItemPrice(item.id, item.selectedSize, dbProduct.price);
-            setToastMessage({
-              message: `Price for "${item.name}" has been updated to ₹${dbProduct.price}.`,
-              type: 'info'
-            });
+            newStockStatus[itemKey] = true;
+          } else {
+            if (dbProduct.price !== item.price) {
+              updateCartItemPrice(item.id, item.selectedSize, dbProduct.price);
+              setToastMessage({
+                message: `Price for "${item.name}" has been updated to ₹${dbProduct.price}.`,
+                type: 'info'
+              });
+            }
+
+            let isOutOfStock = true;
+            if (dbProduct.size && item.selectedSize) {
+              try {
+                // Parse the size field (which is a JSON-like object)
+                const sizeData = typeof dbProduct.size === 'string' ? JSON.parse(dbProduct.size) : dbProduct.size;
+                const stockForSize = sizeData[item.selectedSize];
+                if (stockForSize !== undefined && stockForSize > 0) {
+                  isOutOfStock = false;
+                }
+              } catch (e) {
+                console.error(`Error parsing size data for product ${item.id}:`, e);
+                isOutOfStock = true; // Default to out of stock if parsing fails
+              }
+            }
+
+            newStockStatus[itemKey] = isOutOfStock;
+
+            // Check for stock status changes and set toast messages
+            if (previousStockStatus[itemKey] === true && !isOutOfStock) {
+              stockChangeMessage = {
+                message: `Item "${item.name}" (Size: ${item.selectedSize}) is now back in stock!`,
+                type: 'success'
+              };
+            } else if (previousStockStatus[itemKey] === false && isOutOfStock) {
+              stockChangeMessage = {
+                message: `Item "${item.name}" (Size: ${item.selectedSize}) is now out of stock.`,
+                type: 'error'
+              };
+            }
           }
         });
+
+        if (stockChangeMessage) {
+          setToastMessage(stockChangeMessage);
+        }
+
+        const currentItemKeys = cartItems.map(item => `${item.id}-${item.selectedSize || 'NA'}`);
+        const cleanedStockStatus = {};
+        currentItemKeys.forEach(key => {
+          if (key in newStockStatus) {
+            cleanedStockStatus[key] = newStockStatus[key];
+          }
+        });
+
+        setPreviousStockStatus(stockStatus);
+        setStockStatus(cleanedStockStatus);
       } catch (error) {
-        console.error('Error verifying product prices:', error.message);
-        setToastMessage({ message: 'Failed to verify product prices.', type: 'error' });
+        setToastMessage({ message: 'Failed to verify product data.', type: 'error' });
       }
     };
 
-    verifyProductPrices();
+    verifyProductPricesAndStock();
   }, [cartItems, removeFromCart, updateCartItemPrice]);
 
   useEffect(() => {
@@ -752,7 +847,6 @@ const CartCheckout = () => {
       setToastMessage({ message: 'Please enter a promo code.', type: 'error' });
       return;
     }
-
     if (!user) {
       setToastMessage({ message: 'Please log in to apply a promo code.', type: 'error' });
       setTimeout(() => navigate('/login'), 1500);
@@ -762,7 +856,7 @@ const CartCheckout = () => {
     try {
       const { data: promo, error } = await supabase
         .from('promocodes')
-        .select('*') // This should fetch 'limit', 'used', and 'display' columns as well
+        .select('*')
         .eq('code', promoCode.toUpperCase())
         .single();
 
@@ -773,10 +867,8 @@ const CartCheckout = () => {
         return;
       }
 
-      // Check if the promo code has reached its overall usage limit
-      // Ensure 'used' and 'limit' are numbers. Handle null or undefined if necessary.
-      const usedCount = promo.used ;
-      const limitCount = promo.limit ; // If no limit, consider it infinite
+      const usedCount = promo.used;
+      const limitCount = promo.limit;
 
       if (usedCount >= limitCount) {
         setToastMessage({ message: 'This promo code has reached its usage limit.', type: 'error' });
@@ -785,7 +877,6 @@ const CartCheckout = () => {
         return;
       }
 
-      // --- Start of commented out user-specific usage check ---
       const { data: usageData, error: usageError } = await supabase
         .from('promo_usage')
         .select('usage_count')
@@ -793,11 +884,8 @@ const CartCheckout = () => {
         .eq('promo_code_id', promo.id)
         .single();
 
-      if (usageError && usageError.code !== 'PGRST116') { // PGRST116 means no rows found, which is fine
+      if (usageError && usageError.code !== 'PGRST116') {
         console.error("Error fetching promo usage:", usageError);
-        // Optionally, you could decide to block promo application here or proceed
-        // For now, let's assume if there's an error fetching usage, we might allow it
-        // or show a generic error.
       }
       
       let usageCount = 0;
@@ -811,15 +899,12 @@ const CartCheckout = () => {
         setAppliedPromo(null);
         return;
       }
-      // --- End of commented out user-specific usage check ---
 
       const discountAmount = (subtotal * promo.discount) / 100;
       setDiscount(discountAmount);
       setAppliedPromo(promo);
       setToastMessage({ message: `Promo code applied! ${promo.discount}% off.`, type: 'success' });
-
     } catch (error) {
-      console.error('Error applying promo code:', error);
       setToastMessage({ message: 'Error applying promo code. Please try again.', type: 'error' });
       setDiscount(0);
       setAppliedPromo(null);
@@ -834,6 +919,10 @@ const CartCheckout = () => {
     if (!user) {
       setToastMessage({ message: 'Please log in. Redirecting to login...', type: 'error' });
       setTimeout(() => navigate('/login'), 1500);
+      return;
+    }
+    if (hasOutOfStockItems) {
+      setToastMessage({ message: 'Please remove out-of-stock items before proceeding.', type: 'error' });
       return;
     }
 
@@ -859,45 +948,56 @@ const CartCheckout = () => {
           {cartItems.length === 0 ? (
             <p style={styles.emptyText}>Your cart is empty.</p>
           ) : (
-            cartItems.map(item => (
-              <div key={`${item.id}-${item.selectedSize || 'NA'}`} style={styles.itemCard}>
-                <img
-                  src={
-                    item.media_urls && item.media_urls.length > 0
-                      ? item.media_urls[0]
-                      : 'https://via.placeholder.com/100?text=No+Image'
-                  }
-                  alt={item.name}
-                  style={styles.itemImage}
-                />
-                <div style={styles.itemInfo}>
-                  <h3 style={styles.itemName}>{item.name}</h3>
-                  {item.selectedSize && (
-                    <p style={styles.itemSize}>
-                      Size: {item.selectedSize}
-                    </p>
-                  )}
-                  <div style={styles.qtyRow}>
-                    <span style={styles.qtyLabel}>Qty:</span>
-                    <input
-                      type="number"
-                      min="1"
-                      max="10"
-                      value={item.quantity}
-                      onChange={(e) => {
-                        const qty = parseInt(e.target.value, 10);
-                        if (qty >= 1 && qty <= 10) updateQuantity(item.id, qty);
-                      }}
-                      style={styles.qtyInput}
-                    />
+            cartItems.map(item => {
+              const itemKey = `${item.id}-${item.selectedSize || 'NA'}`;
+              const isOutOfStock = stockStatus[itemKey] || false;
+
+              return (
+                <div key={itemKey} style={styles.itemCard}>
+                  <img
+                    src={
+                      item.media_urls && item.media_urls.length > 0
+                        ? item.media_urls[0]
+                        : 'https://via.placeholder.com/100?text=No+Image'
+                    }
+                    alt={item.name}
+                    style={styles.itemImage}
+                  />
+                  <div style={styles.itemInfo}>
+                    <h3 style={styles.itemName}>{item.name}</h3>
+                    {item.selectedSize && (
+                      <p style={styles.itemSize}>
+                        Size: {item.selectedSize}
+                        {isOutOfStock && (
+                          <span style={styles.outOfStockText}> (Out of Stock)</span>
+                        )}
+                      </p>
+                    )}
+                    <div style={styles.qtyRow}>
+                      <span style={styles.qtyLabel}>Qty:</span>
+                      <input
+                        type="number"
+                        min="1"
+                        max="10"
+                        value={item.quantity}
+                        onChange={(e) => {
+                          const qty = parseInt(e.target.value, 10);
+                          if (qty >= 1 && qty <= 10) {
+                            updateQuantity(item.id, item.selectedSize, qty);
+                          }
+                        }}
+                        style={styles.qtyInput}
+                        disabled={isOutOfStock}
+                      />
+                    </div>
+                    <p style={styles.itemPrice}>₹{item.price * item.quantity}</p>
                   </div>
-                  <p style={styles.itemPrice}>₹{item.price * item.quantity}</p>
+                  <button onClick={() => handleRemoveItem(item.id, item.selectedSize)} style={styles.removeBtn}>
+                    Remove
+                  </button>
                 </div>
-                <button onClick={() => handleRemoveItem(item.id, item.selectedSize)} style={styles.removeBtn}>
-          Remove
-        </button>
-              </div>
-            ))
+              );
+            })
           )}
           {cartItems.length > 0 && (
             <div style={{ textAlign: 'center', marginTop: '20px' }}>
@@ -913,14 +1013,22 @@ const CartCheckout = () => {
 
           <div style={styles.card}>
             <h3 style={styles.cardTitle}>Order Details</h3>
-            {cartItems.map((item, idx) => (
-              <div key={`${item.id}-${item.selectedSize}-${idx}`} style={styles.orderRow}>
-                <span style={styles.orderItemName}>{item.name}</span>
-                <span style={styles.orderItemMeta}>
-                  Size: {item.selectedSize} | Qty: {item.quantity} | Price: ₹{item.price * item.quantity}
-                </span>
-              </div>
-            ))}
+            {cartItems.map(item => {
+              const itemKey = `${item.id}-${item.selectedSize || 'NA'}`;
+              const isOutOfStock = stockStatus[itemKey] || false;
+
+              return (
+                <div key={itemKey} style={styles.orderRow}>
+                  <span style={styles.orderItemName}>{item.name}</span>
+                  <span style={styles.orderItemMeta}>
+                    Size: {item.selectedSize} | Qty: {item.quantity} | Price: ₹{item.price * item.quantity}
+                    {isOutOfStock && (
+                      <span style={styles.outOfStockText}> (Out of Stock)</span>
+                    )}
+                  </span>
+                </div>
+              );
+            })}
             <hr style={{ margin: '12px 0', borderColor: '#eee' }} />
 
             <div style={styles.promoCodeSection}>
@@ -986,7 +1094,15 @@ const CartCheckout = () => {
             </div>
           </div>
 
-          <button onClick={handlePlaceOrder} disabled={loadingOrder} style={styles.placeOrderBtn}>
+          <button
+            onClick={handlePlaceOrder}
+            disabled={loadingOrder || hasOutOfStockItems}
+            style={{
+              ...styles.placeOrderBtn,
+              ...(hasOutOfStockItems ? styles.disabledBtn : {}),
+            }}
+            title={hasOutOfStockItems ? 'Remove out-of-stock items to proceed' : ''}
+          >
             {loadingOrder ? 'Proceeding...' : 'Proceed to Checkout'}
           </button>
         </div>
@@ -1074,6 +1190,13 @@ const styles = {
     fontSize: '0.85rem',
     color: '#9ca3af',
     marginBottom: '4px',
+    fontFamily: "'Inter', sans-serif",
+  },
+  outOfStockText: {
+    color: '#ff3333',
+    fontSize: '0.85rem',
+    fontWeight: '600',
+    marginLeft: '4px',
     fontFamily: "'Inter', sans-serif",
   },
   qtyRow: {
@@ -1200,10 +1323,10 @@ const styles = {
   },
   checkboxInput: {
     position: 'absolute',
-    opacity: 0,
+    opacity: '0',
     cursor: 'pointer',
-    height: 0,
-    width: 0,
+    height: '0',
+    width: '0',
   },
   checkboxCustom: {
     height: '20px',
@@ -1249,6 +1372,10 @@ const styles = {
     transition: 'background-color 0.2s ease',
     fontSize: '15px',
     width: '100%',
+  },
+  disabledBtn: {
+    backgroundColor: '#666',
+    cursor: 'not-allowed',
   },
   emptyText: {
     textAlign: 'center',
