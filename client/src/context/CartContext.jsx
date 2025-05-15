@@ -42,7 +42,6 @@ export const CartProvider = ({ children }) => {
           .single();
         setIsAdmin(!!isAdmin);
       } catch (err) {
-        console.error('Error checking admin status:', err.message);
         setIsAdmin(false);
       }
     };
@@ -75,12 +74,10 @@ export const CartProvider = ({ children }) => {
             localCart = parsedCart;
             setCartItems(localCart);
           } else {
-            console.warn('Invalid local cart data, resetting.');
             localStorage.removeItem('cart');
           }
         }
       } catch (e) {
-        console.error('Error parsing local cart:', e);
         localStorage.removeItem('cart');
       }
 
@@ -92,7 +89,6 @@ export const CartProvider = ({ children }) => {
             .eq('user_id', user.id)
             .single();
           if (error) {
-            console.error('Error fetching cart from Supabase:', error.message);
             if (error.code === '42P01') {
               setSyncError('Cart database unavailable. Using local cart.');
             }
@@ -104,16 +100,13 @@ export const CartProvider = ({ children }) => {
               localStorage.setItem('cart', JSON.stringify(mergedCart));
             } catch (e) {
               if (e.name === 'QuotaExceededError') {
-                console.error('Local storage quota exceeded. Clearing cart.');
                 localStorage.removeItem('cart');
                 setCartItems([]);
                 setSyncError('Cart cleared due to storage limits.');
               } else {
-                console.error('Local storage unavailable:', e);
               }
             }
           } else {
-            console.warn('No cart data found in Supabase for user:', user.id);
             if (localCart.length > 0) {
               try {
                 await supabase
@@ -127,14 +120,12 @@ export const CartProvider = ({ children }) => {
                     { onConflict: 'user_id' }
                   );
               } catch (err) {
-                console.error('Error syncing local cart to Supabase:', err.message);
                 setSyncError('Failed to sync cart. Changes saved locally.');
               }
             }
             setCartItems(localCart);
           }
         } catch (err) {
-          console.error('Unexpected error fetching cart:', err.message);
           setSyncError('Failed to fetch cart. Using local cart.');
           setCartItems(localCart);
         }
@@ -179,7 +170,6 @@ export const CartProvider = ({ children }) => {
               { onConflict: 'user_id' }
             );
           if (error) {
-            console.error('Error syncing cart to Supabase:', error.message);
             setSyncError('Failed to sync cart. Changes saved locally.');
           } else {
             try {
@@ -187,30 +177,25 @@ export const CartProvider = ({ children }) => {
               setSyncError(null);
             } catch (e) {
               if (e.name === 'QuotaExceededError') {
-                console.error('Local storage quota exceeded. Clearing cart.');
                 localStorage.removeItem('cart');
                 setCartItems([]);
                 setSyncError('Cart cleared due to storage limits.');
               } else {
-                console.error('Local storage unavailable:', e);
                 setSyncError('Failed to save cart locally.');
               }
             }
           }
         }
       } catch (err) {
-        console.error('Unexpected error syncing cart:', err.message);
         setSyncError('Failed to sync cart. Changes saved locally.');
         try {
           localStorage.setItem('cart', JSON.stringify(cartItems));
         } catch (e) {
           if (e.name === 'QuotaExceededError') {
-            console.error('Local storage quota exceeded. Clearing cart.');
             localStorage.removeItem('cart');
             setCartItems([]);
             setSyncError('Cart cleared due to storage limits.');
           } else {
-            console.error('Local storage unavailable:', e);
             setSyncError('Failed to save cart locally.');
           }
         }
