@@ -19,7 +19,6 @@ const Navbar = ({ showLogo }) => {
       try {
         user = JSON.parse(persistedUser);
       } catch (e) {
-        console.error('Error parsing persisted user:', e);
         localStorage.removeItem('user');
       }
     }
@@ -28,7 +27,6 @@ const Navbar = ({ showLogo }) => {
       try {
         fullName = persistedFullName;
       } catch (e) {
-        console.error('Error parsing persisted fullName:', e);
         localStorage.removeItem('fullName');
       }
     }
@@ -70,7 +68,6 @@ const Navbar = ({ showLogo }) => {
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
         if (error) {
-          console.error('Session fetch error:', error.message);
           return;
         }
 
@@ -84,7 +81,6 @@ const Navbar = ({ showLogo }) => {
               .eq('email', session.user.email)
               .single();
             if (error) {
-              console.error('Error fetching full name:', error.message);
               setFullName('');
               localStorage.removeItem('fullName');
             } else {
@@ -93,7 +89,6 @@ const Navbar = ({ showLogo }) => {
               localStorage.setItem('fullName', fetchedFullName);
             }
           } catch (e) {
-            console.error('Local storage unavailable or fetch error:', e);
             setFullName('');
             localStorage.removeItem('fullName');
           }
@@ -104,7 +99,6 @@ const Navbar = ({ showLogo }) => {
           localStorage.removeItem('fullName');
         }
       } catch (err) {
-        console.error('Unexpected session error:', err.message);
       }
     };
 
@@ -114,7 +108,6 @@ const Navbar = ({ showLogo }) => {
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
         if (error) {
-          console.error('Session refresh error:', error.message);
           return;
         }
         if (session?.user) {
@@ -126,7 +119,6 @@ const Navbar = ({ showLogo }) => {
             .eq('email', session.user.email)
             .single();
           if (error) {
-            console.error('Error refreshing full name:', error.message);
             setFullName('');
             localStorage.removeItem('fullName');
           } else {
@@ -141,7 +133,6 @@ const Navbar = ({ showLogo }) => {
           localStorage.removeItem('fullName');
         }
       } catch (err) {
-        console.error('Unexpected refresh error:', err.message);
       }
     }, 5 * 60 * 1000);
 
@@ -157,7 +148,6 @@ const Navbar = ({ showLogo }) => {
               .eq('email', session.user.email)
               .single();
             if (error) {
-              console.error('Error fetching full name on auth change:', error.message);
               setFullName('');
               localStorage.removeItem('fullName');
             } else {
@@ -168,7 +158,6 @@ const Navbar = ({ showLogo }) => {
           };
           fetchFullName();
         } catch (e) {
-          console.error('Local storage unavailable:', e);
           setFullName('');
           localStorage.removeItem('fullName');
         }
@@ -228,7 +217,6 @@ useEffect(() => {
     try {
       const { error } = await supabase.auth.signOut();
       if (error) {
-        console.error('Logout error:', error.message);
         return;
       }
       setUser(null);
@@ -240,7 +228,6 @@ useEffect(() => {
       setToastMessage({ message: "Logged out successfully!", type: "success" });
       navigate('/');
     } catch (err) {
-      console.error('Unexpected logout error:', err.message);
     }
   };
 
