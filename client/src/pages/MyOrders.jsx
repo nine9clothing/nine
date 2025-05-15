@@ -85,7 +85,7 @@ const MyOrders = () => {
           .in('id', Array.from(skus));
 
         if (productError) {
-          console.error('Error fetching products:', productError.message);
+          // console.error('Error fetching products:', productError.message);
           setToastMessage({ message: 'Error fetching product images: ' + productError.message, type: 'error' });
         }
 
@@ -109,7 +109,7 @@ const MyOrders = () => {
 
         setOrders(filteredOrders);
       } else {
-        console.error('Error loading orders:', error.message);
+        // console.error('Error loading orders:', error.message);
         setToastMessage({ message: 'Error loading orders: ' + error.message, type: 'error' });
       }
       setLoading(false);
@@ -228,7 +228,7 @@ const MyOrders = () => {
       setExchangeReason('');
       setSelectedItems([]);
     } catch (error) {
-      console.error('Error requesting exchange:', error.message);
+      // console.error('Error requesting exchange:', error.message);
       setToastMessage({
         message: `Failed to request exchange for order #${selectedOrderId}: ${error.message}`,
         type: 'error'

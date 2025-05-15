@@ -105,18 +105,16 @@ const AdminLayout = () => {
     }
   }, [location.pathname]);
 
-  // Refresh page when tab becomes visible
   useEffect(() => {
-    let wasHidden = false; // Track if the tab was previously hidden
+    let wasHidden = false; 
 
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
         if (wasHidden) {
-          console.log('Tab is visible, refreshing page...');
-          window.location.reload(); // Refresh the page
+          window.location.reload(); 
         }
       } else {
-        wasHidden = true; // Mark as hidden when tab is not visible
+        wasHidden = true; 
       }
     };
 
@@ -124,9 +122,7 @@ const AdminLayout = () => {
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, []);
 
-  // --- Handlers ---
   const handleLogout = async () => {
-    console.log('handleLogout triggered');
     try {
       const { error } = await supabase.auth.signOut();
       if (error) {

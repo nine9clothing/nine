@@ -48,7 +48,7 @@ const WishlistPage = () => {
           setProducts([]);
         }
       } catch (error) {
-        console.error('Error fetching wishlist products:', error.message);
+        // console.error('Error fetching wishlist products:', error.message);
         setToast({ message: 'Error loading wishlist items.', type: 'error' });
         setProducts([]);
       } finally {

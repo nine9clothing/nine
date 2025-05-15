@@ -1,4 +1,3 @@
-// src/pages/About.jsx
 import React from 'react';
 import Navbar from '../components/Navbar';
 import logo from '../assets/nine9_logo.png';

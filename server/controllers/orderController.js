@@ -1,6 +1,5 @@
 const { supabase } = require('../supabaseClient');
 
-// Create an order
 exports.createOrder = async (req, res) => {
   const { userId, products, totalAmount } = req.body;
   const { data, error } = await supabase
@@ -16,7 +15,6 @@ exports.createOrder = async (req, res) => {
   res.status(201).json(data);
 };
 
-// Get all orders for a user
 exports.getUserOrders = async (req, res) => {
   const { userId } = req.params;
   const { data, error } = await supabase

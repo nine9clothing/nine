@@ -8,10 +8,9 @@ const SearchModal = ({ isOpen, onClose, initialQuery = '' }) => {
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState({ show: false, message: '', type: '' });
 
-  // Perform search when initialQuery changes and modal is open
   useEffect(() => {
     if (isOpen && initialQuery.trim()) {
-      handleSearch({ preventDefault: () => {} }); // Trigger search with initial query
+      handleSearch({ preventDefault: () => {} }); 
     }
   }, [isOpen, initialQuery]);
 
@@ -100,7 +99,7 @@ const SearchModal = ({ isOpen, onClose, initialQuery = '' }) => {
           color: '#000000',
           marginBottom: '1.5rem',
           textAlign: 'center',
-          fontFamily: '"Abril Extra Bold", sans-serif' // Applied to headings
+          fontFamily: '"Abril Extra Bold", sans-serif' 
         }}>Search Products</h2>
 
         {toast.show && (
@@ -126,7 +125,7 @@ const SearchModal = ({ isOpen, onClose, initialQuery = '' }) => {
               color: '#000000',
               backgroundColor: '#ffffff',
               transition: 'border-color 0.2s',
-              fontFamily: '"Louvette Semi Bold", sans-serif' // Applied to descriptions
+              fontFamily: '"Louvette Semi Bold", sans-serif'
             }}
             onFocus={(e) => e.target.style.borderColor = '#80bdff'}
             onBlur={(e) => e.target.style.borderColor = '#ced4da'}
@@ -146,7 +145,7 @@ const SearchModal = ({ isOpen, onClose, initialQuery = '' }) => {
               fontSize: '0.9rem',
               fontWeight: '500',
               transition: 'background-color 0.2s',
-              fontFamily: '"Abril Extra Bold", sans-serif' // Applied to headings
+              fontFamily: '"Abril Extra Bold", sans-serif'
             }}
             onMouseOver={(e) => {
               if (!loading && searchQuery) e.target.style.backgroundColor = '#333333';
@@ -170,7 +169,7 @@ const SearchModal = ({ isOpen, onClose, initialQuery = '' }) => {
               fontWeight: '600',
               color: '#000000',
               marginBottom: '1rem',
-              fontFamily: '"Abril Extra Bold", sans-serif' // Applied to headings
+              fontFamily: '"Abril Extra Bold", sans-serif' 
             }}>Results</h3>
             <div style={{
               display: 'grid',

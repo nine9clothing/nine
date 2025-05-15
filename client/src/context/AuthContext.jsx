@@ -8,7 +8,6 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check if the user is already in localStorage (persisted)
     const persistedUser = localStorage.getItem('user');
     if (persistedUser) {
       try {
@@ -28,7 +27,6 @@ export const AuthProvider = ({ children }) => {
           console.error('Session fetch error:', error.message);
         }
 
-        // Set user from session
         if (session?.user) {
           setUser(session.user);
           try {
@@ -50,7 +48,7 @@ export const AuthProvider = ({ children }) => {
     checkSession();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      console.log('Auth state changed:', session ? 'User logged in' : 'User logged out', session?.user);
+      // console.log('Auth state changed:', session ? 'User logged in' : 'User logged out', session?.user);
       if (session?.user) {
         setUser(session.user);
         try {

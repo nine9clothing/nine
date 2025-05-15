@@ -7,20 +7,11 @@ export const CartContext = createContext();
 
 export const CartProvider = ({ children }) => {
   const { user, loading: authLoading } = useContext(AuthContext) || {};
-  const [cartItems, setCartItems] = useState(() => {
-    try {
-      const savedCart = localStorage.getItem('cart');
-      const parsedCart = savedCart ? JSON.parse(savedCart) : [];
-      return Array.isArray(parsedCart) ? parsedCart : [];
-    } catch (e) {
-      console.error('Error parsing local cart:', e);
-      return [];
-    }
-  });
+  const [cartItems, setCartItems] = useState([]);
   const [isCartLoaded, setIsCartLoaded] = useState(false);
   const [syncError, setSyncError] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false); // New state for admin status
 
-  // Merge local and server carts to combine unique items
   const mergeCarts = (localCart, serverCart) => {
     const merged = [...serverCart];
     localCart.forEach((localItem) => {
@@ -35,10 +26,46 @@ export const CartProvider = ({ children }) => {
     return merged;
   };
 
+  // Check if user is admin
   useEffect(() => {
-    if (authLoading) return;
+    if (authLoading || !user) {
+      setIsAdmin(false);
+      return;
+    }
+
+    const checkAdminStatus = async () => {
+      try {
+        const { data: isAdmin } = await supabase
+          .from('admins')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+        setIsAdmin(!!isAdmin);
+      } catch (err) {
+        console.error('Error checking admin status:', err.message);
+        setIsAdmin(false);
+      }
+    };
+
+    checkAdminStatus();
+  }, [user, authLoading]);
+
+  useEffect(() => {
+    if (authLoading || isAdmin) {
+      setCartItems([]);
+      localStorage.removeItem('cart');
+      setIsCartLoaded(true);
+      return;
+    }
 
     const loadCart = debounce(async () => {
+      if (!user) {
+        setCartItems([]);
+        localStorage.removeItem('cart');
+        setIsCartLoaded(true);
+        return;
+      }
+
       let localCart = [];
       try {
         const savedCart = localStorage.getItem('cart');
@@ -46,7 +73,6 @@ export const CartProvider = ({ children }) => {
           const parsedCart = JSON.parse(savedCart);
           if (Array.isArray(parsedCart)) {
             localCart = parsedCart;
-            console.log('Restored cart from local storage:', localCart);
             setCartItems(localCart);
           } else {
             console.warn('Invalid local cart data, resetting.');
@@ -59,7 +85,6 @@ export const CartProvider = ({ children }) => {
       }
 
       if (user && user.id) {
-        console.log('Fetching cart for user ID:', user.id);
         try {
           const { data, error } = await supabase
             .from('cart_data')
@@ -71,9 +96,8 @@ export const CartProvider = ({ children }) => {
             if (error.code === '42P01') {
               setSyncError('Cart database unavailable. Using local cart.');
             }
-            // Keep local cart if Supabase fails
+            setCartItems(localCart);
           } else if (data && Array.isArray(data.cart_items)) {
-            console.log('Cart items fetched from Supabase:', data.cart_items);
             const mergedCart = mergeCarts(localCart, data.cart_items);
             setCartItems(mergedCart);
             try {
@@ -91,7 +115,6 @@ export const CartProvider = ({ children }) => {
           } else {
             console.warn('No cart data found in Supabase for user:', user.id);
             if (localCart.length > 0) {
-              // Sync local cart to Supabase if Supabase has no data
               try {
                 await supabase
                   .from('cart_data')
@@ -108,28 +131,31 @@ export const CartProvider = ({ children }) => {
                 setSyncError('Failed to sync cart. Changes saved locally.');
               }
             }
+            setCartItems(localCart);
           }
         } catch (err) {
           console.error('Unexpected error fetching cart:', err.message);
           setSyncError('Failed to fetch cart. Using local cart.');
+          setCartItems(localCart);
         }
-      } else {
-        console.log('No user, using local cart');
       }
       setIsCartLoaded(true);
     }, 100);
 
     loadCart();
     return () => loadCart.cancel();
-  }, [user, authLoading]);
+  }, [user, authLoading, isAdmin]);
 
   useEffect(() => {
-    if (!isCartLoaded || authLoading) return;
+    if (!isCartLoaded || authLoading || isAdmin) return;
 
     const syncCart = debounce(async () => {
+      if (!user) {
+        return;
+      }
+
       try {
         if (user && user.id) {
-          // Check if cart has changed
           const currentCart = JSON.stringify(cartItems);
           const { data: serverData } = await supabase
             .from('cart_data')
@@ -138,12 +164,10 @@ export const CartProvider = ({ children }) => {
             .single();
           const lastSyncedCart = JSON.stringify(serverData?.cart_items || []);
           if (currentCart === lastSyncedCart) {
-            console.log('No cart changes to sync.');
             setSyncError(null);
             return;
           }
 
-          console.log('Syncing cart to Supabase for user ID:', user.id, cartItems);
           const { error } = await supabase
             .from('cart_data')
             .upsert(
@@ -173,22 +197,6 @@ export const CartProvider = ({ children }) => {
               }
             }
           }
-        } else {
-          console.log('No user, saving cart to local storage:', cartItems);
-          try {
-            localStorage.setItem('cart', JSON.stringify(cartItems));
-            setSyncError(null);
-          } catch (e) {
-            if (e.name === 'QuotaExceededError') {
-              console.error('Local storage quota exceeded. Clearing cart.');
-              localStorage.removeItem('cart');
-              setCartItems([]);
-              setSyncError('Cart cleared due to storage limits.');
-            } else {
-              console.error('Local storage unavailable:', e);
-              setSyncError('Failed to save cart locally.');
-            }
-          }
         }
       } catch (err) {
         console.error('Unexpected error syncing cart:', err.message);
@@ -211,9 +219,12 @@ export const CartProvider = ({ children }) => {
 
     syncCart();
     return () => syncCart.cancel();
-  }, [cartItems, user, isCartLoaded, authLoading]);
+  }, [cartItems, user, isCartLoaded, authLoading, isAdmin]);
 
   const addToCart = (product) => {
+    if (!user || isAdmin) {
+      return;
+    }
     setCartItems((prev) => {
       const exists = prev.find(
         (item) => item.id === product.id && item.selectedSize === product.selectedSize
@@ -229,13 +240,19 @@ export const CartProvider = ({ children }) => {
     });
   };
 
-  const updateQuantity = (productId, quantity) => {
+  const updateQuantity = (productId, selectedSize, quantity) => {
+    if (isAdmin) return;
     setCartItems((prev) =>
-      prev.map((item) => (item.id === productId ? { ...item, quantity } : item))
+      prev.map((item) =>
+        item.id === productId && item.selectedSize === selectedSize
+          ? { ...item, quantity }
+          : item
+      )
     );
   };
 
   const removeFromCart = (productId, selectedSize) => {
+    if (isAdmin) return;
     setCartItems((prev) =>
       prev.filter(
         (item) => !(item.id === productId && item.selectedSize === selectedSize)
@@ -243,9 +260,13 @@ export const CartProvider = ({ children }) => {
     );
   };
 
-  const clearCart = () => setCartItems([]);
+  const clearCart = () => {
+    if (isAdmin) return;
+    setCartItems([]);
+  };
 
   const updateCartItemPrice = (productId, selectedSize, newPrice) => {
+    if (isAdmin) return;
     setCartItems((prev) =>
       prev.map((item) =>
         item.id === productId && item.selectedSize === selectedSize
@@ -257,15 +278,26 @@ export const CartProvider = ({ children }) => {
 
   if (!isCartLoaded || authLoading) {
     return (
-        <div style={{ backgroundColor: 'black', height: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'center', color: 'white', paddingTop: '20px' }}>
+      <div
+        style={{
+          backgroundColor: 'black',
+          height: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'flex-start',
+          alignItems: 'center',
+          color: 'white',
+          paddingTop: '20px',
+        }}
+      >
         <p>Loading...</p>
         <button
           onClick={() => window.location.reload()}
           style={{
             padding: '8px 10px',
             backgroundColor: 'transparent',
-            color: 'black ',
-            border: '1px solid black',
+            color: 'white',
+            border: '1px solid white',
             borderRadius: '4px',
             cursor: 'pointer',
             textDecoration: 'underline',
@@ -279,10 +311,22 @@ export const CartProvider = ({ children }) => {
 
   return (
     <CartContext.Provider
-      value={{ cartItems, addToCart, updateQuantity, removeFromCart, clearCart, syncError, updateCartItemPrice }}
+      value={{
+        cartItems,
+        addToCart,
+        updateQuantity,
+        removeFromCart,
+        clearCart,
+        syncError,
+        updateCartItemPrice,
+        user,
+        authLoading,
+      }}
     >
-      {syncError && (
-        <div style={{ color: 'red', textAlign: 'center', padding: '10px' }}>{syncError}</div>
+      {syncError && !isAdmin && (
+        <div style={{ color: 'red', textAlign: 'center', padding: '10px' }}>
+          {syncError}
+        </div>
       )}
       {children}
     </CartContext.Provider>

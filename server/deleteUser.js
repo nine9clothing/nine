@@ -14,5 +14,4 @@ const deleteUser = async (userId) => {
   }
 }
 
-// Call the function with the user ID you want to delete
-deleteUser('') // <== replace this with the real user's UUID
+deleteUser('') //  replace this with the real user's UUID

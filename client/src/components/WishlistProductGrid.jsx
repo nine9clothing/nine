@@ -7,7 +7,6 @@ const WishlistProductGrid = ({ products, onRemove }) => {
   const { wishlist, toggleWishlist, user } = useWishlist();
   const [hoveredProductId, setHoveredProductId] = useState(null);
 
-  // Function to get image URL with fallback
   const getImageUrl = (mediaUrls, index = 0) => {
     if (!Array.isArray(mediaUrls) || mediaUrls.length === 0) {
       return 'https://via.placeholder.com/300x500?text=No+Image';
@@ -18,7 +17,6 @@ const WishlistProductGrid = ({ products, onRemove }) => {
     return validUrls[index] || validUrls[0] || 'https://via.placeholder.com/300x500?text=No+Image';
   };
 
-  // Inject mobile and desktop-specific styles
   useEffect(() => {
     const style = document.createElement('style');
     style.innerHTML = `
@@ -173,7 +171,6 @@ const WishlistProductGrid = ({ products, onRemove }) => {
                   }}
                 />
               </div>
-              {/* Product Details */}
               <h3 className="productName" style={styles.productName}>{product.name}</h3>
               <p className="productPrice" style={styles.productPrice}>₹{product.price}</p>
               {window.innerWidth <= 768 && (

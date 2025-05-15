@@ -38,8 +38,7 @@ const AdminDashboard = () => {
       if (error) throw error;
       if (!data || data.length === 0) throw new Error("No data received for shipping status");
 
-      console.log('Raw shipping status data:', data);
-      console.log('Number of orders fetched:', data.length);
+  
 
       const orderMap = new Map();
       data.forEach((order) => {
@@ -51,7 +50,6 @@ const AdminDashboard = () => {
       });
       const uniqueOrders = Array.from(orderMap.values());
 
-      console.log('Number of unique orders with valid display_order_id:', uniqueOrders.length);
 
       const counts = uniqueOrders.reduce((acc, { shipping_status }) => {
         if (shipping_status && shipping_status.trim() !== '') {
@@ -64,11 +62,10 @@ const AdminDashboard = () => {
         .map(([status, value]) => ({ name: status, value }))
         .filter(entry => entry.value > 0);
 
-      console.log('Shipping status chart data:', chartData);
 
       setStatusData(chartData);
     } catch (error) {
-      console.error('Shipping status chart error:', error.message);
+      // console.error('Shipping status chart error:', error.message);
       setStatusError('Failed to load shipping status data.');
     } finally {
       setIsLoadingStatus(false);
@@ -91,8 +88,7 @@ const AdminDashboard = () => {
       if (error) throw error;
       if (!data) throw new Error("No data received for revenue");
 
-      console.log('Raw revenue data:', data);
-      console.log('Number of orders fetched:', data.length);
+     
 
       const orderMap = new Map();
       data.forEach((order) => {
@@ -104,7 +100,6 @@ const AdminDashboard = () => {
       });
       const uniqueOrders = Array.from(orderMap.values());
 
-      console.log('Number of unique orders with valid display_order_id:', uniqueOrders.length);
 
       const dailyTotals = uniqueOrders.reduce((acc, order) => {
         const date = format(new Date(order.created_at), 'MMM dd');
@@ -127,7 +122,7 @@ const AdminDashboard = () => {
       }
       setDailyRevenueData(last7Days);
     } catch (error) {
-      console.error('Revenue chart error:', error.message);
+      // console.error('Revenue chart error:', error.message);
       setRevenueError('Failed to load daily net revenue data.');
     } finally {
       setIsLoadingRevenue(false);
@@ -150,8 +145,7 @@ const AdminDashboard = () => {
       if (error) throw error;
       if (!data) throw new Error("No data received for monthly sales");
 
-      console.log('Raw monthly sales data:', data);
-      console.log('Number of orders fetched:', data.length);
+   
 
       const orderMap = new Map();
       data.forEach((order) => {
@@ -163,7 +157,6 @@ const AdminDashboard = () => {
       });
       const uniqueOrders = Array.from(orderMap.values());
 
-      console.log('Number of unique orders with valid display_order_id:', uniqueOrders.length);
 
       const monthlyTotals = uniqueOrders.reduce((acc, order) => {
         const month = format(new Date(order.created_at), 'MMM yyyy');
@@ -174,7 +167,6 @@ const AdminDashboard = () => {
         return acc;
       }, {});
 
-      console.log('Monthly net totals (₹):', monthlyTotals);
 
       const last12Months = [];
       for (let i = 11; i >= 0; i--) {
@@ -186,11 +178,10 @@ const AdminDashboard = () => {
         });
       }
 
-      console.log('Monthly net sales chart data:', last12Months);
 
       setMonthlySalesData(last12Months);
     } catch (error) {
-      console.error('Monthly sales chart error:', error.message);
+      // console.error('Monthly sales chart error:', error.message);
       setMonthlySalesError('Failed to load monthly net sales data.');
     } finally {
       setIsLoadingMonthlySales(false);
@@ -212,8 +203,7 @@ const AdminDashboard = () => {
       if (error) throw error;
       if (!data || data.length === 0) throw new Error("No orders with valid user_id found");
 
-      console.log('Raw orders data for age groups:', data);
-      console.log('Number of orders fetched:', data.length);
+    
 
       const orderMap = new Map();
       data.forEach((order) => {
@@ -225,7 +215,6 @@ const AdminDashboard = () => {
       });
       const uniqueOrders = Array.from(orderMap.values());
 
-      console.log('Number of unique orders with valid display_order_id and user_id:', uniqueOrders.length);
 
       const userIds = [...new Set(uniqueOrders.map(order => order.user_id))];
       const { data: userData, error: userError } = await supabase
@@ -237,8 +226,6 @@ const AdminDashboard = () => {
       if (userError) throw userError;
       if (!userData || userData.length === 0) throw new Error("No user data with valid birthday found");
 
-      console.log('User data with birthday:', userData);
-
       const userAgeMap = {};
       const currentDate = new Date('2025-04-20');
       userData.forEach(user => {
@@ -247,7 +234,7 @@ const AdminDashboard = () => {
           const age = differenceInYears(currentDate, birthdayDate);
           userAgeMap[user.id] = age;
         } else {
-          console.warn(`Invalid future birthday for user ${user.id}: ${user.birthday}, skipping`);
+          // console.warn(`Invalid future birthday for user ${user.id}: ${user.birthday}, skipping`);
         }
       });
 
@@ -272,17 +259,15 @@ const AdminDashboard = () => {
         }
       });
 
-      console.log('Age group counts:', ageGroups);
 
       const chartData = Object.entries(ageGroups)
         .map(([name, value]) => ({ name, value }))
         .filter(entry => entry.value > 0);
 
-      console.log('Age group chart data:', chartData);
 
       setAgeGroupData(chartData);
     } catch (error) {
-      console.error('Age group chart error:', error.message);
+      // console.error('Age group chart error:', error.message);
       setAgeGroupError('Failed to load age group data.');
     } finally {
       setIsLoadingAgeGroups(false);

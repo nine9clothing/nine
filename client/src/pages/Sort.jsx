@@ -38,7 +38,7 @@ const Sort = () => {
         .select('category');
 
       if (error) {
-        console.error('Error fetching categories:', error.message);
+        // console.error('Error fetching categories:', error.message);
       } else if (data) {
         const uniqueCategories = [...new Set(data.map(item => item.category).filter(Boolean))];
         setAvailableCategories(uniqueCategories.sort());
@@ -237,7 +237,7 @@ const Sort = () => {
         .select('items');
 
       if (ordersError) {
-        console.error('Error fetching orders:', ordersError.message);
+        // console.error('Error fetching orders:', ordersError.message);
         setProducts([]);
         setLoading(false);
         return;
@@ -257,7 +257,7 @@ const Sort = () => {
       const { data: productsData, error: productsError } = await query;
       
       if (productsError) {
-        console.error('Error fetching products:', productsError.message);
+        // console.error('Error fetching products:', productsError.message);
         setProducts([]);
         setLoading(false);
         return;
@@ -288,7 +288,7 @@ const Sort = () => {
     const { data, error } = await query;
 
     if (error) {
-      console.error('Error fetching products:', error.message);
+      // console.error('Error fetching products:', error.message);
       setProducts([]);
     } else {
       setProducts(data || []);

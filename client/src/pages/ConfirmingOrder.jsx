@@ -21,7 +21,7 @@ const ConfirmingOrder = () => {
 
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       if (sessionError || !session || !user) {
-        console.error('User session missing during confirmation:', sessionError?.message);
+        // console.error('User session missing during confirmation:', sessionError?.message);
         setMessage('Error: User session issue. Please log in and try again. Redirecting...');
         setIsError(true);
         setTimeout(() => navigate('/login'), 3000);
@@ -30,7 +30,7 @@ const ConfirmingOrder = () => {
 
       const pendingOrderDataString = sessionStorage.getItem('pendingOrderData');
       if (!pendingOrderDataString) {
-        console.error('No pending order data found.');
+        // console.error('No pending order data found.');
         const { data: existingOrder, error: fetchError } = await supabase
           .from('orders')
           .select('order_id, status')
@@ -57,7 +57,7 @@ const ConfirmingOrder = () => {
       try {
         orderData = JSON.parse(pendingOrderDataString);
       } catch (e) {
-        console.error('Failed to parse order data:', e);
+        // console.error('Failed to parse order data:', e);
         setMessage('Error: Invalid order data. Redirecting to cart...');
         setIsError(true);
         setTimeout(() => navigate('/cart'), 3000);
@@ -65,7 +65,7 @@ const ConfirmingOrder = () => {
       }
 
       if (user.id !== orderData.user_id) {
-        console.error('User session mismatch during confirmation.');
+        // console.error('User session mismatch during confirmation.');
         setMessage('Error: User session issue. Please log in and try again. Redirecting...');
         setIsError(true);
         setTimeout(() => navigate('/login'), 3000);
@@ -131,7 +131,7 @@ const ConfirmingOrder = () => {
 
         if (orderInsertError) {
           if (orderInsertError.code === '23505') {
-            console.warn(`Order ${order_id} already exists in database.`);
+            // console.warn(`Order ${order_id} already exists in database.`);
             const { data: existingOrder, error: fetchError } = await supabase
               .from('orders')
               .select('id')
@@ -139,7 +139,7 @@ const ConfirmingOrder = () => {
               .single();
 
             if (fetchError || !existingOrder) {
-              console.error('Duplicate order detected but not found in database:', fetchError);
+              // console.error('Duplicate order detected but not found in database:', fetchError);
               setMessage('Error: Duplicate order detected but not found. Contact support.');
               setIsError(true);
               setTimeout(() => navigate('/checkout'), 3000);
@@ -152,7 +152,7 @@ const ConfirmingOrder = () => {
             setTimeout(() => navigate('/success'), 3000);
             return;
           }
-          console.error('Supabase order insert error:', orderInsertError);
+          // console.error('Supabase order insert error:', orderInsertError);
           sessionStorage.setItem(
             'orderConfirmationError',
             `Critical: Order placed with shipper but failed to save locally. Ref ${order_id}. Contact support. Error: ${orderInsertError.message}`
@@ -162,7 +162,6 @@ const ConfirmingOrder = () => {
           setTimeout(() => navigate('/checkout'), 3000);
           return;
         }
-        console.log('Order inserted into Supabase:', insertedOrder);
 
         // Update stock
         for (const item of orderItems) {
@@ -188,7 +187,7 @@ const ConfirmingOrder = () => {
             try {
               currentSizes = typeof productData.size === 'string' ? JSON.parse(productData.size) : (productData.size || {});
             } catch (parseError) {
-              console.error(`Error parsing size data for SKU ${sku}:`, parseError.message);
+              // console.error(`Error parsing size data for SKU ${sku}:`, parseError.message);
               continue;
             }
 
@@ -209,7 +208,6 @@ const ConfirmingOrder = () => {
               .eq('id', sku);
 
             if (updateError) throw updateError;
-            console.log(`Stock updated for ${productData.name} (SKU ${sku}, Size ${selectedSize}): ${currentStock} -> ${newStock}`);
 
             // Update promo code usage
         if (promoDetails) {
@@ -230,7 +228,7 @@ const ConfirmingOrder = () => {
                 details: promoDetailsError.details
               });
             } else if (!promoData) {
-              console.error('No promo details found for promo ID:', promoId);
+              // console.error('No promo details found for promo ID:', promoId);
             } else {
               const usedCount = promoData.used || 0;
               const limitCount = promoData.limit;
@@ -318,7 +316,7 @@ const ConfirmingOrder = () => {
           }
         }
           } catch (stockUpdateError) {
-            console.error(`Error updating stock for SKU ${sku}:`, stockUpdateError.message);
+            // console.error(`Error updating stock for SKU ${sku}:`, stockUpdateError.message);
             setMessage(`Error updating stock for item ${sku}. Contact support. Redirecting...`);
             setIsError(true);
             sessionStorage.setItem(
@@ -335,7 +333,7 @@ const ConfirmingOrder = () => {
         clearCart();
         setTimeout(() => navigate('/success'), 3000);
       } catch (error) {
-        console.error('Order processing failed:', error);
+        // console.error('Order processing failed:', error);
         setMessage(`Order processing error: ${error.message}. Redirecting...`);
         setIsError(true);
         sessionStorage.setItem(

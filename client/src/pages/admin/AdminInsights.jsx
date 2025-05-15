@@ -26,10 +26,6 @@ const AdminInsights = () => {
       return;
     }
 
-    console.log('Raw orders data with valid display_order_id:', ordersData);
-    console.log('Number of orders with valid display_order_id:', ordersData?.length || 0);
-
-    // Deduplicate orders based on display_order_id, keeping the latest entry
     const orderMap = new Map();
     ordersData.forEach((order) => {
       if (order.order_id === order.display_order_id) {
@@ -90,9 +86,6 @@ const AdminInsights = () => {
       })
       .sort((a, b) => b.qty - a.qty || a.name.localeCompare(b.name))
       .slice(0, 5);
-
-    console.log('Shipping status counts:', statusCounts);
-    console.log('Top products:', topProducts);
 
     setInsights({
       totalOrders,

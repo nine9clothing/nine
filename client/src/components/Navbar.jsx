@@ -192,7 +192,6 @@ useEffect(() => {
       const isCheckoutPage = window.location.pathname.includes('/checkout');
       if (document.visibilityState === 'visible') {
         if (wasHidden && !isCheckoutPage) {
-          console.log('Tab is visible, refreshing page...');
           window.location.reload();
         }
       } else {

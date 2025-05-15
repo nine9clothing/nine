@@ -205,7 +205,7 @@ const Rewards = () => {
                 setActivities(allActivities);
                 setPoints(netPoints);
             } catch (error) {
-                console.error('Error fetching user, orders, or updating points:', error.message);
+                // console.error('Error fetching user, orders, or updating points:', error.message);
                 setToastMessage({
                     message: 'Failed to load or update rewards. Please try again.',
                     type: 'error'

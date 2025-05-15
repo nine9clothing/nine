@@ -63,14 +63,11 @@ const AddVideo = () => {
     setIsSubmitting(true);
     setUploadProgress(0);
     setToast(null);
-    console.log('Starting video upload process...');
 
     try {
       const ext = videoFile.name.split('.').pop();
       const bucketName = 'home-video';
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${ext}`;
-      console.log('Uploading to bucket:', bucketName);
-      console.log('Uploading file:', fileName);
 
       const progressInterval = setInterval(() => {
         setUploadProgress(prev => {
@@ -96,7 +93,6 @@ const AddVideo = () => {
       }
 
       setUploadProgress(95);
-      console.log('Upload successful, getting public URL...');
       const { data: urlData } = supabase.storage
         .from(bucketName)
         .getPublicUrl(fileName);
@@ -107,9 +103,7 @@ const AddVideo = () => {
       }
 
       const mediaUrl = urlData.publicUrl;
-      console.log('Public URL obtained:', mediaUrl);
 
-      console.log('Inserting into database...', { title, description, media_url: mediaUrl });
       const { error: insertError } = await supabase.from('videos').insert([
         {
           title,
@@ -124,7 +118,6 @@ const AddVideo = () => {
       }
 
       setUploadProgress(100);
-      console.log('Video added successfully!');
       setToast({ message: 'Video added successfully!', type: 'success' });
       setNewVideo({ title: '', description: '' });
       setVideoFile(null);
@@ -137,7 +130,6 @@ const AddVideo = () => {
       console.error('Error in handleAddVideo:', error);
       setToast({ message: error.message || 'An unexpected error occurred.', type: 'error' });
     } finally {
-      console.log('Submission process completed, resetting isSubmitting...');
       setIsSubmitting(false);
       setTimeout(() => setUploadProgress(0), 2000);
     }

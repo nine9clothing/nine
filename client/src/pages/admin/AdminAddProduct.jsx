@@ -102,27 +102,26 @@ const AddProduct = () => {
 
   const handleAddProduct = async () => {
     if (isSubmitting) {
-      console.log('Submission blocked: already submitting');
       return;
     }
 
     const finalCategory = newProduct.category === 'Other' ? customCategory.trim() : newProduct.category;
     const { name, description, price, strike_price, gender, size, care_guide, composition_fabric, shipping_info, exchange } = newProduct;
 
-    console.log('Validation inputs:', {
-      name,
-      description,
-      price,
-      strike_price,
-      imageFiles: imageFiles.length,
-      finalCategory,
-      gender,
-      size,
-      care_guide,
-      composition_fabric,
-      shipping_info,
-      exchange,
-    });
+    // console.log('Validation inputs:', {
+    //   name,
+    //   description,
+    //   price,
+    //   strike_price,
+    //   imageFiles: imageFiles.length,
+    //   finalCategory,
+    //   gender,
+    //   size,
+    //   care_guide,
+    //   composition_fabric,
+    //   shipping_info,
+    //   exchange,
+    // });
 
     const hasStock = Object.values(size).some(stock => stock > 0);
 
@@ -133,7 +132,6 @@ const AddProduct = () => {
       } else if (!newProduct.category) {
         errorMessage = 'Please select or enter a category.';
       }
-      console.log('Validation failed:', errorMessage);
       setToast({ message: errorMessage, type: 'error' });
       return;
     }
@@ -141,7 +139,6 @@ const AddProduct = () => {
     setIsSubmitting(true);
     setToast(null);
     setUploadProgress(0);
-    console.log('Starting product submission');
 
     const timeout = setTimeout(() => {
       setIsSubmitting(false);
@@ -154,7 +151,7 @@ const AddProduct = () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        console.error('No active session');
+        // console.error('No active session');
         throw new Error('User not authenticated. Please log in again.');
       }
 
@@ -172,7 +169,6 @@ const AddProduct = () => {
       };
 
       for (const file of imageFiles) {
-        console.log(`File: ${file.name}, Size: ${file.size} bytes, Type: ${file.type}`);
         if (file.size > 10 * 1024 * 1024) {
           throw new Error(`File ${file.name} exceeds 10MB limit`);
         }
@@ -181,7 +177,6 @@ const AddProduct = () => {
         }
         const ext = file.name.split('.').pop();
         const fileName = `product-media/${Date.now()}-${Math.random().toString(36).substring(2)}.${ext}`;
-        console.log(`Uploading file: ${fileName}`);
         const { error: uploadError } = await uploadWithTimeout(file, fileName);
 
         if (uploadError) {
@@ -201,13 +196,10 @@ const AddProduct = () => {
         filesUploaded += 1;
         setUploadProgress((prev) => {
           const newProgress = (filesUploaded / totalFiles) * 100;
-          console.log(`Progress update: ${newProgress}%`);
           return newProgress;
         });
-        console.log(`File uploaded: ${fileName}, Progress: ${(filesUploaded / totalFiles) * 100}%`);
       }
 
-      console.log('Inserting product into database');
       const { error: insertError } = await supabase.from('products').insert([
         {
           name,
@@ -230,7 +222,6 @@ const AddProduct = () => {
         throw new Error('Failed to add product to database.');
       }
 
-      console.log('Product added successfully');
       setToast({ message: 'Product added successfully!', type: 'success' });
       setNewProduct({
         name: '',
@@ -263,7 +254,6 @@ const AddProduct = () => {
       clearTimeout(timeout);
       setIsSubmitting(false);
       setUploadProgress(0);
-      console.log('Submission complete, isSubmitting set to false');
     }
   };
 

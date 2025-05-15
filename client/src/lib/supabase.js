@@ -5,8 +5,8 @@ const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS
 
 export const supabase = createClient(supabaseUrl, supabaseKey, {
     auth: {
-      autoRefreshToken: true,      // Automatically refresh tokens before they expire
-      persistSession: true,        // Persist session in localStorage
+      autoRefreshToken: true,      
+      persistSession: true,       
     }
 });
 export default supabase; 

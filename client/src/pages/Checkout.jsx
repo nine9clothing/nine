@@ -399,7 +399,7 @@ const completeOrder = async (paymentId = null, promoDetails = null ) => {
     return true;
   }
   catch (error) {
-      console.error('Shiprocket order creation or data prep error:', error);
+      // console.error('Shiprocket order creation or data prep error:', error);
       let errorMessage = 'Failed to process order with shipping partner';
       if (error.response) {
         errorMessage += `: ${error.response.status} - ${JSON.stringify(error.response.data?.message || error.response.data?.errors || error.response.data || error.response.statusText)}`;
@@ -423,7 +423,7 @@ const completeOrder = async (paymentId = null, promoDetails = null ) => {
     const userId = user?.id;
 
     if (!userId) {
-      console.error('User ID is undefined. Cannot process promo code.', { user });
+      // console.error('User ID is undefined. Cannot process promo code.', { user });
       setToastMessage({ message: 'User ID is undefined. Cannot process promo code.', type: 'error' });
       return;
     }
@@ -445,7 +445,7 @@ const completeOrder = async (paymentId = null, promoDetails = null ) => {
     }
 
     if (!promoDetails) {
-      console.error('No promo details found for promo ID:', promoId);
+      // console.error('No promo details found for promo ID:', promoId);
       setToastMessage({ message: 'No promo details found for this promo code.', type: 'error' });
       return;
     }
@@ -460,10 +460,10 @@ const completeOrder = async (paymentId = null, promoDetails = null ) => {
     }
 
     if (paymentMethod === 'Paid Online') {
-      await handleOnlinePayment(promoDetails); // Pass promoDetails directly
+      await handleOnlinePayment(promoDetails);
     } else {
       setLoadingOrder(true);
-      await completeOrder(null, promoDetails); // Pass promoDetails directly
+      await completeOrder(null, promoDetails); 
     }
 
     const { data: usageData, error: usageError } = await supabase
@@ -474,10 +474,8 @@ const completeOrder = async (paymentId = null, promoDetails = null ) => {
             .single();
     
           if (usageError && usageError.code !== 'PGRST116') { // PGRST116 means no rows found, which is fine
-            console.error("Error fetching promo usage:", usageError);
-            // Optionally, you could decide to block promo application here or proceed
-            // For now, let's assume if there's an error fetching usage, we might allow it
-            // or show a generic error.
+            // console.error("Error fetching promo usage:", usageError);
+            
           }
           
           let usageCount = 0;
@@ -502,12 +500,11 @@ const completeOrder = async (paymentId = null, promoDetails = null ) => {
     setLoadingOrder(false);
   }
 } else {
-  // Handle case where no promo code is applied
   if (paymentMethod === 'Paid Online') {
-    await handleOnlinePayment(); // No promoDetails
+    await handleOnlinePayment(); 
   } else {
     setLoadingOrder(true);
-    await completeOrder(); // No promoDetails
+    await completeOrder(); 
   }
 }
   };

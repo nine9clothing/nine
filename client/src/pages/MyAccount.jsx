@@ -28,22 +28,19 @@ const MyAccount = () => {
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       
       if (sessionError) {
-        console.error('Error fetching session:', sessionError);
+        // console.error('Error fetching session:', sessionError);
         setUpdateError('Failed to fetch session. Please login again.');
         setToast({ show: true, message: 'Failed to fetch session. Please login again.', type: 'error' });
         return;
       }
 
       if (!session) {
-        console.log('No active session found. Redirecting to login...');
         window.location.replace('/login');
         return;
       }
 
       setUser(session.user);
-      console.log('Session user:', session.user);
 
-      console.log('Fetching details for email:', session.user.email);
       const { data, error } = await supabase
         .from('registered_details')
         .select('*')
@@ -52,7 +49,6 @@ const MyAccount = () => {
 
       if (error) {
         if (error.code === 'PGRST116') {
-          console.log('No existing record found for this user.');
         } else {
           console.error('Error fetching user details:', error);
           setUpdateError(`Failed to fetch user details: ${error.message}`);
@@ -61,7 +57,6 @@ const MyAccount = () => {
       }
 
       if (data) {
-        console.log('User details fetched successfully:', data);
         setUserDetails({
           id: data.id,
           email: data.email || session.user.email,
@@ -76,7 +71,6 @@ const MyAccount = () => {
           birthday: data.birthday || '',
         });
       } else {
-        console.log('Setting default values for new user');
         setUserDetails({
           id: null,
           email: session.user.email,
@@ -92,7 +86,7 @@ const MyAccount = () => {
         });
       }
     } catch (error) {
-      console.error('Unexpected error in fetchUserData:', error);
+      // console.error('Unexpected error in fetchUserData:', error);
       setUpdateError(`Unexpected error: ${error.message}`);
       setToast({ show: true, message: `Unexpected error: ${error.message}`, type: 'error' });
     } finally {
@@ -159,14 +153,11 @@ const MyAccount = () => {
       }
 
       if (Object.keys(changedFields).length === 0) {
-        console.log('No changes detected. Skipping database update.');
         setEditing(false);
         setUpdateSuccess(true);
         setToast({ show: true, message: 'Your profile was updated successfully!', type: 'success' });
         return;
       }
-
-      console.log('Upserting data:', upsertData);
 
       const { error } = await supabase
         .from('registered_details')
@@ -176,20 +167,18 @@ const MyAccount = () => {
         });
 
       if (error) {
-        console.error('Database operation error:', error);
+        // console.error('Database operation error:', error);
         setUpdateError(`Failed to update profile: ${error.message}`);
         setToast({ show: true, message: `Failed to update profile: ${error.message}`, type: 'error' });
         return;
       }
-
-      console.log('Database operation successful');
       await fetchUserData();
 
       setEditing(false);
       setUpdateSuccess(true);
       setToast({ show: true, message: 'Your profile was updated successfully!', type: 'success' });
     } catch (error) {
-      console.error('Unexpected error during update:', error);
+      // console.error('Unexpected error during update:', error);
       setUpdateError(`An unexpected error occurred: ${error.message}`);
       setToast({ show: true, message: `An unexpected error occurred: ${error.message}`, type: 'error' });
     }
@@ -206,7 +195,7 @@ const MyAccount = () => {
       });
 
       if (error) {
-        console.error('Error initiating password reset:', error);
+        // console.error('Error initiating password reset:', error);
         setUpdateError(`Failed to send password reset email: ${error.message}`);
         setToast({ show: true, message: `Failed to send password reset email: ${error.message}`, type: 'error' });
         return;
@@ -215,7 +204,7 @@ const MyAccount = () => {
       setResetPasswordMessage('Password reset email sent! Please check your inbox.');
       setToast({ show: true, message: 'Password reset email sent! Please check your inbox.', type: 'success' });
     } catch (error) {
-      console.error('Unexpected error during password reset:', error);
+      // console.error('Unexpected error during password reset:', error);
       setUpdateError(`An unexpected error occurred: ${error.message}`);
       setToast({ show: true, message: `An unexpected error occurred: ${error.message}`, type: 'error' });
     }

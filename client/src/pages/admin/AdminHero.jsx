@@ -119,7 +119,6 @@ const AdminHeroImages = () => {
       for (const file of fittedFiles) {
         const ext = file.name.split('.').pop().toLowerCase().replace(/[^a-z0-9]/g, '');
         const fileName = `hero/${Date.now()}-${Math.random().toString(36).substring(2)}.${ext}`;
-        console.log('Uploading file:', fileName, file);
 
         const { error: uploadError } = await supabase.storage
           .from('hero-images')

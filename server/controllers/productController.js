@@ -1,6 +1,5 @@
 const { supabase } = require('../supabaseClient');
 
-// Create a new product
 exports.createProduct = async (req, res) => {
   const { name, price, description, imageUrl } = req.body;
   const { data, error } = await supabase
@@ -16,7 +15,6 @@ exports.createProduct = async (req, res) => {
   res.status(201).json(data);
 };
 
-// Get all products
 exports.getAllProducts = async (req, res) => {
   const { data, error } = await supabase.from('products').select('*');
 
@@ -27,7 +25,6 @@ exports.getAllProducts = async (req, res) => {
   res.status(200).json(data);
 };
 
-// Update product details
 exports.updateProduct = async (req, res) => {
   const { id, name, price, description, imageUrl } = req.body;
   const { data, error } = await supabase
@@ -41,7 +38,6 @@ exports.updateProduct = async (req, res) => {
   res.status(200).json(data);
 };
 
-// Delete a product
 exports.deleteProduct = async (req, res) => {
   const { id } = req.params;
   const { data, error } = await supabase.from('products').delete().match({ id });
