@@ -28,11 +28,11 @@ async function getShiprocketToken() {
     });
     return response.data.token;
   } catch (error) {
-    console.error('Shiprocket login error:', {
-      message: error.message,
-      response: error.response?.data,
-      status: error.response?.status,
-    });
+    // console.error('Shiprocket login error:', {
+    //   message: error.message,
+    //   response: error.response?.data,
+    //   status: error.response?.status,
+    // });
     throw new Error('Failed to authenticate with Shiprocket');
   }
 }
@@ -92,11 +92,11 @@ app.post('/api/shiprocket/check-serviceability', async (req, res) => {
       });
     }
   } catch (error) {
-    console.error('Shiprocket serviceability error:', {
-      message: error.message,
-      response: error.response?.data,
-      status: error.response?.status
-    });
+    // console.error('Shiprocket serviceability error:', {
+    //   message: error.message,
+    //   response: error.response?.data,
+    //   status: error.response?.status
+    // });
     
     return res.status(500).json({
       status: 'error',
@@ -160,7 +160,7 @@ app.post('/api/shiprocket/order', async (req, res) => {
       throw checkError;
     }
     if (existingOrder) {
-      console.warn('Order with order_id already exists:', order_id);
+      // console.warn('Order with order_id already exists:', order_id);
       return res.status(400).json({ error: 'Order already processed', order_id });
     }
 
@@ -191,25 +191,25 @@ app.post('/api/shiprocket/order', async (req, res) => {
       .single();
 
     if (error) {
-      console.error('Supabase insertion error:', {
-        message: error.message,
-        code: error.code,
-        details: error.details,
-        hint: error.hint,
-        context: error.context,
-      });
+      // console.error('Supabase insertion error:', {
+      //   message: error.message,
+      //   code: error.code,
+      //   details: error.details,
+      //   hint: error.hint,
+      //   context: error.context,
+      // });
       throw error;
     }
 
     res.json({ shiprocket_response: shiprocketResponse.data, supabase_order: data });
   } catch (error) {
-    console.error('Order processing error:', {
-      message: error.message,
-      response: error.response?.data,
-      stack: error.stack,
-      supabase_error: error.code,
-      details: error.details,
-    });
+    // console.error('Order processing error:', {
+    //   message: error.message,
+    //   response: error.response?.data,
+    //   stack: error.stack,
+    //   supabase_error: error.code,
+    //   details: error.details,
+    // });
     if (error.message === 'Failed to authenticate with Shiprocket') {
       res.status(401).json({ error: 'Authentication failed with Shiprocket' });
     } else if (error.message.includes('payment_method')) {
@@ -246,11 +246,11 @@ app.post('/api/razorpay/create-order', async (req, res) => {
       amount: order.amount,
     });
   } catch (error) {
-    console.error('Razorpay order creation error:', {
-      message: error.message,
-      status: error.statusCode,
-      details: error.error,
-    });
+    // console.error('Razorpay order creation error:', {
+    //   message: error.message,
+    //   status: error.statusCode,
+    //   details: error.error,
+    // });
     res.status(error.statusCode || 500).json({
       error: 'Failed to create order',
       details: error.error?.description || error.message,
