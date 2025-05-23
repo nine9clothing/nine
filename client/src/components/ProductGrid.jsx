@@ -66,7 +66,8 @@ const ProductCard = ({ product, styles, uniqueKeySuffix = "" }) => {
 			</div>
 			</>
 	);
-  };
+};
+
 const getImageFromMedia = (mediaUrls) => {
 	if (Array.isArray(mediaUrls)) {
 		const imageUrl = mediaUrls.find((url) =>
@@ -84,6 +85,8 @@ const ProductGrid = ({
 	isMobile: isMobileProp = false,
 }) => {
 	const [products, setProducts] = useState([]);
+	const [isLoading, setIsLoading] = useState(true);
+	const [error, setError] = useState(null);
 	const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
 	useEffect(() => {
@@ -95,28 +98,26 @@ const ProductGrid = ({
 	const isMobile = isMobileProp || windowWidth < 768;
 
 	useEffect(() => {
-		const mockData = Array.from({ length: 6 }, (_, i) => ({
-			id: `prod-${i + 1}`,
-			name: `Product Name ${i + 1}`,
-			created_at: new Date(Date.now() - i * 1000 * 60 * 60 * 24).toISOString(), 
-			media_urls: [
-				"https://via.placeholder.com/300x500/eee/888?text=Product+" + (i + 1),
-			], 
-		}));
-		const sorted = [...mockData].sort(
-			(a, b) => new Date(b.created_at) - new Date(a.created_at)
-		);
-		setProducts(sorted.slice(0, 6)); 
-
+		setIsLoading(true);
 		fetch("https://nine-ymmn.onrender.com/api/products")
-			.then((response) => response.json())
+			.then((response) => {
+				if (!response.ok) {
+					throw new Error("Failed to fetch products");
+				}
+				return response.json();
+			})
 			.then((data) => {
 				const sorted = [...data].sort(
 					(a, b) => new Date(b.created_at) - new Date(a.created_at)
 				);
-				setProducts(sorted.slice(0, 6)); // Get latest 6 products
+				setProducts(sorted.slice(0, 6));
+				setIsLoading(false);
 			})
-			.catch((error) => console.error("Error fetching products:", error));
+			.catch((error) => {
+				console.error("Error fetching products:", error);
+				setError(error.message);
+				setIsLoading(false);
+			});
 	}, []);
 
 	const getStyles = () => {
@@ -166,7 +167,32 @@ const ProductGrid = ({
 		? currentStyles.singleLineContainer
 		: currentStyles.grid;
 
-	const itemsToRender = singleLine ? [...products, ...products] : products;
+	if (isLoading) {
+		return (
+			<div style={{ textAlign: "center", padding: "40px" }}>
+				<div
+					style={{
+						border: "4px solid #ccc",
+						borderTop: "4px solid #Ffa500",
+						borderRadius: "50%",
+						width: "40px",
+						height: "40px",
+						animation: "spin 1s linear infinite",
+						margin: "0 auto",
+					}}
+				/>
+				<p>Loading products...</p>
+			</div>
+		);
+	}
+
+	if (error) {
+		return (
+			<div style={{ textAlign: "center", padding: "40px", color: "#ff0000" }}>
+				<p>Error: {error}. Please try again later.</p>
+			</div>
+		);
+	}
 
 	return (
 		<div style={containerStyle}>
@@ -175,6 +201,7 @@ const ProductGrid = ({
 					key={product.id}
 					product={product}
 					styles={currentStyles}
+					uniqueKeySuffix={singleLine ? "-single" : ""}
 				/>
 			))}
 			{singleLine &&
@@ -183,6 +210,7 @@ const ProductGrid = ({
 						key={`${product.id}-duplicate`}
 						product={product}
 						styles={currentStyles}
+						uniqueKeySuffix="-duplicate"
 					/>
 				))}
 		</div>
@@ -240,8 +268,6 @@ const styles = {
 		overflow: "hidden",
 		textOverflow: "ellipsis",
 	},
-
-	
 };
 
 export default ProductGrid;

@@ -17,6 +17,7 @@ const Footer = () => {
     { href: "/shippingpolicy", label: "Shipping" },
     { href: "/t&c", label: "Privacy & Policy" },
     { href: "/faq", label: "FAQs" },
+    { href: "/about", label: "About Us" },
     { href: "/contact", label: "Contact Us" },
     { href: "/exchange", label: "Exchange Policy" },
   ];

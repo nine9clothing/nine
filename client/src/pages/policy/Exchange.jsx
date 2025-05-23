@@ -265,28 +265,22 @@ function ExchangePolicy() {
   `;
 
   return (
-    <> {/* Use Fragment to wrap styles and content */}
-      {/* Inject the CSS string into a style tag */}
+    <> 
       <style dangerouslySetInnerHTML={{ __html: cssStyles }} />
 
-      {/* Main container */}
       <div className="exchange-policy-container">
 
-        {/* Navbar Component */}
         <div className="navbar-wrapper">
             <Navbar showLogo={true} />
         </div>
 
-        {/* Main Content Wrapper */}
         <div className="exchange-policy-content">
 
             <header className="policy-header">
-                {/* Header content */}
                 <h1>Exchange Policy</h1>
             </header>
             <p className="tagline">We get it — sometimes things don’t fit just right or feel how you imagined.</p>
 
-            {/* Intro Section */}
             <section className="policy-section intro">
             <p>
                 That’s why we offer a 5-day exchange window to make sure you absolutely love what you wear. 
@@ -294,7 +288,6 @@ function ExchangePolicy() {
             </p>
             </section>
 
-            {/* Eligibility Section */}
             <section className="policy-section">
             <h2>📦 What’s Eligible for Exchange?</h2>
             <p>
@@ -307,7 +300,6 @@ function ExchangePolicy() {
             </ul>
             </section>
 
-            {/* No Returns Section */}
             <section className="policy-section highlight-section">
             <h2>🚫 No Returns</h2>
             <p>
@@ -315,14 +307,12 @@ function ExchangePolicy() {
             </p>
             </section>
 
-            {/* Contact Section */}
             <section className="policy-section">
             <h2>Ready to Exchange?</h2>
             <p>
                 If your product meets the criteria, reach out to us within 5 days of delivery at{' '}
-                <a href="mailto:your-exchange-email@nine9.co.in" className="contact-link">
-                your-exchange-email@nine9.co.in
-                </a>. We’ll guide you through the process to get you the perfect fit!
+                <a href="mailto:info@nine9.co.in" className="contact-link">
+                  info@nine9.co.in                  </a>. We’ll guide you through the process to get you the perfect fit!
             </p>
             </section>
 

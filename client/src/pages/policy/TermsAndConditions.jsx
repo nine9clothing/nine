@@ -265,29 +265,23 @@ function PrivacyPolicy() {
   `;
 
   return (
-    <> {/* Use Fragment to wrap styles and content */}
-      {/* Inject the CSS string into a style tag */}
+    <> 
       <style dangerouslySetInnerHTML={{ __html: cssStyles }} />
 
-      {/* Main container */}
       <div className="privacy-policy-container">
 
-        {/* Navbar Component */}
         <div className="navbar-wrapper">
             <Navbar showLogo={true} />
         </div>
 
-        {/* Main Content Wrapper */}
         <div className="privacy-policy-content">
 
             <header className="policy-header">
-                {/* Header content */}
                 <h1>Privacy Policy – Nine9</h1>
             </header>
              <p className="tagline">Because Trust is Part of the Fit</p>
 
 
-            {/* Intro Section */}
             <section className="policy-section intro">
             <p>
                 At Nine9, we’re not just stitching fabric—we’re stitching trust. This
@@ -299,7 +293,6 @@ function PrivacyPolicy() {
             </p>
             </section>
 
-            {/* What We Collect Section */}
             <section className="policy-section">
             <h2>What We Collect</h2>
             <p>
@@ -325,7 +318,6 @@ function PrivacyPolicy() {
             </ul>
             </section>
 
-            {/* Why We Collect It Section */}
             <section className="policy-section">
             <h2>Why We Collect It</h2>
             <p>We use this data to:</p>
@@ -338,7 +330,6 @@ function PrivacyPolicy() {
             </ul>
             </section>
 
-            {/* Highlighted Section */}
             <section className="policy-section highlight-section">
             <h2>What We Don't Do</h2>
             <p>
@@ -351,7 +342,6 @@ function PrivacyPolicy() {
             </p>
             </section>
 
-            {/* Exchanges Section */}
             <section className="policy-section">
             <h2>Exchanges (Only if the Product is Unused)</h2>
             <p>
@@ -359,28 +349,22 @@ function PrivacyPolicy() {
                 <strong>unused, unworn, unwashed</strong>, and not what you expected
                 size-wise, you can exchange it within <strong>5 days</strong> of delivery.
                 Keep the tags intact and hit us up at:{' '}
-                {/* --- Replace placeholder below with actual contact info/link --- */}
-                <a href="mailto:your-exchange-email@nine9.co.in" className="contact-link">
-                your-exchange-email@nine9.co.in
-                </a>
+                <a href="mailto:info@nine9.co.in" className="contact-link">
+info@nine9.co.in                </a>
             </p>
             </section>
 
-            {/* Flawed Product Section */}
             <section className="policy-section">
             <h2>Flawed Product? We Got You.</h2>
             <p>
                 On the rare chance that you receive a product with a manufacturing
                 flaw—email us, and we’ll make it right. Because imperfections in art
                 are cool, but not in packaging. Contact us at:{' '}
-                {/* --- Replace placeholder below with actual contact info/link --- */}
-                <a href="mailto:your-support-email@nine9.co.in" className="contact-link">
-                your-support-email@nine9.co.in
-                </a>
+                <a href="mailto:info@nine9.co.in" className="contact-link">
+info@nine9.co.in                </a>
             </p>
             </section>
 
-            {/* Update Info Section */}
             <section className="policy-section">
             <h2>Need to Update Your Info?</h2>
             <p>

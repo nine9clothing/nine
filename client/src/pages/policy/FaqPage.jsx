@@ -32,7 +32,7 @@ const faqs = [
   {
     question: "Do you collaborate with artists or influencers?",
     answer:
-      "Big yes. At Nine9, we’re all about community and collabs. Whether you paint walls or paint your nails to match your outfit—we want your vibe. Drop us a line at info@nine9.co.in or tag us @---. Let’s make something dope.",
+      "Big yes. At Nine9, we’re all about community and collabs. Whether you paint walls or paint your nails to match your outfit—we want your vibe. Drop us a line at info@nine9.co.in , Let’s make something dope.",
   },
   {
     question: "How do I earn and use Nine9 Reward Points?",
