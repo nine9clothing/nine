@@ -114,7 +114,7 @@ const ProductGrid = ({
 				setIsLoading(false);
 			})
 			.catch((error) => {
-				console.error("Error fetching products:", error);
+				// console.error("Error fetching products:", error);
 				setError(error.message);
 				setIsLoading(false);
 			});

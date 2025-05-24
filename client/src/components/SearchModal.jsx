@@ -30,7 +30,7 @@ const SearchModal = ({ isOpen, onClose, initialQuery = '' }) => {
         );
 
       if (error) {
-        console.error('Error searching products:', error);
+        // console.error('Error searching products:', error);
         setToast({ show: true, message: `Failed to search products: ${error.message}`, type: 'error' });
         setProducts([]);
         return;
@@ -43,7 +43,7 @@ const SearchModal = ({ isOpen, onClose, initialQuery = '' }) => {
         setProducts(data);
       }
     } catch (error) {
-      console.error('Unexpected error during search:', error);
+      // console.error('Unexpected error during search:', error);
       setToast({ show: true, message: `Unexpected error: ${error.message}`, type: 'error' });
       setProducts([]);
     } finally {

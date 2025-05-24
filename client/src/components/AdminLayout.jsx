@@ -62,7 +62,6 @@ const AdminLayout = () => {
           .eq('id', user.id)
           .maybeSingle();
         if (adminError) {
-          console.error('Admin check error:', adminError);
           navigate('/');
           return;
         }
@@ -72,7 +71,6 @@ const AdminLayout = () => {
           navigate('/');
         }
       } catch (error) {
-        console.error('Unexpected error:', error);
         navigate('/');
       } finally {
         setLoading(false);
@@ -126,11 +124,9 @@ const AdminLayout = () => {
     try {
       const { error } = await supabase.auth.signOut();
       if (error) {
-        console.error('Logout error:', error.message);
       }
       navigate('/login');
     } catch (err) {
-      console.error('Unexpected logout error:', err.message || err);
       navigate('/login');
     }
   };
