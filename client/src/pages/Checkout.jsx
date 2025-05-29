@@ -43,6 +43,7 @@ const Checkout = () => {
   const totalWithShipping = totalAfterDiscount + (selectedShippingOption?.rate || 0) + codFee;
   const shippingDiscount = selectedShippingOption?.rate || 0; // TEMPORARY FOR SHIPPING DISCOUNT
   const totalForDisplay = totalWithShipping - shippingDiscount; // TEMPORARY FOR SHIPPING DISCOUNT
+
   useEffect(() => {
     if (!loading && cartItems.length === 0 && !location.state) {
       navigate('/cart');
@@ -53,7 +54,6 @@ const Checkout = () => {
     const restoreSessionAndFetchAddresses = async () => {
       const { data: { session }, error } = await supabase.auth.getSession();
       if (error) {
-        // console.error('Error restoring session:', error.message);
         setToastMessage({ message: 'Failed to load session. Please log in again.', type: 'error' });
         navigate('/login');
         return;
@@ -70,10 +70,8 @@ const Checkout = () => {
           .select('*')
           .eq('user_id', user.id);
         if (!error) {
-          // console.log('Fetched addresses:', data);
           setAddresses(data);
         } else {
-          // console.error('Error fetching addresses:', error.message);
           setToastMessage({ message: `Failed to fetch addresses: ${error.message}`, type: 'error' });
         }
       }
@@ -92,8 +90,6 @@ const Checkout = () => {
         return weight + (0.35 * item.quantity);
       }, 0);
 
-      // console.log('Checking shipping for pincode:', pincode, 'with weight:', totalWeight);
-      
       const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/shiprocket/check-serviceability`, {
         pickup_postcode: warehousePincode,
         delivery_postcode: pincode,
@@ -101,8 +97,6 @@ const Checkout = () => {
         cod: true
       });
 
-      // console.log('Shipping options response:', response.data);
-      
       if (response.data.status === 'success' && response.data.data.serviceability) {
         const availableCouriers = response.data.data.available_couriers || [];
         const cheapestOption = availableCouriers.sort((a, b) => a.rate - b.rate)[0];
@@ -114,7 +108,6 @@ const Checkout = () => {
         setShippingError('This pincode is not serviceable by our shipping partner');
       }
     } catch (error) {
-      // console.error('Error checking shipping:', error);
       setShippingOptions([]);
       setSelectedShippingOption(null);
       setShippingError('Failed to check shipping options. Please try again.');
@@ -162,7 +155,6 @@ const Checkout = () => {
       .select();
 
     if (error) {
-      // console.error('Error adding address:', error.message);
       setToastMessage({ message: `Failed to add address: ${error.message}`, type: 'error' });
       return;
     }
@@ -173,10 +165,9 @@ const Checkout = () => {
         .select('*')
         .eq('user_id', user.id);
       if (!error) {
-        // console.log('Updated addresses:', updatedAddresses);
         setAddresses(updatedAddresses);
       } else {
-        // console.error('Error fetching updated addresses:', error.message);
+        // No error handling needed here as per original code
       }
     };
 
@@ -188,18 +179,13 @@ const Checkout = () => {
 
   const handleAddressChange = (e) => {
     const newId = e.target.value;
-    // console.log('Dropdown selected address ID:', newId);
     setSelectedAddressId(newId);
   };
 
   const handleOnlinePayment = async (promoDetails = null) => {
     setLoadingOrder(true);
     try {
-      // console.log('handleOnlinePayment - addresses:', addresses);
-      // console.log('handleOnlinePayment - selectedAddressId:', selectedAddressId);
       const selectedAddress = addresses.find(addr => addr.id.toString() === selectedAddressId);
-      // console.log('handleOnlinePayment - selectedAddress:', selectedAddress);
-  
       if (!selectedAddress) {
         throw new Error('Selected address not found');
       }
@@ -215,20 +201,27 @@ const Checkout = () => {
       if (!import.meta.env.VITE_RAZORPAY_KEY_ID) {
         throw new Error('Razorpay key not configured');
       }
-  
-      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/razorpay/create-order`, {
-        // amount: totalWithShipping,    ////TEMPORARY COMMENTED FOR SHIPPING DISCOUNT
-        amount: totalForDisplay,
 
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/razorpay/create-order`, {
+        amount: totalForDisplay,
         currency: 'INR',
         receipt: `order_rcptid_${Date.now()}`
       });
-  
+
       const order = response.data;
       if (order.error) {
         throw new Error('Error creating Razorpay order: ' + order.error);
       }
-  
+
+      // Function to clean up Razorpay-related keys from localStorage
+      const cleanupRazorpayKeys = () => {
+        Object.keys(localStorage).forEach((key) => {
+          if (key.startsWith('rzp_') || key.startsWith('sb-')) {
+            localStorage.removeItem(key);
+          }
+        });
+      };
+
       const options = {
         key: import.meta.env.VITE_RAZORPAY_KEY_ID,
         amount: order.amount,
@@ -246,14 +239,19 @@ const Checkout = () => {
             const verifyResult = verifyResponse.data;
             if (verifyResult.status === 'success') {
               await completeOrder(response.razorpay_payment_id, promoDetails);
+              // Clean up Razorpay keys after successful payment
+              cleanupRazorpayKeys();
             } else {
               setToastMessage({ message: 'Payment verification failed: ' + verifyResult.message, type: 'error' });
               setLoadingOrder(false);
+              // Clean up Razorpay keys on verification failure
+              cleanupRazorpayKeys();
             }
           } catch (error) {
-            // console.error('Verification error:', error);
             setToastMessage({ message: 'Payment verification failed: ' + error.message, type: 'error' });
             setLoadingOrder(false);
+            // Clean up Razorpay keys on verification error
+            cleanupRazorpayKeys();
           }
         },
         modal: {
@@ -262,6 +260,8 @@ const Checkout = () => {
             navigate('/checkout', {
               state: { subtotal, discount, pointsToRedeem, pointsDiscount, total: totalAfterDiscount, appliedPromo }
             });
+            // Clean up Razorpay keys when modal is dismissed
+            cleanupRazorpayKeys();
           }
         },
         prefill: {
@@ -271,26 +271,37 @@ const Checkout = () => {
         },
         theme: { color: '#Ffa500' }
       };
-  
+
       const rzp = new window.Razorpay(options);
       rzp.on('payment.failed', function (response) {
-        // console.error('Payment failed:', response.error);
         setToastMessage({ message: `Payment failed: ${response.error.description}`, type: 'error' });
         setLoadingOrder(false);
+        // Clean up Razorpay keys on payment failure
+        cleanupRazorpayKeys();
       });
       rzp.on('payment.error', function (response) {
-        // console.error('Checkout error:', response.error);
         setToastMessage({ message: `Checkout error: ${response.error.description}`, type: 'error' });
         setLoadingOrder(false);
+        // Clean up Razorpay keys on payment error
+        cleanupRazorpayKeys();
       });
       rzp.open();
     } catch (error) {
-      // console.error('Online payment error:', error);
       setToastMessage({ message: 'Failed to initiate payment: ' + error.message, type: 'error' });
       setLoadingOrder(false);
+      // Clean up Razorpay keys on general error
+      const cleanupRazorpayKeys = () => {
+        Object.keys(localStorage).forEach((key) => {
+          if (key.startsWith('rzp_') || key.startsWith('sb-')) {
+            localStorage.removeItem(key);
+          }
+        });
+      };
+      cleanupRazorpayKeys();
     }
   };
-const completeOrder = async (paymentId = null, promoDetails = null ) => {
+
+  const completeOrder = async (paymentId = null, promoDetails = null) => {
     if (cartItems.length === 0) {
       setToastMessage({ message: 'Your cart is empty.', type: 'error' });
       return;
@@ -319,87 +330,82 @@ const completeOrder = async (paymentId = null, promoDetails = null ) => {
 
     const order_id = `ORDER_${Date.now()}`;
 
-  try {
-    const orderItems = cartItems.map((item, index) => ({
-      name: item.name,
-      sku: item.id || `SKU_${item.name.replace(/\s+/g, '_')}_${index}_${item.selectedSize || 'NOSIZE'}`,
-      units: item.quantity,
-      selling_price: item.price,
-      discount: 0,
-      tax: 0,
-      hsn: '1234',
-      selectedSize: item.selectedSize,
-    }));
+    try {
+      const orderItems = cartItems.map((item, index) => ({
+        name: item.name,
+        sku: item.id || `SKU_${item.name.replace(/\s+/g, '_')}_${index}_${item.selectedSize || 'NOSIZE'}`,
+        units: item.quantity,
+        selling_price: item.price,
+        discount: 0,
+        tax: 0,
+        hsn: '1234',
+        selectedSize: item.selectedSize,
+      }));
 
-    const totalWeight = cartItems.reduce((weight, item) => {
-      return weight + (0.35 * item.quantity);
-    }, 0);
+      const totalWeight = cartItems.reduce((weight, item) => {
+        return weight + (0.35 * item.quantity);
+      }, 0);
 
-    const shiprocketPayload = {
-      order_id,
-      order_date: new Date().toISOString().split('T')[0] + ' ' + new Date().toTimeString().split(' ')[0],
-      pickup_location: 'warehouse-1',
-      billing: {
-        customer_name: selectedAddress.name.split(' ')[0] || 'Customer',
-        last_name: selectedAddress.name.split(' ').slice(1).join(' ') || '',
-        address: selectedAddress.address,
-        city: selectedAddress.city,
-        pincode: selectedAddress.pincode,
-        state: 'Maharashtra',
-        country: 'India',
-        email: user.email || 'customer@example.com',
-        phone: selectedAddress.phone,
-      },
-      shipping: { is_billing: true },
-      items: orderItems,
-      sub_total: totalForDisplay,
-      // sub_total: totalWithShipping, TEMPORARY FOR SHIPPING DISCOUNT
-      dimensions: { length: 16, breadth: 12, height: 16, weight: totalWeight },
-      user_id: user.id,
-      shipping_charges: selectedShippingOption.rate,
-      cod_fee: codFee,
-      payment_method: paymentMethod === 'Cash on Delivery' ? 'COD' : 'Prepaid',
-      courier_id: selectedShippingOption.courier_company_id,
-    };
+      const shiprocketPayload = {
+        order_id,
+        order_date: new Date().toISOString().split('T')[0] + ' ' + new Date().toTimeString().split(' ')[0],
+        pickup_location: 'warehouse-1',
+        billing: {
+          customer_name: selectedAddress.name.split(' ')[0] || 'Customer',
+          last_name: selectedAddress.name.split(' ').slice(1).join(' ') || '',
+          address: selectedAddress.address,
+          city: selectedAddress.city,
+          pincode: selectedAddress.pincode,
+          state: 'Maharashtra',
+          country: 'India',
+          email: user.email || 'customer@example.com',
+          phone: selectedAddress.phone,
+        },
+        shipping: { is_billing: true },
+        items: orderItems,
+        sub_total: totalForDisplay,
+        dimensions: { length: 16, breadth: 12, height: 16, weight: totalWeight },
+        user_id: user.id,
+        shipping_charges: selectedShippingOption.rate,
+        cod_fee: codFee,
+        payment_method: paymentMethod === 'Cash on Delivery' ? 'COD' : 'Prepaid',
+        courier_id: selectedShippingOption.courier_company_id,
+      };
 
-    const shiprocketResponse = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/shiprocket/order`, shiprocketPayload, {
-      headers: { 'Content-Type': 'application/json' },
-    });
+      const shiprocketResponse = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/shiprocket/order`, shiprocketPayload, {
+        headers: { 'Content-Type': 'application/json' },
+      });
 
-    const dataForConfirmingPage = {
-      user_id: user.id,
-      order_id,
-      // total: totalWithShipping,//TEMPORARY FOR SHIPPING DISCOUNT
-      // total_amount: totalWithShipping,  //TEMPORARY FOR SHIPPING DISCOUNT
-      total: totalForDisplay,
-      total_amount: totalForDisplay,
-      discount: discount + pointsDiscount,
-      shipping_charges: selectedShippingOption.rate,
-      cod_fee: codFee,
-      items: orderItems,
-      status: 'placed',
-      shipping_name: selectedAddress.name,
-      shipping_phone: selectedAddress.phone,
-      shipping_address: selectedAddress.address,
-      shipping_city: selectedAddress.city,
-      shipping_pincode: selectedAddress.pincode,
-      shipping_details: shiprocketResponse.data.shiprocket_response || shiprocketResponse.data,
-      shipping_status: 'pending',
-      display_order_id: order_id,
-      courier_id: selectedShippingOption.courier_company_id,
-      courier_name: selectedShippingOption.courier_name,
-      estimated_delivery: selectedShippingOption.estimated_delivery_days,
-      payment_method: paymentMethod,
-      payment_id: paymentId,
-      promoDetails: promoDetails,
-    };
+      const dataForConfirmingPage = {
+        user_id: user.id,
+        order_id,
+        total: totalForDisplay,
+        total_amount: totalForDisplay,
+        discount: discount + pointsDiscount,
+        shipping_charges: selectedShippingOption.rate,
+        cod_fee: codFee,
+        items: orderItems,
+        status: 'placed',
+        shipping_name: selectedAddress.name,
+        shipping_phone: selectedAddress.phone,
+        shipping_address: selectedAddress.address,
+        shipping_city: selectedAddress.city,
+        shipping_pincode: selectedAddress.pincode,
+        shipping_details: shiprocketResponse.data.shiprocket_response || shiprocketResponse.data,
+        shipping_status: 'pending',
+        display_order_id: order_id,
+        courier_id: selectedShippingOption.courier_company_id,
+        courier_name: selectedShippingOption.courier_name,
+        estimated_delivery: selectedShippingOption.estimated_delivery_days,
+        payment_method: paymentMethod,
+        payment_id: paymentId,
+        promoDetails: promoDetails,
+      };
 
-    sessionStorage.setItem('pendingOrderData', JSON.stringify(dataForConfirmingPage));
-    window.location.href = '/confirming';
-    return true;
-  }
-  catch (error) {
-      // console.error('Shiprocket order creation or data prep error:', error);
+      sessionStorage.setItem('pendingOrderData', JSON.stringify(dataForConfirmingPage));
+      window.location.href = '/confirming';
+      return true;
+    } catch (error) {
       let errorMessage = 'Failed to process order with shipping partner';
       if (error.response) {
         errorMessage += `: ${error.response.status} - ${JSON.stringify(error.response.data?.message || error.response.data?.errors || error.response.data || error.response.statusText)}`;
@@ -410,103 +416,92 @@ const completeOrder = async (paymentId = null, promoDetails = null ) => {
       setLoadingOrder(false);
       return false;
     }
-};
+  };
+
   const handleConfirmOrder = async () => {
     if (!paymentMethod) {
       setToastMessage({ message: 'Please select a payment method.', type: 'error' });
       return;
     }
 
- if (location.state?.appliedPromo?.id) {
-  try {
-    const promoId = location.state.appliedPromo.id;
-    const userId = user?.id;
+    if (location.state?.appliedPromo?.id) {
+      try {
+        const promoId = location.state.appliedPromo.id;
+        const userId = user?.id;
 
-    if (!userId) {
-      // console.error('User ID is undefined. Cannot process promo code.', { user });
-      setToastMessage({ message: 'User ID is undefined. Cannot process promo code.', type: 'error' });
-      return;
-    }
+        if (!userId) {
+          setToastMessage({ message: 'User ID is undefined. Cannot process promo code.', type: 'error' });
+          return;
+        }
 
-    const { data: promoDetails, error: promoDetailsError } = await supabase
-      .from('promocodes')
-      .select('*')
-      .eq('id', promoId)
-      .single();
+        const { data: promoDetails, error: promoDetailsError } = await supabase
+          .from('promocodes')
+          .select('*')
+          .eq('id', promoId)
+          .single();
 
-    if (promoDetailsError) {
-      console.error('Error fetching promo details:', {
-        message: promoDetailsError.message,
-        code: promoDetailsError.code,
-        details: promoDetailsError.details
-      });
-      setToastMessage({ message: `Error fetching promo details: ${promoDetailsError.message}`, type: 'error' });
-      return;
-    }
+        if (promoDetailsError) {
+          setToastMessage({ message: `Error fetching promo details: ${promoDetailsError.message}`, type: 'error' });
+          return;
+        }
 
-    if (!promoDetails) {
-      // console.error('No promo details found for promo ID:', promoId);
-      setToastMessage({ message: 'No promo details found for this promo code.', type: 'error' });
-      return;
-    }
+        if (!promoDetails) {
+          setToastMessage({ message: 'No promo details found for this promo code.', type: 'error' });
+          return;
+        }
 
-    const usedCount = promoDetails.used;
-    const limitCount = promoDetails.limit;
+        const usedCount = promoDetails.used;
+        const limitCount = promoDetails.limit;
 
-    if (usedCount >= limitCount) {
-      setToastMessage({ message: 'This promo code has reached its usage limit.', type: 'error' });
-      navigate('/cart');
-      return;
-    }
+        if (usedCount >= limitCount) {
+          setToastMessage({ message: 'This promo code has reached its usage limit.', type: 'error' });
+          navigate('/cart');
+          return;
+        }
 
-    if (paymentMethod === 'Paid Online') {
-      await handleOnlinePayment(promoDetails);
-    } else {
-      setLoadingOrder(true);
-      await completeOrder(null, promoDetails); 
-    }
+        if (paymentMethod === 'Paid Online') {
+          await handleOnlinePayment(promoDetails);
+        } else {
+          setLoadingOrder(true);
+          await completeOrder(null, promoDetails); 
+        }
 
-    const { data: usageData, error: usageError } = await supabase
-            .from('promo_usage')
-            .select('usage_count')
-            .eq('user_id', user.id)
-            .eq('promo_code_id', promoDetails.id)
-            .single();
+        const { data: usageData, error: usageError } = await supabase
+          .from('promo_usage')
+          .select('usage_count')
+          .eq('user_id', user.id)
+          .eq('promo_code_id', promoDetails.id)
+          .single();
     
-          if (usageError && usageError.code !== 'PGRST116') { // PGRST116 means no rows found, which is fine
-            // console.error("Error fetching promo usage:", usageError);
-            
-          }
+        if (usageError && usageError.code !== 'PGRST116') {
+          // No error handling needed here as per original code
+        }
           
-          let usageCount = 0;
-          if (usageData) {
-            usageCount = usageData.usage_count;
-          }
+        let usageCount = 0;
+        if (usageData) {
+          usageCount = usageData.usage_count;
+        }
     
-          if (promoDetails.max_uses_per_user && usageCount >= promoDetails.max_uses_per_user) {
-            setToastMessage({ message: 'You have exceeded the maximum uses for this promo code.', type: 'error' });
-            return;
-          }
-    if (usageError) {
-      setToastMessage({ message: 'Error Occured: ', type: 'error' });
-      }
+        if (promoDetails.max_uses_per_user && usageCount >= promoDetails.max_uses_per_user) {
+          setToastMessage({ message: 'You have exceeded the maximum uses for this promo code.', type: 'error' });
+          return;
+        }
 
-  } catch (promoError) {
-    console.error('Error processing promo code:', {
-      message: promoError.message,
-      stack: promoError.stack
-    });
-    setToastMessage({ message: `Error processing promo code: ${promoError.message}`, type: 'error' });
-    setLoadingOrder(false);
-  }
-} else {
-  if (paymentMethod === 'Paid Online') {
-    await handleOnlinePayment(); 
-  } else {
-    setLoadingOrder(true);
-    await completeOrder(); 
-  }
-}
+        if (usageError) {
+          setToastMessage({ message: 'Error Occured: ', type: 'error' });
+        }
+      } catch (promoError) {
+        setToastMessage({ message: `Error processing promo code: ${promoError.message}`, type: 'error' });
+        setLoadingOrder(false);
+      }
+    } else {
+      if (paymentMethod === 'Paid Online') {
+        await handleOnlinePayment(); 
+      } else {
+        setLoadingOrder(true);
+        await completeOrder(); 
+      }
+    }
   };
 
   return (
@@ -514,7 +509,6 @@ const completeOrder = async (paymentId = null, promoDetails = null ) => {
       <Navbar showLogo={true} />
       <div style={styles.container}>
         <div style={styles.mainColumn}>
-        
           <h2 style={styles.columnHeading}>Checkout</h2>
 
           {user && (
@@ -636,7 +630,6 @@ const completeOrder = async (paymentId = null, promoDetails = null ) => {
             )}
           </div>
 
-
           <div style={styles.card}>
             <h3 style={styles.cardTitle}>Payment Method</h3>
             <div style={styles.paymentOptions}>
@@ -666,7 +659,8 @@ const completeOrder = async (paymentId = null, promoDetails = null ) => {
               </div>
             </div>
           </div>
- <div style={styles.card}>
+
+          <div style={styles.card}>
             <h3 style={styles.cardTitle}>Review Your Order</h3>
             {cartItems.map((item, idx) => (
               <div key={`${item.id}-${item.selectedSize}-${idx}`} style={styles.orderRow}>
@@ -702,7 +696,7 @@ const completeOrder = async (paymentId = null, promoDetails = null ) => {
                 <span>₹{selectedShippingOption.rate.toFixed(2)}</span>
               </div>
             )}
-            {shippingDiscount > 0 && (                                        //TEMPORARY FOR SHIPPING DISCOUNT next 5 lines
+            {shippingDiscount > 0 && (
               <div style={styles.totalRow}>
                 <span>Shipping Discount</span>
                 <span>-₹{shippingDiscount.toFixed(2)}</span>
@@ -716,11 +710,10 @@ const completeOrder = async (paymentId = null, promoDetails = null ) => {
             )}
             <div style={styles.totalRow}>
               <span style={{ fontWeight: '600', fontSize: '1.2rem' }}>Total</span>
-              {/* <span style={{ fontWeight: '600', fontSize: '1.2rem' }}>₹{totalWithShipping.toFixed(2)}</span>     // TEMPORARY COMMENTED FOR SHIPPING DISCOUNT */}
-              <span style={{ fontWeight: '600', fontSize: '1.2rem' }}>₹{totalForDisplay.toFixed(2)}</span>  
-
+              <span style={{ fontWeight: '600', fontSize: '1.2rem' }}>₹{totalForDisplay.toFixed(2)}</span>
             </div>
           </div>
+
           <button 
             onClick={handleConfirmOrder} 
             disabled={loadingOrder || !selectedAddressId || !selectedShippingOption || !paymentMethod} 
@@ -729,7 +722,6 @@ const completeOrder = async (paymentId = null, promoDetails = null ) => {
               opacity: (!selectedAddressId || !selectedShippingOption || !paymentMethod || loadingOrder) ? 0.6 : 1
             }}
           >
-            {/* {loadingOrder ? 'Confirming...' : `Confirm Order - ₹${totalWithShipping.toFixed(2)}`}   // //TEMPORARY COMMENTED FOR SHIPPING DISCOUNT */}
             {loadingOrder ? 'Confirming...' : `Confirm Order - ₹${totalForDisplay.toFixed(2)}`}
           </button>
           

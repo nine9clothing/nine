@@ -10,7 +10,7 @@ export const CartProvider = ({ children }) => {
   const [cartItems, setCartItems] = useState([]);
   const [isCartLoaded, setIsCartLoaded] = useState(false);
   const [syncError, setSyncError] = useState(null);
-  const [isAdmin, setIsAdmin] = useState(false); // New state for admin status
+  const [isAdmin, setIsAdmin] = useState(false); 
 
   const mergeCarts = (localCart, serverCart) => {
     const merged = [...serverCart];

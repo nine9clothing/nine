@@ -7,10 +7,17 @@ import Slider from 'react-slick';
 import { FaChevronLeft, FaChevronRight, FaHeart } from 'react-icons/fa';
 import ToastMessage from '../ToastMessage';
 import { useWishlist } from '../context/WishlistContext.jsx';
-import Footer from "../pages/Footer";      
+import Footer from "../pages/Footer";
+
+const generateSlug = (name) => {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-') 
+    .replace(/(^-|-$)/g, ''); 
+};
 
 const ProductDetail = () => {
-  const { id } = useParams();
+  const { id, productName } = useParams(); 
   const navigate = useNavigate();
   const { addToCart } = useContext(CartContext);
   const [product, setProduct] = useState(null);
@@ -50,16 +57,19 @@ const ProductDetail = () => {
         .single();
 
       if (error) {
-        // console.error('Error fetching product:', error.message);
         setToastMessage({ message: 'Error fetching product: ' + error.message, type: 'error' });
       } else {
         setProduct(data);
+        const slug = generateSlug(data.name);
+        if (productName !== slug) {
+          navigate(`/${slug}/${id}`, { replace: true });
+        }
       }
       setLoading(false);
     };
 
     fetchProduct();
-  }, [id]);
+  }, [id, productName, navigate]);
 
   const handleAddToCart = () => {
     if (!selectedSize) {
@@ -135,7 +145,6 @@ const ProductDetail = () => {
         });
 
       if (error) {
-        // console.error('Error saving notification request:', error.message);
         setToastMessage({ message: 'Error saving notification request: ' + error.message, type: 'error' });
       } else {
         setToastMessage({ message: `You will be notified when size ${notifySize} is available!`, type: 'success' });
@@ -143,7 +152,6 @@ const ProductDetail = () => {
         setNotifySize(null);
       }
     } catch (err) {
-      // console.error('Unexpected error:', err);
       setToastMessage({ message: 'Unexpected error occurred.', type: 'error' });
     }
   };
@@ -162,7 +170,7 @@ const ProductDetail = () => {
 
   if (loading) return (
     <div style={{ backgroundColor: 'black', color: 'white', height: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-      <p></p>
+      <p>Loading...</p>
     </div>
   );
   if (!product) {
@@ -173,7 +181,6 @@ const ProductDetail = () => {
   try {
     sizeStock = JSON.parse(product.size || '{}');
   } catch (error) {
-    // console.error('Error parsing size JSON:', error.message);
     sizeStock = {};
   }
 
@@ -200,85 +207,85 @@ const ProductDetail = () => {
       <Navbar showLogo={true} />
       <div style={isMobile ? styles.mobileContainer : styles.container}>
         <div style={isMobile ? styles.mobileContentWrapper : styles.contentWrapper}>
-      <div style={styles.imageWrapper}>
-  {user && (
-    <button
-      onClick={() => toggleWishlist(product.id)}
-      style={{
-        ...styles.wishlistButton,
-        ...(isMobile ? styles.mobileWishlistButton : {}),
-        color: isWished ? 'red' : 'white',
-        zIndex: 200,
-      }}
-      title={isWished ? 'Remove from wishlist' : 'Add to wishlist'}
-    >
-      <FaHeart />
-    </button>
-  )}
-  {media.length > 1 ? (
-    <Slider {...sliderSettings} ref={sliderRef} style={{ width: '100%', position: 'relative' }}>
-      {media.map((url, index) => {
-        const isImage = url.match(/\.(jpeg|jpg|png|gif|webp)$/i);
-        const isVideo = url.match(/\.(mp4|webm|ogg)$/i);
-
-        return (
-          <div key={index} style={{ position: 'relative' }}>
-            {isImage ? (
-              <img
-                src={url}
-                alt={`Product ${index}`}
-                style={isMobile ? styles.mobileProductImage : styles.productImage}
-              />
-            ) : isVideo ? (
-              <video
-                ref={(el) => (videoRefs.current[index] = el)}
-                muted
-                playsInline
-                controls
-                preload="metadata"
-                style={isMobile ? styles.mobileProductImage : styles.productImage}
+          <div style={styles.imageWrapper}>
+            {user && (
+              <button
+                onClick={() => toggleWishlist(product.id)}
+                style={{
+                  ...styles.wishlistButton,
+                  ...(isMobile ? styles.mobileWishlistButton : {}),
+                  color: isWished ? 'red' : 'white',
+                  zIndex: 200,
+                }}
+                title={isWished ? 'Remove from wishlist' : 'Add to wishlist'}
               >
-                <source src={url} />
-              </video>
-            ) : null}
+                <FaHeart />
+              </button>
+            )}
+            {media.length > 1 ? (
+              <Slider {...sliderSettings} ref={sliderRef} style={{ width: '100%', position: 'relative' }}>
+                {media.map((url, index) => {
+                  const isImage = url.match(/\.(jpeg|jpg|png|gif|webp)$/i);
+                  const isVideo = url.match(/\.(mp4|webm|ogg)$/i);
+
+                  return (
+                    <div key={index} style={{ position: 'relative' }}>
+                      {isImage ? (
+                        <img
+                          src={url}
+                          alt={`Product ${index}`}
+                          style={isMobile ? styles.mobileProductImage : styles.productImage}
+                        />
+                      ) : isVideo ? (
+                        <video
+                          ref={(el) => (videoRefs.current[index] = el)}
+                          muted
+                          playsInline
+                          controls
+                          preload="metadata"
+                          style={isMobile ? styles.mobileProductImage : styles.productImage}
+                        >
+                          <source src={url} />
+                        </video>
+                      ) : null}
+                    </div>
+                  );
+                })}
+              </Slider>
+            ) : media.length === 1 ? (
+              <div style={{ position: 'relative' }}>
+                {media[0].match(/\.(jpeg|jpg|png|gif|webp)$/i) ? (
+                  <img
+                    src={media[0]}
+                    alt="Product"
+                    style={isMobile ? styles.mobileProductImage : styles.productImage}
+                  />
+                ) : media[0].match(/\.(mp4|webm|ogg)$/i) ? (
+                  <video
+                    muted
+                    playsInline
+                    controls
+                    preload="metadata"
+                    style={isMobile ? styles.mobileProductImage : styles.productImage}
+                  >
+                    <source src={media[0]} />
+                  </video>
+                ) : null}
+              </div>
+            ) : (
+              <div
+                style={{
+                  ...styles.productImage,
+                  background: '#333',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <span style={{ color: '#fff' }}>No media available</span>
+              </div>
+            )}
           </div>
-        );
-      })}
-    </Slider>
-  ) : media.length === 1 ? (
-    <div style={{ position: 'relative' }}>
-      {media[0].match(/\.(jpeg|jpg|png|gif|webp)$/i) ? (
-        <img
-          src={media[0]}
-          alt="Product"
-          style={isMobile ? styles.mobileProductImage : styles.productImage}
-        />
-      ) : media[0].match(/\.(mp4|webm|ogg)$/i) ? (
-        <video
-          muted
-          playsInline
-          controls
-          preload="metadata"
-          style={isMobile ? styles.mobileProductImage : styles.productImage}
-        >
-          <source src={media[0]} />
-        </video>
-      ) : null}
-    </div>
-  ) : (
-    <div
-      style={{
-        ...styles.productImage,
-        background: '#333',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}
-    >
-      <span style={{ color: '#fff' }}>No media available</span>
-    </div>
-  )}
-</div>
           <div style={styles.detailsWrapper}>
             <h2 style={isMobile ? styles.mobileName : styles.name}>{product.name}</h2>
             <p style={isMobile ? styles.mobileDetail : styles.detail}><strong>Price:</strong> ₹{product.price}</p>
@@ -1000,6 +1007,3 @@ const styles = {
 };
 
 export default ProductDetail;
-
-
-
