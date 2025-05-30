@@ -18,7 +18,29 @@ const appContent =
       <App />
     </WishlistProvider>
   );
+// pages/_app.js
+import { useEffect } from 'react';
 
+export default function App({ Component, pageProps }) {
+  useEffect(() => {
+    // Suppress specific Supabase errors
+    const originalError = console.error;
+    console.error = (...args) => {
+      const message = args.join(' ');
+      if (message.includes('406') && message.includes('supabase.co')) {
+        return; // Don't log this error
+      }
+      originalError.apply(console, args);
+    };
+    
+    // Cleanup on unmount
+    return () => {
+      console.error = originalError;
+    };
+  }, []);
+
+  return <Component {...pageProps} />;
+}
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <CartProvider>
