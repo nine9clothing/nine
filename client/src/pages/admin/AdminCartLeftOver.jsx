@@ -14,7 +14,6 @@ const AdminCartData = () => {
     setToast(null);
 
     try {
-      // Fetch cart data
       const { data: cartDataResult, error: cartError } = await supabase
         .from('cart_data')
         .select('*')
@@ -23,16 +22,14 @@ const AdminCartData = () => {
 
       if (cartError) throw cartError;
 
-      // Fetch registered details for all user_ids
       const userIds = cartDataResult.map(item => item.user_id);
       const { data: regData, error: regError } = await supabase
         .from('registered_details')
-        .select('id, email, full_name')
+        .select('id, email, full_name ,phone')
         .in('id', userIds);
 
       if (regError) throw regError;
 
-      // Combine the data
       const combinedData = cartDataResult.map(cartItem => ({
         ...cartItem,
         registered_details: regData.find(reg => reg.id === cartItem.user_id) || {}
@@ -161,6 +158,16 @@ const AdminCartData = () => {
                   color: '#495057',
                   textTransform: 'uppercase',
                   fontSize: '0.85em'
+                }}>Phone</th>
+                <th style={{
+                  backgroundColor: '#f8f9fa',
+                  border: '1px solid #dee2e6',
+                  padding: '12px 15px',
+                  textAlign: 'left',
+                  fontWeight: '600',
+                  color: '#495057',
+                  textTransform: 'uppercase',
+                  fontSize: '0.85em'
                 }}>Cart Items</th>
                 <th style={{
                   backgroundColor: '#f8f9fa',
@@ -216,6 +223,15 @@ const AdminCartData = () => {
                   }}>
                     {item.registered_details?.email || 'N/A'}
                   </td>
+                  <td style={{
+                      border: '1px solid #dee2e6',
+                      padding: '12px 15px',
+                      verticalAlign: 'top',
+                      fontSize: '0.95em',
+                      color: '#333'
+                    }}>
+                      {item.registered_details?.phone || 'N/A'}
+                    </td>
                   <td style={{
                     border: '1px solid #dee2e6',
                     padding: '12px 15px',
