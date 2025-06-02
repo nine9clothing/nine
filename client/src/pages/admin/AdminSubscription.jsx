@@ -23,7 +23,6 @@ const NewsletterSubscriptions = () => {
       setSubscribers(data || []);
 
     } catch (err) {
-      console.error("Error fetching subscribers:", err);
       setToast({ message: err.message || 'Failed to fetch subscribers.', type: 'error' });
     } finally {
       setLoading(false);
@@ -59,7 +58,6 @@ const NewsletterSubscriptions = () => {
       setToast({ message: 'Subscriber deleted successfully!', type: 'success' });
 
     } catch (err) {
-      console.error("Error deleting subscriber:", err);
       setToast({ message: err.message || 'Failed to delete subscriber.', type: 'error' });
     } finally {
       setIsDeleting(false); 

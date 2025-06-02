@@ -4,11 +4,13 @@ import ToastMessage from '../../ToastMessage';
 
 const ViewPromoCodes = () => {
   const [promoCodes, setPromoCodes] = useState([]);
+  const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState(null);
   const [confirmingDeleteId, setConfirmingDeleteId] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [updatingDisplayId, setUpdatingDisplayId] = useState(null); 
+  const [updatingDisplayId, setUpdatingDisplayId] = useState(null);
+  const [updatingProductId, setUpdatingProductId] = useState(null);
 
   const fetchPromoCodes = async () => {
     setLoading(true);
@@ -17,21 +19,35 @@ const ViewPromoCodes = () => {
     try {
       const { data, error } = await supabase
         .from('promocodes')
-        .select('*') 
+        .select('*, products(name)')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
       setPromoCodes(data || []);
     } catch (err) {
-      // console.error('Error fetching promo codes:', err);
       setToast({ message: err.message || 'Failed to fetch promo codes.', type: 'error' });
     } finally {
       setLoading(false);
     }
   };
 
+  const fetchProducts = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('products')
+        .select('id, name')
+        .order('name', { ascending: true });
+      
+      if (error) throw error;
+      setProducts(data || []);
+    } catch (err) {
+      setToast({ message: err.message || 'Failed to fetch products.', type: 'error' });
+    }
+  };
+
   useEffect(() => {
     fetchPromoCodes();
+    fetchProducts();
   }, []);
 
   const handleDeleteClick = (promoId) => {
@@ -63,7 +79,6 @@ const ViewPromoCodes = () => {
       setPromoCodes((prev) => prev.filter((promo) => promo.id !== confirmingDeleteId));
       setToast({ message: 'Promo code deleted successfully!', type: 'success' });
     } catch (err) {
-      // console.error('Error deleting promo code:', err);
       setToast({
         message: err.message || 'Failed to delete promo code. Please ensure no usage records exist or adjust the foreign key constraint.',
         type: 'error',
@@ -74,40 +89,60 @@ const ViewPromoCodes = () => {
     }
   };
 
-  // Handle cancel deletion
   const handleCancelDelete = () => {
     setConfirmingDeleteId(null);
   };
 
-  // Handle display toggle
   const handleToggleDisplay = async (promoId, currentDisplayStatus) => {
     setUpdatingDisplayId(promoId);
     setToast(null);
     const newDisplayStatus = !currentDisplayStatus;
 
     try {
-        const { error } = await supabase
-            .from('promocodes')
-            .update({ display: newDisplayStatus })
-            .eq('id', promoId);
+      const { error } = await supabase
+        .from('promocodes')
+        .update({ display: newDisplayStatus })
+        .eq('id', promoId);
 
-        if (error) throw error;
+      if (error) throw error;
 
-        setPromoCodes(prevCodes =>
-            prevCodes.map(p =>
-                p.id === promoId ? { ...p, display: newDisplayStatus } : p
-            )
-        );
-        setToast({ message: `Promo code display set to ${newDisplayStatus}.`, type: 'success' });
-
+      setPromoCodes(prevCodes =>
+        prevCodes.map(p =>
+          p.id === promoId ? { ...p, display: newDisplayStatus } : p
+        )
+      );
+      setToast({ message: `Promo code display set to ${newDisplayStatus}.`, type: 'success' });
     } catch (err) {
-        // console.error('Error updating display status:', err);
-        setToast({ message: err.message || 'Failed to update display status.', type: 'error' });
+      setToast({ message: err.message || 'Failed to update display status.', type: 'error' });
     } finally {
-        setUpdatingDisplayId(null);
+      setUpdatingDisplayId(null);
     }
   };
 
+  const handleProductChange = async (promoId, newProductId) => {
+    setUpdatingProductId(promoId);
+    setToast(null);
+
+    try {
+      const { error } = await supabase
+        .from('promocodes')
+        .update({ product_id: newProductId || null })
+        .eq('id', promoId);
+
+      if (error) throw error;
+
+      setPromoCodes(prevCodes =>
+        prevCodes.map(p =>
+          p.id === promoId ? { ...p, product_id: newProductId, products: products.find(prod => prod.id === newProductId) || null } : p
+        )
+      );
+      setToast({ message: 'Product updated successfully!', type: 'success' });
+    } catch (err) {
+      setToast({ message: err.message || 'Failed to update product.', type: 'error' });
+    } finally {
+      setUpdatingProductId(null);
+    }
+  };
 
   return (
     <div style={{ padding: '20px' }}>
@@ -134,6 +169,7 @@ const ViewPromoCodes = () => {
                 <th style={tableHeaderStyle}>Limit</th>
                 <th style={tableHeaderStyle}>Used</th>
                 <th style={tableHeaderStyle}>Remaining</th>
+                <th style={tableHeaderStyle}>Product</th>
                 <th style={tableHeaderStyle}>Display</th>
                 <th style={tableHeaderStyle}>Actions</th>
               </tr>
@@ -142,6 +178,7 @@ const ViewPromoCodes = () => {
               {promoCodes.map((promo) => {
                 const remainingUses = (promo.limit || 0) - (promo.used || 0);
                 const isCurrentlyUpdatingDisplay = updatingDisplayId === promo.id;
+                const isCurrentlyUpdatingProduct = updatingProductId === promo.id;
                 const isSomeActionInProgress = loading || isDeleting || confirmingDeleteId !== null;
 
                 return (
@@ -155,23 +192,38 @@ const ViewPromoCodes = () => {
                     <td style={tableCellStyle}>{promo.used !== null ? promo.used : 'N/A'}</td>
                     <td style={tableCellStyle}>{remainingUses >= 0 ? remainingUses : 'N/A'}</td>
                     <td style={tableCellStyle}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <button
-                                onClick={() => handleToggleDisplay(promo.id, promo.display)}
-                                style={{
-                                    ...smallButtonStyle,
-                                    backgroundColor: isCurrentlyUpdatingDisplay ? '#ccc' : (promo.display ? '#ffc107' : '#28a745'),
-                                    minWidth: '100px', // Ensure consistent width
-                                }}
-                                disabled={isSomeActionInProgress || isCurrentlyUpdatingDisplay}
-                            >
-                                {isCurrentlyUpdatingDisplay ? (
-                                    <div style={spinnerContainer}>
-                                        <div style={{ ...spinner, borderTop: '2px solid #333' }}></div>
-                                    </div>
-                                ) : (promo.display ? "Don't Display" : "Display")}
-                            </button>
-                        </div>
+                      <select
+                        value={promo.product_id || ''}
+                        onChange={(e) => handleProductChange(promo.id, e.target.value)}
+                        style={{ ...inputStyle, padding: '6px' }}
+                        disabled={isSomeActionInProgress || isCurrentlyUpdatingDisplay || isCurrentlyUpdatingProduct}
+                      >
+                        <option value="">No product</option>
+                        {products.map((product) => (
+                          <option key={product.id} value={product.id}>
+                            {product.name}
+                          </option>
+                        ))}
+                      </select>
+                    </td>
+                    <td style={tableCellStyle}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <button
+                          onClick={() => handleToggleDisplay(promo.id, promo.display)}
+                          style={{
+                            ...smallButtonStyle,
+                            backgroundColor: isCurrentlyUpdatingDisplay ? '#ccc' : (promo.display ? '#ffc107' : '#28a745'),
+                            minWidth: '100px',
+                          }}
+                          disabled={isSomeActionInProgress || isCurrentlyUpdatingDisplay || isCurrentlyUpdatingProduct}
+                        >
+                          {isCurrentlyUpdatingDisplay ? (
+                            <div style={spinnerContainer}>
+                              <div style={{ ...spinner, borderTop: '2px solid #333' }}></div>
+                            </div>
+                          ) : (promo.display ? "Don't Display" : "Display")}
+                        </button>
+                      </div>
                     </td>
                     <td style={tableCellStyle}>
                       <button
@@ -179,9 +231,9 @@ const ViewPromoCodes = () => {
                         style={{
                           ...smallButtonStyle,
                           backgroundColor: '#dc3545',
-                          opacity: (isSomeActionInProgress && confirmingDeleteId !== promo.id) || isCurrentlyUpdatingDisplay ? 0.7 : 1,
+                          opacity: (isSomeActionInProgress && confirmingDeleteId !== promo.id) || isCurrentlyUpdatingDisplay || isCurrentlyUpdatingProduct ? 0.7 : 1,
                         }}
-                        disabled={isSomeActionInProgress || isCurrentlyUpdatingDisplay || confirmingDeleteId === promo.id}
+                        disabled={isSomeActionInProgress || isCurrentlyUpdatingDisplay || isCurrentlyUpdatingProduct || confirmingDeleteId === promo.id}
                       >
                         Delete
                       </button>
@@ -238,7 +290,6 @@ const ViewPromoCodes = () => {
   );
 };
 
-// Table styles
 const tableStyle = {
   width: '100%',
   borderCollapse: 'collapse',
@@ -262,13 +313,12 @@ const tableHeaderStyle = {
 const tableCellStyle = {
   border: '1px solid #ddd',
   padding: '12px 15px',
-  verticalAlign: 'middle', // Changed to middle for better alignment with buttons
+  verticalAlign: 'middle',
   fontSize: '0.95em',
   color: '#333',
 };
 
-// Button style
-const buttonStyle = { // General modal button style
+const buttonStyle = {
   padding: '10px 15px',
   backgroundColor: '#000',
   color: '#fff',
@@ -285,22 +335,20 @@ const buttonStyle = { // General modal button style
   minWidth: '120px',
 };
 
-const smallButtonStyle = { // For action buttons in table rows
-    padding: '6px 12px',
-    color: 'white',
-    border: 'none',
-    borderRadius: '6px',
-    cursor: 'pointer',
-    fontSize: '0.9em',
-    opacity: 1,
-    transition: 'opacity 0.2s ease, background-color 0.2s ease',
-    display: 'inline-flex', // Changed for better spinner alignment
-    alignItems: 'center',
-    justifyContent: 'center',
+const smallButtonStyle = {
+  padding: '6px 12px',
+  color: 'white',
+  border: 'none',
+  borderRadius: '6px',
+  cursor: 'pointer',
+  fontSize: '0.9em',
+  opacity: 1,
+  transition: 'opacity 0.2s ease, background-color 0.2s ease',
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
 };
 
-
-// Modal styles
 const modalOverlay = {
   position: 'fixed',
   top: 0,
@@ -338,25 +386,33 @@ const modalButtonContainer = {
   gap: '15px',
 };
 
-// Loading spinner styles
+const inputStyle = {
+  width: '100%',
+  padding: '10px',
+  marginBottom: '10px',
+  borderRadius: '6px',
+  border: '1px solid #ccc',
+  fontSize: '1rem',
+  boxSizing: 'border-box',
+};
+
 const spinnerContainer = {
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
-  width: '100%', // Ensure spinner container takes full width of button
-  height: '100%', // Ensure spinner container takes full height of button
+  width: '100%',
+  height: '100%',
 };
 
 const spinner = {
   border: '2px solid rgba(255, 255, 255, 0.3)',
   borderRadius: '50%',
-  borderTop: '2px solid #ffffff', // Default white spinner for dark buttons
+  borderTop: '2px solid #ffffff',
   width: '16px',
   height: '16px',
   animation: 'spin 1s linear infinite',
 };
 
-// Add spinner keyframes (ensure it's only added once)
 if (typeof window !== 'undefined') {
   if (!document.getElementById('spinner-keyframes-style')) {
     const spinnerKeyframes = `

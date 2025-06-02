@@ -13,7 +13,6 @@ export const AuthProvider = ({ children }) => {
       try {
         setUser(JSON.parse(persistedUser));
       } catch (e) {
-        console.error('Error parsing persisted user:', e);
         localStorage.removeItem('user');
       } finally {
         setLoading(false);
@@ -24,7 +23,6 @@ export const AuthProvider = ({ children }) => {
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
         if (error) {
-          console.error('Session fetch error:', error.message);
         }
 
         if (session?.user) {
@@ -32,14 +30,12 @@ export const AuthProvider = ({ children }) => {
           try {
             localStorage.setItem('user', JSON.stringify(session.user));
           } catch (e) {
-            console.error('Local storage unavailable:', e);
           }
         } else {
           setUser(null);
           localStorage.removeItem('user');
         }
       } catch (err) {
-        console.error('Unexpected session error:', err.message);
       } finally {
         setLoading(false);
       }
@@ -48,13 +44,11 @@ export const AuthProvider = ({ children }) => {
     checkSession();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      // console.log('Auth state changed:', session ? 'User logged in' : 'User logged out', session?.user);
       if (session?.user) {
         setUser(session.user);
         try {
           localStorage.setItem('user', JSON.stringify(session.user));
         } catch (e) {
-          console.error('Local storage unavailable:', e);
         }
       } else {
         setUser(null);
@@ -73,7 +67,6 @@ export const AuthProvider = ({ children }) => {
       localStorage.removeItem('user');
       localStorage.removeItem('cart'); 
     } catch (err) {
-      console.error('Sign out error:', err.message);
     }
   };
 

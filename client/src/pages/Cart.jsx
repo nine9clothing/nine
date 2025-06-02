@@ -23,7 +23,6 @@ const CartCheckout = () => {
   const navigate = useNavigate();
   const subtotal = cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
   const totalAfterDiscount = subtotal - (discount + pointsDiscount);
-
   const hasOutOfStockItems = Object.values(stockStatus).some(status => status === true);
 
   useEffect(() => {
@@ -37,16 +36,20 @@ const CartCheckout = () => {
     const getPoints = async () => {
       if (user) {
         try {
-          const { data: userData, error: userError } = await supabase
-            .from('registered_details')
-            .select('loyalty_points')
-            .eq('id', user.id)
-            .single();
+          const { data: redemptionsData, error: redemptionsError } = await supabase
+            .from('point_redemptions')
+            .select('points_received, points_redeemed')
+            .eq('user_id', user.id)
+            .or(`created_at.lt.${new Date().toISOString()}`)
+            .or(`expiry_date.is.null,expiry_date.gt.${new Date().toISOString()}`);
+          
+          if (redemptionsError) throw new Error(`Failed to fetch points data: ${redemptionsError.message}`);
 
-          if (userError) throw new Error(`Failed to fetch loyalty points: ${userError.message}`);
-          if (!userData || userData.loyalty_points == null) throw new Error('No loyalty points data found for user.');
+          const totalPointsReceived = redemptionsData.reduce((sum, redemption) => sum + (redemption.points_received || 0), 0);
+          const totalPointsRedeemed = redemptionsData.reduce((sum, redemption) => sum + (redemption.points_redeemed || 0), 0);
+          const calculatedPoints = Math.max(0, totalPointsReceived - totalPointsRedeemed);
 
-          setPoints(userData.loyalty_points);
+          setPoints(calculatedPoints);
         } catch (error) {
           setToastMessage({ message: 'Failed to load points data.', type: 'error' });
         }
@@ -109,7 +112,6 @@ const CartCheckout = () => {
                   isOutOfStock = false;
                 }
               } catch (e) {
-                // console.error(`Error parsing size data for product ${item.id}:`, e);
                 isOutOfStock = true;
               }
             }
@@ -183,6 +185,9 @@ const CartCheckout = () => {
     clearCart();
     setToastMessage({ message: 'Cart cleared!', type: 'success' });
     setConfirmClear(false);
+    setDiscount(0);
+    setAppliedPromo(null);
+    setPromoCode('');
   };
 
   const handleApplyPromoCode = async () => {
@@ -199,7 +204,7 @@ const CartCheckout = () => {
     try {
       const { data: promo, error } = await supabase
         .from('promocodes')
-        .select('*')
+        .select('id, code, discount, used, limit, max_uses_per_user, product_id')
         .eq('code', promoCode.toUpperCase())
         .single();
 
@@ -210,7 +215,7 @@ const CartCheckout = () => {
         return;
       }
 
-      const usedCount = promo.used;
+      const usedCount = promo.used || 0;
       const limitCount = promo.limit;
 
       if (usedCount >= limitCount) {
@@ -228,7 +233,10 @@ const CartCheckout = () => {
         .single();
 
       if (usageError && usageError.code !== 'PGRST116') {
-        // console.error("Error fetching promo usage:", usageError);
+        setToastMessage({ message: 'Error checking promo usage.', type: 'error' });
+        setDiscount(0);
+        setAppliedPromo(null);
+        return;
       }
 
       let usageCount = 0;
@@ -243,10 +251,26 @@ const CartCheckout = () => {
         return;
       }
 
-      const discountAmount = (subtotal * promo.discount) / 100;
-      setDiscount(discountAmount);
-      setAppliedPromo(promo);
-      setToastMessage({ message: `Promo code applied! ${promo.discount}% off.`, type: 'success' });
+      if (promo.product_id) {
+        const matchingItem = cartItems.find(item => item.id === promo.product_id);
+        if (!matchingItem) {
+          setToastMessage({ message: 'This promo code is only valid for a specific product not in your cart.', type: 'error' });
+          setDiscount(0);
+          setAppliedPromo(null);
+          return;
+        }
+
+        const productTotal = matchingItem.price * matchingItem.quantity;
+        const discountAmount = (productTotal * promo.discount) / 100;
+        setDiscount(discountAmount);
+        setAppliedPromo(promo);
+        setToastMessage({ message: `Promo code applied! ${promo.discount}% off on ${matchingItem.name}.`, type: 'success' });
+      } else {
+        const discountAmount = (subtotal * promo.discount) / 100;
+        setDiscount(discountAmount);
+        setAppliedPromo(promo);
+        setToastMessage({ message: `Promo code applied! ${promo.discount}% off.`, type: 'success' });
+      }
     } catch (error) {
       setToastMessage({ message: 'Error applying promo code. Please try again.', type: 'error' });
       setDiscount(0);
@@ -281,7 +305,6 @@ const CartCheckout = () => {
     });
   };
 
-  // Don't render cart content if user is not logged in or auth is still loading
   if (authLoading || !user) {
     return (
       <div style={styles.pageWrapper}>
@@ -349,7 +372,14 @@ const CartCheckout = () => {
                         disabled={isOutOfStock}
                       />
                     </div>
-                    <p style={styles.itemPrice}>₹{item.price * item.quantity}</p>
+                    <p style={styles.itemPrice}>
+                      ₹{item.price * item.quantity}
+                      {appliedPromo?.product_id === item.id && discount > 0 && (
+                        <span style={{ color: '#Ffa500', marginLeft: '8px',fontSize: '15px' , display: 'block'}}>
+                          ( -₹{discount.toFixed(2)})
+                        </span>
+                      )}
+                    </p>
                   </div>
                   <button onClick={() => handleRemoveItem(item.id, item.selectedSize)} style={styles.removeBtn}>
                     Remove
@@ -381,6 +411,9 @@ const CartCheckout = () => {
                   <span style={styles.orderItemName}>{item.name}</span>
                   <span style={styles.orderItemMeta}>
                     Size: {item.selectedSize} | Qty: {item.quantity} | Price: ₹{item.price * item.quantity}
+                    {appliedPromo?.product_id === item.id && discount > 0 && (
+                      <span style={{ color: '#Ffa500' }}> (-₹{discount.toFixed(2)})</span>
+                    )}
                     {isOutOfStock && (
                       <span style={styles.outOfStockText}> (Out of Stock)</span>
                     )}

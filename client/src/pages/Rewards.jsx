@@ -35,12 +35,12 @@ const Rewards = () => {
         },
         {
             title: "Earning Points",
-            content: "Customers will earn 10 loyalty points for every ₹100 spent on qualifying purchases. Points are awarded based on the final billed amount after discounts and after taxes (coupon discounts not included).",
+            content: "Points are awarded as per customer service credits or other promotions. Check your transaction history for details.",
             icon: faCoins
         },
         {
             title: "Redeeming Points",
-            content: "5 loyalty points are equivalent to ₹1 when redeemed. Points can be redeemed for discounts on future purchases. A maximum of ₹99 worth of points can be redeemed per purchase. Points cannot be exchanged for cash.",
+            content: "5 loyalty points are equivalent to ₹1 when redeemed. Points can be redeemed for discounts on future purchases.",
             icon: faExchangeAlt
         },
         {
@@ -55,7 +55,7 @@ const Rewards = () => {
         },
         {
             title: "Account Adjustments",
-            content: "Points will be added to account after 15 days of purchase (if any exchange the time may vary).",
+            content: "Points adjustments may be made by customer service as needed.",
             icon: faAdjust
         },
         {
@@ -86,10 +86,6 @@ const Rewards = () => {
         setShowTransactions(prev => !prev);
     };
 
-    const calculatePoints = (netAmount) => {
-        return Math.max(0, Math.floor(netAmount / 100) * 10);
-    };
-
     useEffect(() => {
         const fetchUserAndPoints = async () => {
             try {
@@ -101,113 +97,63 @@ const Rewards = () => {
                 }
                 setUser(user);
 
-                const { data: ordersData, error: ordersError } = await supabase
-                    .from('orders')
-                    .select('display_order_id, total_amount, shipping_charges, cod_fee, created_at')
-                    .eq('user_id', user.id);
-
-                if (ordersError) throw ordersError;
-
-                const ordersWithPoints = ordersData.map(order => {
-                    const totalAmount = order.total_amount != null ? order.total_amount : 0;
-                    const shippingCharges = order.shipping_charges != null ? order.shipping_charges : 0;
-                    const codFee = order.cod_fee != null ? order.cod_fee : 0; // Handle cod_fee
-                    const netAmount = totalAmount - shippingCharges - codFee; // Subtract cod_fee
-                    const orderDate = new Date(order.created_at);
-                    const currentDate = new Date();
-                    const daysSinceOrder = (currentDate - orderDate) / (1000 * 60 * 60 * 24);
-                    const points = daysSinceOrder >= 15 ? calculatePoints(netAmount) : 0;
-                    return {
-                        type: 'order',
-                        id: order.display_order_id,
-                        netAmount: netAmount,
-                        points: points,
-                        date: order.created_at,
-                        discount: 0
-                    };
-                });
-
-                const uniqueOrders = Object.values(
-                    ordersWithPoints.reduce((acc, order) => {
-                        if (order.netAmount > 0 && (!acc[order.id] || order.netAmount > acc[order.id].netAmount)) {
-                            acc[order.id] = order;
-                        }
-                        return acc;
-                    }, {})
-                );
-
                 const { data: redemptionsData, error: redemptionsError } = await supabase
                     .from('point_redemptions')
-                    .select('points_redeemed, discount_amount, created_at')
-                    .eq('user_id', user.id);
+                    .select('id, points_received, amount_received, points_redeemed, amount_redeemed, created_at, expiry_date, description')
+                    .eq('user_id', user.id)
+                    .or(`created_at.lt.${new Date().toISOString()}`);
+                    
 
                 if (redemptionsError) throw redemptionsError;
 
-                const redemptions = redemptionsData.map(redemption => ({
-                    type: 'redemption',
-                    id: null,
-                    netAmount: 0,
-                    points: -redemption.points_redeemed,
-                    date: redemption.created_at,
-                    discount: redemption.discount_amount
-                }));
-
-                const { data: userData, error: userError } = await supabase
-                    .from('registered_details')
-                    .select('birthday')
-                    .eq('id', user.id)
-                    .single();
-
-                if (userError) throw userError;
-
-                let birthdayPoints = 0;
                 const today = new Date();
-                const todayMonthDay = `${today.getMonth() + 1}-${today.getDate()}`; 
-                const birthday = userData?.birthday ? new Date(userData.birthday) : null;
-                const birthdayMonthDay = birthday ? `${birthday.getMonth() + 1}-${birthday.getDate()}` : null;
+                let totalPointsReceived = 0;
+                let totalPointsRedeemed = 0;
+                let totalAmountReceived = 0;
+                let totalAmountRedeemed = 0;
+                const allActivities = [];
 
-                if (birthdayMonthDay && todayMonthDay === birthdayMonthDay) {
-                    birthdayPoints = 50;
-                    const birthdayActivity = {
-                        type: 'birthday',
-                        id: null,
-                        netAmount: 0,
-                        points: 50,
-                        date: today.toISOString(),
-                        discount: 0
-                    };
-                    const hasBirthdayActivity = uniqueOrders.some(
-                        act => act.type === 'birthday' && new Date(act.date).toDateString() === today.toDateString()
-                    );
-                    if (!hasBirthdayActivity) {
-                        uniqueOrders.push(birthdayActivity);
+                redemptionsData.forEach(redemption => {
+                    const pointsReceived = redemption.points_received || 0;
+                    const pointsRedeemed = redemption.points_redeemed || 0;
+                    const amountReceived = redemption.amount_received || 0;
+                    const amountRedeemed = redemption.amount_redeemed || 0;
+                    const expiryDate = redemption.expiry_date ? new Date(redemption.expiry_date) : null;
+
+                    allActivities.push({
+                        type: redemption.description || 'Customer Service Credit',
+                        id: redemption.id,
+                        netAmount: amountReceived,
+                        points: pointsReceived - pointsRedeemed,
+                        date: redemption.created_at,
+                        discount: amountRedeemed,
+                        expiry_date: redemption.expiry_date
+                    });
+
+                    if (expiryDate && expiryDate < today && pointsReceived > 0) {
+                        allActivities.push({
+                            type: `${redemption.description || 'Customer Service Credit'} (Expired)`,
+                            id: `${redemption.id}-expired`,
+                            netAmount: -(pointsReceived / 5), 
+                            points: -pointsReceived,
+                            date: expiryDate.toISOString(),
+                            discount: 0,
+                            expiry_date: null 
+                        });
+                    } else {
+                        totalPointsReceived += pointsReceived;
+                        totalPointsRedeemed += pointsRedeemed;
+                        totalAmountReceived += amountReceived;
+                        totalAmountRedeemed += amountRedeemed;
                     }
-                }
-
-                const allActivities = [...uniqueOrders, ...redemptions].sort((a, b) => {
-                    return new Date(b.date) - new Date(a.date);
                 });
 
-                const totalEarnedPoints = uniqueOrders.reduce((sum, order) => sum + order.points, 0);
-                const totalRedeemedPoints = redemptions.reduce((sum, redemption) => sum + Math.abs(redemption.points), 0);
-                const netPoints = totalEarnedPoints - totalRedeemedPoints + birthdayPoints;
-
-                // Update loyalty_points in registered_details table
-                const { error: updateError } = await supabase
-                    .from('registered_details')
-                    .update({ loyalty_points: netPoints })
-                    .eq('id', user.id);
-
-                if (updateError) {
-                    throw new Error(`Failed to update loyalty points: ${updateError.message}`);
-                }
-
-                setActivities(allActivities);
-                setPoints(netPoints);
+                const calculatedPoints = Math.max(0, totalPointsReceived - totalPointsRedeemed);
+                setPoints(calculatedPoints);
+                setActivities(allActivities.sort((a, b) => new Date(b.date) - new Date(a.date)));
             } catch (error) {
-                // console.error('Error fetching user, orders, or updating points:', error.message);
                 setToastMessage({
-                    message: 'Failed to load or update rewards. Please try again.',
+                    message: 'Failed to load rewards. Please try again.',
                     type: 'error'
                 });
             } finally {
@@ -403,7 +349,7 @@ const Rewards = () => {
                                 textTransform: 'uppercase',
                                 textAlign: 'center'
                             }}>Transaction History</h3>
-                            {activities.length === 0 || activities.every(activity => activity.points <= 0) ? (
+                            {activities.length === 0 ? (
                                 <p style={{
                                     fontSize: '0.9rem',
                                     fontFamily: "'Louvette Semi Bold', sans-serif",
@@ -414,7 +360,7 @@ const Rewards = () => {
                                     borderRadius: '8px',
                                     margin: '10px 0'
                                 }}>
-                                    No activity found. <a href="/sort" style={{ color: '#Ffa500', textDecoration: 'underline', fontWeight: 'bold' }}>Start shopping to earn points!</a>
+                                    No activity found!
                                 </p>
                             ) : (
                                 <div style={{ overflowX: 'auto' }}>
@@ -431,14 +377,15 @@ const Rewards = () => {
                                         <thead>
                                             <tr style={{ background: 'rgba(255, 165, 0, 0.3)' }}>
                                                 <th style={{ padding: '8px', textAlign: 'left', fontSize: '0.8rem' }}>Date</th>
-                                                <th style={{ padding: '8px', marginLeft:'10%', fontSize: '0.8rem' }}>ID</th>
-                                                <th style={{ padding: '8px', textAlign: 'right', fontSize: '0.8rem' }}>Net (₹)</th>
+                                                <th style={{ padding: '8px', marginLeft:'10%', fontSize: '0.8rem' }}>Description</th>
+                                                <th style={{ padding: '8px', textAlign: 'right', fontSize: '0.8rem' }}>Amount (₹)</th>
                                                 <th style={{ padding: '8px', textAlign: 'right', fontSize: '0.8rem' }}>Points</th>
-                                                <th style={{ padding: '8px', textAlign: 'right', fontSize: '0.8rem' }}>Disc (₹)</th>
+                                                <th style={{ padding: '8px', textAlign: 'right', fontSize: '0.8rem' }}>Discount (₹)</th>
+                                                <th style={{ padding: '8px', textAlign: 'right', fontSize: '0.8rem' }}>Expiry Date</th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {activities.filter(activity => activity.points > 0).map((activity, index) => (
+                                            {activities.map((activity, index) => (
                                                 <tr key={index} style={{ 
                                                     background: index % 2 === 0 ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.2)',
                                                     transition: 'all 0.3s ease'
@@ -447,22 +394,25 @@ const Rewards = () => {
                                                         {new Date(activity.date).toLocaleString().slice(0, 10)}
                                                     </td>
                                                     <td style={{ padding: '8px', borderBottom: '1px solid rgba(255, 165, 0, 0.2)' }}>
-                                                        {activity.type === 'order' ? activity.id : activity.type === 'birthday' ? 'Birthday Bonus' : '-'}
+                                                        {activity.type}
                                                     </td>
-                                                    <td style={{ padding: '8px', borderBottom: '1px solid rgba(255, 165, 0, 0.2)', textAlign: 'right' }}>
-                                                        {activity.type === 'order' ? activity.netAmount.toFixed(2) : '-'}
+                                                    <td style={{ padding: '8px', borderBottom: '1px solid rgba(255, 165, 0, 0.2)',color: activity.netAmount > 0 ? '#4ade80' : activity.netAmount < 0 ? '#ff4d4f' : '#fff', textAlign: 'right' }}>
+                                                        {activity.netAmount !== 0 ? activity.netAmount.toFixed(2) : '-'}
                                                     </td>
                                                     <td style={{
                                                         padding: '8px',
                                                         borderBottom: '1px solid rgba(255, 165, 0, 0.2)',
-                                                        color: '#4ade80',
+                                                        color: activity.points > 0 ? '#4ade80' : activity.points < 0 ? '#ff4d4f' : '#fff',
                                                         fontWeight: 'bold',
                                                         textAlign: 'right'
                                                     }}>
-                                                        {`+${activity.points}`}
+                                                        {activity.points > 0 ? `+${activity.points}` : activity.points}
                                                     </td>
                                                     <td style={{ padding: '8px', borderBottom: '1px solid rgba(255, 165, 0, 0.2)', textAlign: 'right' }}>
-                                                        {activity.type === 'redemption' ? activity.discount.toFixed(2) : '-'}
+                                                        {activity.discount > 0 ? activity.discount.toFixed(2) : '-'}
+                                                    </td>
+                                                    <td style={{ padding: '8px', borderBottom: '1px solid rgba(255, 165, 0, 0.2)', textAlign: 'right' }}>
+                                                        {activity.expiry_date && !activity.type.includes('(Expired)') ? new Date(activity.expiry_date).toLocaleString().slice(0, 10) : '-'}
                                                     </td>
                                                 </tr>
                                             ))}
@@ -641,14 +591,14 @@ const Rewards = () => {
                                 padding: '12px'
                             }
                             table {
-                                font-size: '0.8rem'
+                                fontSize: '0.8rem'
                             }
                             th, td {
                                 padding: '6px'
                             }
                             button {
                                 padding: '8px 15px',
-                                font-size: '0.85rem'
+                                fontSize: '0.85rem'
                             }
                         }
                         
@@ -687,7 +637,7 @@ const Rewards = () => {
                             }
                             button {
                                 padding: '6px 12px',
-                                font-size: '0.8rem'
+                                fontSize: '0.8rem'
                             }
                             .points-balance div {
                                 min-width: '90px'

@@ -50,7 +50,6 @@ const MyAccount = () => {
       if (error) {
         if (error.code === 'PGRST116') {
         } else {
-          console.error('Error fetching user details:', error);
           setUpdateError(`Failed to fetch user details: ${error.message}`);
           setToast({ show: true, message: `Failed to fetch user details: ${error.message}`, type: 'error' });
         }

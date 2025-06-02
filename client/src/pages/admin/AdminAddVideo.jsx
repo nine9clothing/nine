@@ -85,7 +85,6 @@ const AddVideo = () => {
       clearInterval(progressInterval);
 
       if (uploadError) {
-        console.error('Upload Error:', uploadError.message || uploadError);
         if (uploadError.message.includes('The bucket does not exist')) {
           throw new Error('The "' + bucketName + '" bucket does not exist. Please create it in the Supabase Storage dashboard.');
         }
@@ -98,7 +97,6 @@ const AddVideo = () => {
         .getPublicUrl(fileName);
 
       if (!urlData || !urlData.publicUrl) {
-        console.error('Error getting public URL for:', fileName);
         throw new Error('Failed to get public URL for the uploaded video.');
       }
 
@@ -113,7 +111,6 @@ const AddVideo = () => {
       ]);
 
       if (insertError) {
-        console.error('Insert Error:', insertError.message || insertError);
         throw new Error('Failed to add video to database: ' + (insertError.message || 'Unknown error'));
       }
 
@@ -127,7 +124,6 @@ const AddVideo = () => {
       localStorage.removeItem('addVideoForm');
       localStorage.removeItem('addVideoFile');
     } catch (error) {
-      console.error('Error in handleAddVideo:', error);
       setToast({ message: error.message || 'An unexpected error occurred.', type: 'error' });
     } finally {
       setIsSubmitting(false);

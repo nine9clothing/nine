@@ -46,14 +46,12 @@ const AdminExchangeOrders = () => {
     const { data: exchangeData, error: exchangeError } = await query.order('created_at', { ascending: false });
 
     if (exchangeError) {
-      console.error('Error fetching exchange orders:', exchangeError.message);
       setToast({ message: 'Failed to fetch exchange orders.', type: 'error' });
       setExchangeOrders([]);
       setLoading(false);
       return;
     }
 
-    // Parse the exchanged_items text into an array
     const parsedData = exchangeData.map(order => ({
       ...order,
       exchanged_items: order.exchanged_items ? JSON.parse(order.exchanged_items.replace(/'/g, '"')) : []
@@ -73,7 +71,6 @@ const AdminExchangeOrders = () => {
       .eq('id', orderId);
 
     if (error) {
-      console.error('Error updating exchange status:', error.message);
       setToast({ message: 'Failed to update exchange status.', type: 'error' });
     } else {
       setToast({ message: 'Exchange status updated successfully!', type: 'success' });

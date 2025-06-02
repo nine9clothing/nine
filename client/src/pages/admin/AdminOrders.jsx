@@ -42,7 +42,6 @@ const AdminOrders = () => {
     const { data, error } = await query.order('created_at', { ascending: false });
 
     if (error) {
-      console.error('Error fetching orders:', error.message);
       setToast({ message: 'Failed to fetch orders.', type: 'error' });
       setOrders([]);
     } else {

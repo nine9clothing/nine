@@ -23,7 +23,6 @@ const AdminMessages = () => {
       setMessages(data || []);
 
     } catch (err) {
-      console.error("Error fetching contact messages:", err);
       setToast({ message: err.message || 'Failed to fetch messages.', type: 'error' });
     } finally {
       setLoading(false);
@@ -59,7 +58,6 @@ const AdminMessages = () => {
       setToast({ message: 'Message deleted successfully!', type: 'success' });
 
     } catch (err) {
-        console.error("Error deleting message:", err);
         setToast({ message: err.message || 'Failed to delete message.', type: 'error' });
     } finally {
       setIsDeleting(false); 

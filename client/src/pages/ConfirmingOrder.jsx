@@ -21,7 +21,6 @@ const ConfirmingOrder = () => {
 
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       if (sessionError || !session || !user) {
-        // console.error('User session missing during confirmation:', sessionError?.message);
         setMessage('Error: User session issue. Please log in and try again. Redirecting...');
         setIsError(true);
         setTimeout(() => navigate('/login'), 3000);
@@ -30,7 +29,6 @@ const ConfirmingOrder = () => {
 
       const pendingOrderDataString = sessionStorage.getItem('pendingOrderData');
       if (!pendingOrderDataString) {
-        // console.error('No pending order data found.');
         const { data: existingOrder, error: fetchError } = await supabase
           .from('orders')
           .select('order_id, status')
@@ -57,7 +55,6 @@ const ConfirmingOrder = () => {
       try {
         orderData = JSON.parse(pendingOrderDataString);
       } catch (e) {
-        // console.error('Failed to parse order data:', e);
         setMessage('Error: Invalid order data. Redirecting to cart...');
         setIsError(true);
         setTimeout(() => navigate('/cart'), 3000);
@@ -65,7 +62,6 @@ const ConfirmingOrder = () => {
       }
 
       if (user.id !== orderData.user_id) {
-        // console.error('User session mismatch during confirmation.');
         setMessage('Error: User session issue. Please log in and try again. Redirecting...');
         setIsError(true);
         setTimeout(() => navigate('/login'), 3000);
@@ -131,7 +127,6 @@ const ConfirmingOrder = () => {
 
         if (orderInsertError) {
           if (orderInsertError.code === '23505') {
-            // console.warn(`Order ${order_id} already exists in database.`);
             const { data: existingOrder, error: fetchError } = await supabase
               .from('orders')
               .select('id')
@@ -139,7 +134,6 @@ const ConfirmingOrder = () => {
               .single();
 
             if (fetchError || !existingOrder) {
-              // console.error('Duplicate order detected but not found in database:', fetchError);
               setMessage('Error: Duplicate order detected but not found. Contact support.');
               setIsError(true);
               setTimeout(() => navigate('/checkout'), 3000);
@@ -152,7 +146,6 @@ const ConfirmingOrder = () => {
             setTimeout(() => navigate('/success'), 3000);
             return;
           }
-          // console.error('Supabase order insert error:', orderInsertError);
           sessionStorage.setItem(
             'orderConfirmationError',
             `Critical: Order placed with shipper but failed to save locally. Ref ${order_id}. Contact support. Error: ${orderInsertError.message}`
@@ -163,11 +156,61 @@ const ConfirmingOrder = () => {
           return;
         }
 
-        // Update stock
+        if (orderData.discount > 0 && !orderData.promoDetails) {
+          const pointsToDeduct = orderData.discount * 5;
+
+          const { error: redemptionInsertError } = await supabase
+            .from('point_redemptions')
+            .insert({
+              order_id: order_id,
+              points_redeemed: pointsToDeduct,
+              amount_redeemed: orderData.discount,
+              user_id: user.id,
+              description: `Points redeemed for order ${display_order_id}`,
+              created_at: new Date().toISOString(),
+            });
+
+          if (redemptionInsertError) {
+            setMessage('Error: Failed to record points redemption. Contact support. Redirecting...');
+            setIsError(true);
+            sessionStorage.setItem(
+              'orderConfirmationError',
+              `Error recording points redemption for order ${order_id}: ${redemptionInsertError.message}. Contact support.`
+            );
+            setTimeout(() => navigate('/checkout'), 3000);
+            return;
+          }
+        }
+
+        const pointsReceived = Math.floor(total_amount / 100) * 10;
+        const amountReceived = Math.floor(pointsReceived / 5);
+
+        const { error: receivedInsertError } = await supabase
+          .from('point_redemptions')
+          .insert({
+            order_id: order_id,
+            points_received: pointsReceived,
+            amount_received: amountReceived,
+            user_id: user.id,
+            description: `Points received for order ${display_order_id}`,
+            created_at: new Date(new Date().setDate(new Date().getDate() + 15)).toISOString(),
+            expiry_date: new Date(new Date().setDate(new Date().getDate() + 365 + 15)).toISOString(),
+          });
+
+        if (receivedInsertError) {
+          setMessage('Error: Failed to record points received. Contact support. Redirecting...');
+          setIsError(true);
+          sessionStorage.setItem(
+            'orderConfirmationError',
+            `Error recording points received for order ${order_id}: ${receivedInsertError.message}. Contact support.`
+          );
+          setTimeout(() => navigate('/checkout'), 3000);
+          return;
+        }
+
         for (const item of orderItems) {
           const { sku, selectedSize, units } = item;
           if (!selectedSize) {
-            console.warn(`No size selected for item SKU ${sku}, skipping stock update.`);
             continue;
           }
           try {
@@ -179,7 +222,6 @@ const ConfirmingOrder = () => {
 
             if (productError) throw productError;
             if (!productData) {
-              console.warn(`Product SKU ${sku} not found for stock update.`);
               continue;
             }
 
@@ -187,7 +229,6 @@ const ConfirmingOrder = () => {
             try {
               currentSizes = typeof productData.size === 'string' ? JSON.parse(productData.size) : (productData.size || {});
             } catch (parseError) {
-              // console.error(`Error parsing size data for SKU ${sku}:`, parseError.message);
               continue;
             }
 
@@ -208,115 +249,7 @@ const ConfirmingOrder = () => {
               .eq('id', sku);
 
             if (updateError) throw updateError;
-
-            // Update promo code usage
-        if (promoDetails) {
-          try {
-            const promoId = promoDetails.id;
-            const userId = user.id;
-
-            const { data: promoData, error: promoDetailsError } = await supabase
-              .from('promocodes')
-              .select('used, limit, max_uses_per_user')
-              .eq('id', promoId)
-              .single();
-
-            if (promoDetailsError) {
-              console.error('Error fetching promo details:', {
-                message: promoDetailsError.message,
-                code: promoDetailsError.code,
-                details: promoDetailsError.details
-              });
-            } else if (!promoData) {
-              // console.error('No promo details found for promo ID:', promoId);
-            } else {
-              const usedCount = promoData.used || 0;
-              const limitCount = promoData.limit;
-              const maxUsesPerUser = promoData.max_uses_per_user;
-
-              if (limitCount && usedCount >= limitCount) {
-                console.warn(`Promo code ${promoId} has reached its total usage limit.`);
-                setMessage('Error: Promo code has reached its usage limit. Redirecting to cart...');
-                setIsError(true);
-                setTimeout(() => navigate('/cart'), 3000);
-                return;
-              }
-
-              // Update overall promo usage
-              const { error: overallUpdateError } = await supabase
-                .from('promocodes')
-                .update({ used: usedCount + 1 })
-                .eq('id', promoId);
-
-              if (overallUpdateError) {
-                console.error('Error updating promo used count:', {
-                  message: overallUpdateError.message,
-                  code: overallUpdateError.code,
-                  details: overallUpdateError.details
-                });
-              }
-
-              // Update user-specific promo usage
-              const { data: userUsageData, error: userUsageFetchError } = await supabase
-                .from('promo_usage')
-                .select('usage_count')
-                .eq('user_id', userId)
-                .eq('promo_code_id', promoId)
-                .maybeSingle();
-
-              if (userUsageFetchError) {
-                console.error('Error fetching user promo usage:', {
-                  message: userUsageFetchError.message,
-                  code: userUsageFetchError.code,
-                  details: userUsageFetchError.details
-                });
-              }
-
-              if (userUsageData) {
-                if (maxUsesPerUser && userUsageData.usage_count >= maxUsesPerUser) {
-                  console.warn(`User ${userId} has reached max uses for promo ${promoId}.`);
-                  setMessage('Error: You have reached the usage limit for this promo code. Redirecting to cart...');
-                  setIsError(true);
-                  setTimeout(() => navigate('/cart'), 3000);
-                  return;
-                }
-
-                const { error: userUpdateError } = await supabase
-                  .from('promo_usage')
-                  .update({ usage_count: userUsageData.usage_count + 1 })
-                  .eq('user_id', userId)
-                  .eq('promo_code_id', promoId);
-
-                if (userUpdateError) {
-                  console.error('Error updating user promo usage:', {
-                    message: userUpdateError.message,
-                    code: userUpdateError.code,
-                    details: userUpdateError.details
-                  });
-                }
-              } else {
-                const { error: userInsertError } = await supabase
-                  .from('promo_usage')
-                  .insert({ user_id: userId, promo_code_id: promoId, usage_count: 1 });
-
-                if (userInsertError) {
-                  console.error('Error inserting user promo usage:', {
-                    message: userInsertError.message,
-                    code: userInsertError.code,
-                    details: userInsertError.details
-                  });
-                }
-              }
-            }
-          } catch (promoError) {
-            console.error('Error processing promo code:', {
-              message: promoError.message,
-              stack: promoError.stack
-            });
-          }
-        }
           } catch (stockUpdateError) {
-            // console.error(`Error updating stock for SKU ${sku}:`, stockUpdateError.message);
             setMessage(`Error updating stock for item ${sku}. Contact support. Redirecting...`);
             setIsError(true);
             sessionStorage.setItem(
@@ -328,12 +261,134 @@ const ConfirmingOrder = () => {
           }
         }
 
-        // Clear session and cart
+        if (promoDetails) {
+          try {
+            const promoId = promoDetails.id;
+            const userId = user.id;
+
+            const { data: promoData, error: promoDetailsError } = await supabase
+              .from('promocodes')
+              .select('used, limit, max_uses_per_user, product_id')
+              .eq('id', promoId)
+              .single();
+
+            if (promoDetailsError) {
+              // console.error('Error fetching promo details:',
+              //   {
+              //   message: promoDetailsError.message,
+              //   code: promoDetailsError.code,
+              //   details: promoDetailsError.details
+              // });
+              throw promoDetailsError;
+            }
+            if (!promoData) {
+              throw new Error('No promo details found');
+            }
+
+            if (promoData.product_id) {
+              const matchingItem = orderItems.find(item => item.sku === promoData.product_id);
+              if (!matchingItem) {
+                setMessage('Error: Promo code is not valid for the items in your order. Redirecting to cart...');
+                setIsError(true);
+                setTimeout(() => navigate('/cart'), 3000);
+                return;
+              }
+            }
+
+            const usedCount = promoData.used || 0;
+            const limitCount = promoData.limit;
+            const maxUsesPerUser = promoData.max_uses_per_user;
+
+            if (limitCount && usedCount >= limitCount) {
+              setMessage('Error: Promo code has reached its usage limit. Redirecting to cart...');
+              setIsError(true);
+              setTimeout(() => navigate('/cart'), 3000);
+              return;
+            }
+
+            const { error: overallUpdateError } = await supabase
+              .from('promocodes')
+              .update({ used: usedCount + 1 })
+              .eq('id', promoId);
+
+            if (overallUpdateError) {
+              // console.error('Error updating promo used count:', {
+              //   message: overallUpdateError.message,
+              //   code: overallUpdateError.code,
+              //   details: overallUpdateError.details
+              // });
+              throw overallUpdateError;
+            }
+
+            const { data: userUsageData, error: userUsageFetchError } = await supabase
+              .from('promo_usage')
+              .select('usage_count')
+              .eq('user_id', userId)
+              .eq('promo_code_id', promoId)
+              .maybeSingle();
+
+            if (userUsageFetchError) {
+              // console.error('Error fetching user promo usage:', {
+              //   message: userUsageFetchError.message,
+              //   code: userUsageFetchError.code,
+              //   details: userUsageFetchError.details
+              // });
+              throw userUsageFetchError;
+            }
+
+            if (userUsageData) {
+              if (maxUsesPerUser && userUsageData.usage_count >= maxUsesPerUser) {
+                setMessage('Error: You have reached the usage limit for this promo code. Redirecting to cart...');
+                setIsError(true);
+                setTimeout(() => navigate('/cart'), 3000);
+                return;
+              }
+
+              const { error: userUpdateError } = await supabase
+                .from('promo_usage')
+                .update({ usage_count: userUsageData.usage_count + 1 })
+                .eq('user_id', userId)
+                .eq('promo_code_id', promoId);
+
+              if (userUpdateError) {
+                // console.error('Error updating user promo usage:', {
+                //   message: userUpdateError.message,
+                //   code: userUpdateError.code,
+                //   details: userUpdateError.details
+                // });
+                throw userUpdateError;
+              }
+            } else {
+              const { error: userInsertError } = await supabase
+                .from('promo_usage')
+                .insert({ user_id: userId, promo_code_id: promoId, usage_count: 1 });
+
+              if (userInsertError) {
+                // console.error('Error inserting user promo usage:', {
+                //   message: userInsertError.message,
+                //   code: userInsertError.code,
+                //   details: userInsertError.details
+                // });
+                throw userInsertError;
+              }
+            }
+          } catch (promoError) {
+            // console.error('Error processing promo code:', {
+            //   message: promoError.message,
+            //   stack: promoError.stack
+            // });
+            setMessage(`Error processing promo code: ${promoError.message}. Redirecting...`);
+            setIsError(true);
+            setTimeout(() => navigate('/checkout'), 3000);
+            return;
+          }
+        }
+
         sessionStorage.removeItem('pendingOrderData');
         clearCart();
+        setMessage('Order confirmed! Redirecting to success page...');
         setTimeout(() => navigate('/success'), 3000);
       } catch (error) {
-        // console.error('Order processing failed:', error);
         setMessage(`Order processing error: ${error.message}. Redirecting...`);
         setIsError(true);
         sessionStorage.setItem(
@@ -364,8 +419,15 @@ const ConfirmingOrder = () => {
       padding: '20px',
       textAlign: 'center',
     },
-    message: { fontSize: '1.5rem', marginBottom: '20px', color: isError ? 'red' : 'white' },
-    spinner: { fontSize: '2rem', animation: 'spin 1s linear infinite' },
+    message: {
+      fontSize: '1.5rem',
+      marginBottom: '20px',
+      color: isError ? 'red' : 'white'
+    },
+    spinner: {
+      fontSize: '2rem',
+      animation: 'spin 1s linear infinite'
+    },
   };
 
   return (

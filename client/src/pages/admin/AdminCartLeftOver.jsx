@@ -38,7 +38,6 @@ const AdminCartData = () => {
       setCartData(combinedData || []);
 
     } catch (err) {
-      console.error("Error fetching cart data:", err.message || err);
       setToast({ message: err.message || 'Failed to fetch cart data.', type: 'error' });
     } finally {
       setLoading(false);
@@ -74,7 +73,6 @@ const AdminCartData = () => {
       setToast({ message: 'Cart data deleted successfully!', type: 'success' });
 
     } catch (err) {
-      console.error("Error deleting cart data:", err);
       setToast({ message: err.message || 'Failed to delete cart data.', type: 'error' });
     } finally {
       setIsDeleting(false); 

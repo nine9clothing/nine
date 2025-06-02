@@ -52,20 +52,17 @@ const AdminNotifySize = () => {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error fetching size notifications:', error.message);
         setToast({ message: 'Failed to fetch size notifications.', type: 'error' });
         setNotifications([]);
       } else {
         setNotifications(data);
         
-        // Collect unique user IDs
         const userIds = [...new Set(data.map(n => n.user_id).filter(Boolean))];
         if (userIds.length > 0) {
           fetchUserEmails(userIds);
         }
       }
     } catch (error) {
-      console.error('Unexpected error:', error);
       setToast({ message: 'An unexpected error occurred.', type: 'error' });
     } finally {
       setLoading(false);
@@ -80,7 +77,6 @@ const AdminNotifySize = () => {
         .in('id', userIds);
 
       if (error) {
-        console.error('Error fetching user emails:', error.message);
       } else if (data) {
         const emailMap = {};
         data.forEach(user => {
@@ -89,7 +85,6 @@ const AdminNotifySize = () => {
         setUserEmails(emailMap);
       }
     } catch (error) {
-      console.error('Unexpected error fetching user emails:', error);
     }
   };
 
@@ -106,7 +101,6 @@ const AdminNotifySize = () => {
         .single();
       
       if (productError) {
-        console.error('Error fetching product:', productError.message);
         return { 
           available: false, 
           quantity: null, 
@@ -132,7 +126,6 @@ const AdminNotifySize = () => {
         error: null
       };
     } catch (error) {
-      console.error('Unexpected error checking size availability:', error);
       return {
         available: false,
         quantity: null,
@@ -194,7 +187,6 @@ const AdminNotifySize = () => {
       });
       
       if (error) {
-        console.error('Error sending email:', error);
         setToast({ message: 'Failed to send notification email.', type: 'error' });
       } else {
         setToast({ message: 'Availability email sent successfully!', type: 'success' });
@@ -215,7 +207,6 @@ const AdminNotifySize = () => {
         }
       }
     } catch (error) {
-      console.error('Unexpected error during email send:', error);
       setToast({ message: 'An unexpected error occurred.', type: 'error' });
     } finally {
       setSendingEmail(prev => ({ ...prev, [notification.id]: false }));
@@ -296,7 +287,6 @@ const AdminNotifySize = () => {
       setNotifications(prev => prev.filter(notif => notif.id !== confirmingDeleteId));
       setToast({ message: 'Notification deleted successfully!', type: 'success' });
     } catch (err) {
-      console.error("Error deleting notification:", err);
       setToast({ message: err.message || 'Failed to delete notification.', type: 'error' });
     } finally {
       setIsDeleting(false);

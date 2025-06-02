@@ -23,7 +23,6 @@ const ViewVideos = () => {
         .order('created_at', { ascending: false });
 
     if (error) {
-        console.error('Error loading videos:', error.message);
         setToast({ message: 'Failed to load videos.', type: 'error' });
         setVideos([]);
         setFilteredVideos([]);
@@ -72,7 +71,6 @@ const ViewVideos = () => {
     try {
         const { error: deleteError } = await supabase.from('videos').delete().eq('id', id);
         if (deleteError) {
-            console.error('Error deleting video record:', deleteError);
             throw new Error('Failed to delete video from database.');
         }
 
@@ -89,17 +87,14 @@ const ViewVideos = () => {
                         .remove([filePath]);
 
                     if (storageError) {
-                        console.error('Error deleting video media from storage:', storageError);
                         setToast({ message: 'Video record deleted, but failed to delete the media file.', type: 'warning' });
                     } else {
                         setToast({ message: 'Video and associated media deleted successfully!', type: 'success' });
                     }
                 } else {
-                    console.warn('Could not parse file path from URL:', mediaUrl);
                     setToast({ message: 'Video record deleted, but media file may remain in storage.', type: 'warning' });
                 }
             } catch (e) {
-                console.error('Error parsing media URL:', mediaUrl, e);
                 setToast({ message: 'Video record deleted, but media file could not be processed.', type: 'warning' });
             }
         } else {
@@ -150,7 +145,6 @@ const ViewVideos = () => {
         }).eq('id', id);
 
         if (error) {
-            console.error('Update Error:', error);
             throw new Error('Failed to update video.');
         }
 

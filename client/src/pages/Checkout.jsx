@@ -167,7 +167,6 @@ const Checkout = () => {
       if (!error) {
         setAddresses(updatedAddresses);
       } else {
-        // No error handling needed here as per original code
       }
     };
 
@@ -213,7 +212,6 @@ const Checkout = () => {
         throw new Error('Error creating Razorpay order: ' + order.error);
       }
 
-      // Function to clean up Razorpay-related keys from localStorage
       const cleanupRazorpayKeys = () => {
         Object.keys(localStorage).forEach((key) => {
           if (key.startsWith('rzp_') || key.startsWith('sb-')) {
@@ -239,18 +237,15 @@ const Checkout = () => {
             const verifyResult = verifyResponse.data;
             if (verifyResult.status === 'success') {
               await completeOrder(response.razorpay_payment_id, promoDetails);
-              // Clean up Razorpay keys after successful payment
               cleanupRazorpayKeys();
             } else {
               setToastMessage({ message: 'Payment verification failed: ' + verifyResult.message, type: 'error' });
               setLoadingOrder(false);
-              // Clean up Razorpay keys on verification failure
               cleanupRazorpayKeys();
             }
           } catch (error) {
             setToastMessage({ message: 'Payment verification failed: ' + error.message, type: 'error' });
             setLoadingOrder(false);
-            // Clean up Razorpay keys on verification error
             cleanupRazorpayKeys();
           }
         },
@@ -260,7 +255,6 @@ const Checkout = () => {
             navigate('/checkout', {
               state: { subtotal, discount, pointsToRedeem, pointsDiscount, total: totalAfterDiscount, appliedPromo }
             });
-            // Clean up Razorpay keys when modal is dismissed
             cleanupRazorpayKeys();
           }
         },
@@ -276,20 +270,17 @@ const Checkout = () => {
       rzp.on('payment.failed', function (response) {
         setToastMessage({ message: `Payment failed: ${response.error.description}`, type: 'error' });
         setLoadingOrder(false);
-        // Clean up Razorpay keys on payment failure
         cleanupRazorpayKeys();
       });
       rzp.on('payment.error', function (response) {
         setToastMessage({ message: `Checkout error: ${response.error.description}`, type: 'error' });
         setLoadingOrder(false);
-        // Clean up Razorpay keys on payment error
         cleanupRazorpayKeys();
       });
       rzp.open();
     } catch (error) {
       setToastMessage({ message: 'Failed to initiate payment: ' + error.message, type: 'error' });
       setLoadingOrder(false);
-      // Clean up Razorpay keys on general error
       const cleanupRazorpayKeys = () => {
         Object.keys(localStorage).forEach((key) => {
           if (key.startsWith('rzp_') || key.startsWith('sb-')) {
@@ -474,7 +465,6 @@ const Checkout = () => {
           .single();
     
         if (usageError && usageError.code !== 'PGRST116') {
-          // No error handling needed here as per original code
         }
           
         let usageCount = 0;

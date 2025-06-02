@@ -40,6 +40,7 @@ import AdminCartLeftOver from './pages/admin/AdminCartLeftOver'
 import AdminPromoCode from './pages/admin/AdminPromoCode'
 import AdminViewPromoCode from './pages/admin/AdminViewPromoCode'
 import AdminHero from './pages/admin/AdminHero'
+import AdminPoints from './pages/admin/AdminPoints'
 
 
 
@@ -50,7 +51,6 @@ const App = () => {
       <CartProvider>
         <Routes>
 
-          {/* Public Routes */}
           <Route path="/" element={<Home />} />
           <Route path="/about" element={<About />} />
           <Route path="/checkout" element={<Checkout />} />
@@ -58,8 +58,8 @@ const App = () => {
           <Route path="/contact" element={<Contact />} />
           <Route path="/login" element={<Login />} />
           <Route path="/sort" element={<Sort />} />
-            <Route path="/:productName/:id" element={<ProductDetail />} />
-            <Route path="/success" element={<Success />} />
+          <Route path="/:productName/:id" element={<ProductDetail />} />
+          <Route path="/success" element={<Success />} />
           <Route path="/my-orders" element={<MyOrders />} />
           <Route path="/wishlist" element={<WishlistPage />} />
           <Route path="/resetpassword" element={<ResetPassword />} />
@@ -73,7 +73,6 @@ const App = () => {
           <Route path="/confirming" element={<ConfirmingOrder />} />
 
           
-          {/* Admin Routes (with custom layout) */}
           <Route path="/admin" element={<AdminLayout />}>
             <Route path="dashboard" element={<AdminDashboard />} />
             <Route path="products" element={<AdminAddProduct />} />
@@ -90,6 +89,7 @@ const App = () => {
             <Route path="promocode" element={<AdminPromoCode/>} />
             <Route path="viewpromocode" element={<AdminViewPromoCode/>} />
             <Route path="heroimage" element={<AdminHero/>} />
+            <Route path="points" element={<AdminPoints/>} />
 
           </Route>
         </Routes>

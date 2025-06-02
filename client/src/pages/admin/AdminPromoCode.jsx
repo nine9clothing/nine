@@ -1,18 +1,38 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import ToastMessage from '../../ToastMessage';
 
 const CreatePromoCode = () => {
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState(null);
+  const [products, setProducts] = useState([]);
   const [formData, setFormData] = useState({
     code: '',
     discount: '',
-    maxUsesPerUser: null, 
-    display: 'false',    
-    limit: '',           
+    maxUsesPerUser: null,
+    display: 'false',
+    limit: '',
+    product_id: '', // New field for product selection
   });
-  const [enableMaxUses, setEnableMaxUses] = useState(false); 
+  const [enableMaxUses, setEnableMaxUses] = useState(false);
+
+  // Fetch products on component mount
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('products')
+          .select('id, name')
+          .order('name', { ascending: true });
+        
+        if (error) throw error;
+        setProducts(data || []);
+      } catch (err) {
+        setToast({ message: err.message || 'Failed to fetch products.', type: 'error' });
+      }
+    };
+    fetchProducts();
+  }, []);
 
   // Handle form input changes
   const handleInputChange = (e) => {
@@ -48,14 +68,14 @@ const CreatePromoCode = () => {
       return;
     }
     if (enableMaxUses && (!formData.maxUsesPerUser || parseInt(formData.maxUsesPerUser, 10) < 1)) {
-        setToast({ message: 'Max uses per user must be at least 1.', type: 'error' });
-        setLoading(false);
-        return;
+      setToast({ message: 'Max uses per user must be at least 1.', type: 'error' });
+      setLoading(false);
+      return;
     }
     if (!formData.limit || parseInt(formData.limit, 10) < 1) {
-        setToast({ message: 'Limit must be at least 1.', type: 'error' });
-        setLoading(false);
-        return;
+      setToast({ message: 'Limit must be at least 1.', type: 'error' });
+      setLoading(false);
+      return;
     }
 
     try {
@@ -65,18 +85,18 @@ const CreatePromoCode = () => {
           discount: parseFloat(formData.discount),
           max_uses_per_user: enableMaxUses ? parseInt(formData.maxUsesPerUser, 10) : null,
           limit: parseInt(formData.limit, 10),
-          display: formData.display === 'true', 
+          display: formData.display === 'true',
           used: 0,
+          product_id: formData.product_id || null, // Include product_id
         },
       ]);
 
       if (error) throw error;
 
       setToast({ message: 'Promo code created successfully!', type: 'success' });
-      setFormData({ code: '', discount: '', maxUsesPerUser: null, display: 'true', limit: '' });
-      setEnableMaxUses(false); // Reset checkbox
+      setFormData({ code: '', discount: '', maxUsesPerUser: null, display: 'true', limit: '', product_id: '' });
+      setEnableMaxUses(false);
     } catch (err) {
-      console.error('Error creating promo code:', err);
       setToast({ message: err.message || 'Failed to create promo code.', type: 'error' });
     } finally {
       setLoading(false);
@@ -95,7 +115,6 @@ const CreatePromoCode = () => {
       </h2>
 
       <div style={formBox}>
-        
         <form onSubmit={handleSubmit}>
           <label style={labelStyle}>
             Promo Code <span style={asterisk}>*</span>
@@ -122,7 +141,7 @@ const CreatePromoCode = () => {
             placeholder="Enter discount percentage"
             min="1"
             max="100"
-            step="0.01" 
+            step="0.01"
             required
           />
 
@@ -139,6 +158,23 @@ const CreatePromoCode = () => {
             min="1"
             required
           />
+
+          <label style={labelStyle}>
+            Product
+          </label>
+          <select
+            name="product_id"
+            value={formData.product_id}
+            onChange={handleInputChange}
+            style={inputStyle}
+          >
+            <option value="">Select a product (optional)</option>
+            {products.map((product) => (
+              <option key={product.id} value={product.id}>
+                {product.name}
+              </option>
+            ))}
+          </select>
 
           <label style={labelStyle}>
             Display <span style={asterisk}>*</span>
@@ -270,7 +306,7 @@ const spinner = {
 
 if (typeof window !== 'undefined') {
   const existingStyleElement = document.getElementById('spinner-keyframes-style');
-  if (!existingStyleElement) { // Add only if not already present
+  if (!existingStyleElement) {
     const spinnerKeyframes = `
     @keyframes spin {
       0% { transform: rotate(0deg); }
@@ -278,7 +314,7 @@ if (typeof window !== 'undefined') {
     }`;
     
     const styleElement = document.createElement('style');
-    styleElement.id = 'spinner-keyframes-style'; 
+    styleElement.id = 'spinner-keyframes-style';
     styleElement.innerHTML = spinnerKeyframes;
     document.head.appendChild(styleElement);
   }

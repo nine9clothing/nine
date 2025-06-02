@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase';
 import {
   FaBars, FaTimes, FaTachometerAlt, FaBoxOpen, FaPlusSquare,
   FaListAlt, FaChartLine, FaEnvelope, FaSignOutAlt, FaVideo,
-  FaAngleDown, FaAngleRight, FaShoppingCart, FaRegEye, FaExchangeAlt, FaBell, FaNewspaper, FaOpencart, FaQrcode, FaImage
+  FaAngleDown, FaAngleRight, FaShoppingCart, FaRegEye, FaExchangeAlt, FaBell, FaNewspaper, FaOpencart, FaQrcode, FaImage, FaGift
 } from 'react-icons/fa';
 import logo from '../assets/nine9_logo.jpg';
 
@@ -89,7 +89,6 @@ const AdminLayout = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, [isSidebarOpen]);
 
-  // Auto-expand sections based on current path
   useEffect(() => {
     const currentPath = location.pathname;
     if (currentPath.includes('/admin/product')) {
@@ -439,6 +438,7 @@ const SidebarContent = ({ styles, colors, isActive, onLinkClick = () => {}, expa
     { path: '/admin/notifysize', icon: FaBell, label: 'Notify Size' },
     { path: '/admin/subscription', icon: FaNewspaper, label: 'Subscription' },
     { path: '/admin/cartleftover', icon: FaOpencart, label: 'Cart Status' },
+    { path: '/admin/points', icon: FaGift, label: 'Reward Points' },
     { path: '/admin/heroimage', icon: FaImage, label: 'Home Images' },
   ];
 
@@ -480,7 +480,6 @@ const SidebarContent = ({ styles, colors, isActive, onLinkClick = () => {}, expa
   return (
     <div style={styles.sidebarContent}>
       <nav style={styles.nav}>
-        {/* Regular Links */}
         {links.map(link => {
           const active = isActive(link.path);
           return (

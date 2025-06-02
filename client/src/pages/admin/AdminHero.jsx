@@ -24,7 +24,6 @@ const AdminHeroImages = () => {
       if (error) throw error;
       setHeroImages(data);
     } catch (error) {
-      console.error('Error fetching hero images:', error);
       setToast({ message: 'Failed to load hero images.', type: 'error' });
     } finally {
       setIsLoading(false);
@@ -40,7 +39,7 @@ const AdminHeroImages = () => {
         const ctx = canvas.getContext('2d');
 
         const targetWidth = 1800;
-        const targetHeight = 1080; // 1800 / (5/3) = 1080
+        const targetHeight = 1080; 
         const targetRatio = 5 / 3;
         const currentRatio = img.width / img.height;
 
@@ -125,7 +124,6 @@ const AdminHeroImages = () => {
           .upload(fileName, file);
 
         if (uploadError) {
-          console.error('Detailed Upload Error:', uploadError);
           throw new Error(`Failed to upload ${fileName}: ${uploadError.message}`);
         }
 
@@ -134,7 +132,6 @@ const AdminHeroImages = () => {
           .getPublicUrl(fileName);
 
         if (!urlData || !urlData.publicUrl) {
-          console.error('Error getting public URL for:', fileName);
           throw new Error('Failed to get public URL for an uploaded file.');
         }
         imageUrls.push(urlData.publicUrl);
@@ -145,7 +142,6 @@ const AdminHeroImages = () => {
       );
 
       if (insertError) {
-        console.error('Insert Error:', insertError);
         throw new Error('Failed to add hero image to database.');
       }
 
@@ -155,7 +151,6 @@ const AdminHeroImages = () => {
       if (fileInput) fileInput.value = '';
       await fetchHeroImages();
     } catch (error) {
-      console.error('Error adding hero image:', error);
       setToast({ message: error.message || 'An unexpected error occurred.', type: 'error' });
     } finally {
       setIsSubmitting(false);
@@ -179,7 +174,6 @@ const AdminHeroImages = () => {
       setToast({ message: 'Hero image deleted successfully!', type: 'success' });
       await fetchHeroImages();
     } catch (error) {
-      console.error('Error deleting hero image:', error);
       setToast({ message: 'Failed to delete hero image.', type: 'error' });
     } finally {
       setIsSubmitting(false);

@@ -18,17 +18,14 @@ const Contact = () => {
     <span>Collaborate <FaHandsHelping style={{ marginLeft: '5px', verticalAlign: 'middle' }} /></span>,
     <span>Create <FaLightbulb style={{ marginLeft: '5px', verticalAlign: 'middle' }} /></span>
   ];
-
   const isMobile = windowWidth < 768;
 
-  // Handle window resize for responsive design
   useEffect(() => {
     const handleResize = () => setWindowWidth(window.innerWidth);
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Word rotation effect
   useEffect(() => {
     const wordInterval = setInterval(() => {
       setCurrentWordIndex((prev) => (prev + 1) % words.length);
@@ -36,12 +33,10 @@ const Contact = () => {
     return () => clearInterval(wordInterval);
   }, [words.length]);
 
-  // Handle email input change
   const handleEmailChange = (e) => {
     setEmail(e.target.value);
   };
 
-  // Handle newsletter subscription
   const handleSubscribe = async () => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
@@ -74,12 +69,10 @@ const Contact = () => {
         setTimeout(() => setSubscribeStatus({ message: "", type: "" }), 3000);
       }
     } catch (error) {
-      // console.error("Error subscribing:", error.message);
       setSubscribeStatus({ message: "Subscription failed. Please try again later.", type: "error" });
     }
   };
 
-  // Existing contact form handlers
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     
@@ -140,7 +133,6 @@ const Contact = () => {
       setToastMessage({ message: 'Message sent successfully!', type: 'success' });
       setForm({ name: '', email: '', phone: '', message: '' });
     } catch (err) {
-      console.error(err);
       setToastMessage({ message: 'Failed to send message. Try again later.', type: 'error' });
     }
   };

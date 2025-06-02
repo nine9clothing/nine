@@ -206,7 +206,7 @@ const ViewProducts = () => {
         composition_fabric,
         shipping_info,
         exchange,
-        strike_price: formattedStrikePrice, // NEW: Include strike_price in update
+        strike_price: formattedStrikePrice, 
       }).eq('id', id);
 
       if (error) {
@@ -319,7 +319,6 @@ const ViewProducts = () => {
                     style={inputStyleSmall}
                   />
 
-                  {/* NEW: Input for strike_price */}
                   <label style={labelStyleSmall}>Strike Price</label>
                   <input
                     value={editFormData.strike_price || ''}

@@ -21,7 +21,6 @@ const AdminInsights = () => {
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('Error fetching orders:', error.message);
       setLoading(false);
       return;
     }

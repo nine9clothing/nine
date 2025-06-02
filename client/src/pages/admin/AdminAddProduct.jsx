@@ -151,7 +151,6 @@ const AddProduct = () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        // console.error('No active session');
         throw new Error('User not authenticated. Please log in again.');
       }
 
@@ -180,7 +179,6 @@ const AddProduct = () => {
         const { error: uploadError } = await uploadWithTimeout(file, fileName);
 
         if (uploadError) {
-          console.error('Upload Error:', uploadError.message);
           throw new Error(`Failed to upload file: ${file.name}`);
         }
 
@@ -189,7 +187,6 @@ const AddProduct = () => {
           .getPublicUrl(fileName);
 
         if (!urlData || !urlData.publicUrl) {
-          console.error('No public URL for:', fileName);
           throw new Error(`Failed to get public URL for ${file.name}`);
         }
         mediaUrls.push(urlData.publicUrl);
@@ -218,7 +215,6 @@ const AddProduct = () => {
       ]);
 
       if (insertError) {
-        console.error('Insert Error:', insertError.message);
         throw new Error('Failed to add product to database.');
       }
 
@@ -245,7 +241,6 @@ const AddProduct = () => {
       localStorage.removeItem('addProductCustomCategory');
       localStorage.removeItem('addProductImageFiles');
     } catch (error) {
-      console.error('Error adding product:', error.message, error.stack);
       setToast({
         message: error.message || 'Failed to add product. Please try again.',
         type: 'error',
