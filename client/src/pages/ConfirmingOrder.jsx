@@ -387,7 +387,7 @@ const ConfirmingOrder = () => {
         sessionStorage.removeItem('pendingOrderData');
         clearCart();
         setMessage('Order confirmed! Redirecting to success page...');
-        setTimeout(() => navigate('/success'), 3000);
+        setTimeout(() => navigate('/success'), 1000);
       } catch (error) {
         setMessage(`Order processing error: ${error.message}. Redirecting...`);
         setIsError(true);
