@@ -14,12 +14,13 @@ const Footer = () => {
   const handleIconMouseLeave = () => setHoveredIcon(null);
 
   const links = [
-    { href: "/shippingpolicy", label: "Shipping" },
-    { href: "/t&c", label: "Privacy & Policy" },
     { href: "/faq", label: "FAQs" },
+    { href: "/shippingpolicy", label: "Shipping" },
     { href: "/about", label: "About Us" },
     { href: "/contact", label: "Contact Us" },
+    { href: "/t&c", label: "Privacy & Policy" },
     { href: "/exchange", label: "Exchange Policy" },
+
   ];
 
   const socialIcons = [
