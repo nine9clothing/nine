@@ -10,6 +10,7 @@ import { useWishlist } from '../context/WishlistContext.jsx';
 import Footer from "../pages/Footer";
 
 const generateSlug = (name) => {
+  if (!name || typeof name !== 'string') return '';
   return name
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-') 
@@ -58,10 +59,10 @@ const ProductDetail = () => {
 
       if (error) {
         setToastMessage({ message: 'Error fetching product: ' + error.message, type: 'error' });
-      } else {
+      } else if (data) {
         setProduct(data);
         const slug = generateSlug(data.name);
-        if (productName !== slug) {
+        if (productName !== slug && slug) {
           navigate(`/${slug}/${id}`, { replace: true });
         }
       }
@@ -187,6 +188,7 @@ const ProductDetail = () => {
   const allSizes = ["XS", "S", "M", "L", "XL", "XXL", "XXXL"];
   const media = Array.isArray(product.media_urls) ? product.media_urls : [];
   const isWished = wishlist.includes(product?.id);
+  const allSizesOutOfStock = allSizes.every(size => !sizeStock[size] || sizeStock[size] <= 0);
 
   const sliderSettings = {
     dots: true,
@@ -296,33 +298,51 @@ const ProductDetail = () => {
                 Size Guide
               </button>
             </div>
-            <div style={isMobile ? styles.mobileSizeOptions : styles.sizeOptions}>
-              {allSizes.map((size) => {
-                const isAvailable = sizeStock[size] > 0;
-                const isSelected = selectedSize === size;
-                return (
-                  <div key={size} style={{ position: 'relative' }}>
-                    <button
-                      onClick={() => {
-                        if (isAvailable) {
-                          setSelectedSize(size);
-                        } else {
-                          setNotifySize(size);
-                          setShowNotifyModal(true);
-                        }
-                      }}
-                      style={{
-                        ...(isMobile ? styles.mobileSizeButton : styles.sizeButton),
-                        ...(isSelected && isAvailable ? styles.sizeButtonSelected : {}),
-                        ...(!isAvailable ? styles.disabledSizeButton : {}),
-                      }}
-                      disabled={!isAvailable && !user}
-                    >
-                      {size}
-                    </button>
-                  </div>
-                );
-              })}
+            <div>
+              <div style={isMobile ? styles.mobileSizeOptions : styles.sizeOptions}>
+                {allSizes.map((size) => {
+                  const isAvailable = sizeStock[size] > 0;
+                  const isSelected = selectedSize === size;
+                  return (
+                    <div key={size} style={{ position: 'relative' }}>
+                      <button
+                        onClick={() => {
+                          if (isAvailable) {
+                            setSelectedSize(size);
+                          } else {
+                            setNotifySize(size);
+                            setShowNotifyModal(true);
+                          }
+                        }}
+                        style={{
+                          ...(isMobile ? styles.mobileSizeButton : styles.sizeButton),
+                          ...(isSelected && isAvailable ? styles.sizeButtonSelected : {}),
+                          ...(!isAvailable ? styles.disabledSizeButton : {}),
+                        }}
+                        disabled={!isAvailable && !user}
+                      >
+                        {size}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+              {allSizesOutOfStock && (
+                <div
+                  style={{
+                    marginTop: '10px',
+                    backgroundColor: '#dc3545',
+                    color: '#fff',
+                    fontSize: '12px',
+                    padding: '3px 8px',
+                    borderRadius: '3px',
+                    fontFamily: "'Louvette Semi Bold', sans-serif",
+                    display: 'inline-block',
+                  }}
+                >
+                  Out of Stock
+                </div>
+              )}
             </div>
             {selectedSize && sizeStock[selectedSize] > 0 && (
               <p style={{ color: 'green', marginTop: '10px', fontSize: '14px' }}>
@@ -679,7 +699,7 @@ const styles = {
     justifyContent: 'center',
     cursor: 'pointer',
     fontSize: '20px',
-    zIndex: 10,
+    zIndex: '10',
     transition: 'all 0.3s ease',
   },
   mobileWishlistButton: {
@@ -771,7 +791,7 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    color: '#fff',
+    color: 'white',
   },
   sizeButtonSelected: {
     border: '2px solid white',

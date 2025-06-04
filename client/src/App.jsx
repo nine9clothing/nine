@@ -23,6 +23,7 @@ import MyAccount from './pages/MyAccount';
 import Rewards from './pages/Rewards';
 import ComingSoon from './pages/ComingSoon';
 import ConfirmingOrder from './pages/ConfirmingOrder';
+import InternationalOrders from './pages/InternationalOrders';
 
 import AdminLayout from './components/AdminLayout';
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -41,6 +42,7 @@ import AdminPromoCode from './pages/admin/AdminPromoCode'
 import AdminViewPromoCode from './pages/admin/AdminViewPromoCode'
 import AdminHero from './pages/admin/AdminHero'
 import AdminPoints from './pages/admin/AdminPoints'
+import AdminInternationalOrders from './pages/admin/AdminInternationalOrders'
 
 
 
@@ -71,6 +73,7 @@ const App = () => {
           <Route path="/rewards" element={<Rewards />} />
           <Route path="/coming" element={<ComingSoon />} />
           <Route path="/confirming" element={<ConfirmingOrder />} />
+          <Route path="/internationalorders" element={<InternationalOrders />} />
 
           
           <Route path="/admin" element={<AdminLayout />}>
@@ -90,6 +93,7 @@ const App = () => {
             <Route path="viewpromocode" element={<AdminViewPromoCode/>} />
             <Route path="heroimage" element={<AdminHero/>} />
             <Route path="points" element={<AdminPoints/>} />
+            <Route path="international" element={<AdminInternationalOrders/>} />
 
           </Route>
         </Routes>

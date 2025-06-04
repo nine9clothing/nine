@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase';
 import {
   FaBars, FaTimes, FaTachometerAlt, FaBoxOpen, FaPlusSquare,
   FaListAlt, FaChartLine, FaEnvelope, FaSignOutAlt, FaVideo,
-  FaAngleDown, FaAngleRight, FaShoppingCart, FaRegEye, FaExchangeAlt, FaBell, FaNewspaper, FaOpencart, FaQrcode, FaImage, FaGift
+  FaAngleDown, FaAngleRight, FaShoppingCart, FaRegEye, FaExchangeAlt, FaBell, FaNewspaper, FaOpencart, FaQrcode, FaImage, FaGift, FaPlane
 } from 'react-icons/fa';
 import logo from '../assets/nine9_logo.jpg';
 
@@ -448,7 +448,9 @@ const SidebarContent = ({ styles, colors, isActive, onLinkClick = () => {}, expa
       label: 'Orders',
       items: [
         { path: '/admin/orders', icon: FaListAlt, label: 'Placed Orders' },
+        { path: '/admin/international', icon: FaPlane , label: 'International Orders' },
         { path: '/admin/exchange', icon: FaExchangeAlt, label: 'Exchange Orders' },
+
       ]
     },
     products: {

@@ -19,6 +19,7 @@ const CartCheckout = () => {
   const [pointsDiscount, setPointsDiscount] = useState(0);
   const [stockStatus, setStockStatus] = useState({});
   const [previousStockStatus, setPreviousStockStatus] = useState({});
+  const [productStock, setProductStock] = useState({}); 
 
   const navigate = useNavigate();
   const subtotal = cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
@@ -64,6 +65,7 @@ const CartCheckout = () => {
       if (cartItems.length === 0) {
         setStockStatus({});
         setPreviousStockStatus({});
+        setProductStock({});
         return;
       }
 
@@ -81,6 +83,7 @@ const CartCheckout = () => {
         }
 
         const newStockStatus = {};
+        const newProductStock = {};
         let stockChangeMessage = null;
 
         cartItems.forEach(item => {
@@ -104,19 +107,30 @@ const CartCheckout = () => {
             }
 
             let isOutOfStock = true;
+            let stockForSize = 0;
             if (dbProduct.size && item.selectedSize) {
               try {
                 const sizeData = typeof dbProduct.size === 'string' ? JSON.parse(dbProduct.size) : dbProduct.size;
-                const stockForSize = sizeData[item.selectedSize];
-                if (stockForSize !== undefined && stockForSize > 0) {
+                stockForSize = sizeData[item.selectedSize] || 0;
+                if (stockForSize > 0) {
                   isOutOfStock = false;
                 }
               } catch (e) {
                 isOutOfStock = true;
+                stockForSize = 0;
               }
             }
 
             newStockStatus[itemKey] = isOutOfStock;
+            newProductStock[itemKey] = stockForSize;
+
+            if (item.quantity > stockForSize && stockForSize > 0) {
+              updateQuantity(item.id, item.selectedSize, stockForSize);
+              setToastMessage({
+                message: `Quantity for "${item.name}" (Size: ${item.selectedSize}) adjusted to available stock of ${stockForSize}.`,
+                type: 'info'
+              });
+            }
 
             if (previousStockStatus[itemKey] === true && !isOutOfStock) {
               stockChangeMessage = {
@@ -138,14 +152,17 @@ const CartCheckout = () => {
 
         const currentItemKeys = cartItems.map(item => `${item.id}-${item.selectedSize || 'NA'}`);
         const cleanedStockStatus = {};
+        const cleanedProductStock = {};
         currentItemKeys.forEach(key => {
           if (key in newStockStatus) {
             cleanedStockStatus[key] = newStockStatus[key];
+            cleanedProductStock[key] = newProductStock[key];
           }
         });
 
         setPreviousStockStatus(stockStatus);
         setStockStatus(cleanedStockStatus);
+        setProductStock(cleanedProductStock);
       } catch (error) {
         setToastMessage({ message: 'Failed to verify product data.', type: 'error' });
       }
@@ -154,7 +171,7 @@ const CartCheckout = () => {
     if (user) {
       verifyProductPricesAndStock();
     }
-  }, [cartItems, removeFromCart, updateCartItemPrice, user]);
+  }, [cartItems, removeFromCart, updateCartItemPrice, updateQuantity, user]);
 
   useEffect(() => {
     if (redeemPoints) {
@@ -333,6 +350,7 @@ const CartCheckout = () => {
             cartItems.map(item => {
               const itemKey = `${item.id}-${item.selectedSize || 'NA'}`;
               const isOutOfStock = stockStatus[itemKey] || false;
+              const maxQuantity = productStock[itemKey] || 10; 
 
               return (
                 <div key={itemKey} style={styles.itemCard}>
@@ -360,22 +378,31 @@ const CartCheckout = () => {
                       <input
                         type="number"
                         min="1"
-                        max="10"
+                        max={maxQuantity}
                         value={item.quantity}
                         onChange={(e) => {
                           const qty = parseInt(e.target.value, 10);
-                          if (qty >= 1 && qty <= 10) {
+                          if (qty >= 1 && qty <= maxQuantity) {
                             updateQuantity(item.id, item.selectedSize, qty);
+                          } else if (qty > maxQuantity) {
+                            setToastMessage({
+                              message: `Cannot set quantity above available stock of ${maxQuantity} for ${item.name} (Size: ${item.selectedSize}).`,
+                              type: 'error'
+                            });
                           }
                         }}
                         style={styles.qtyInput}
                         disabled={isOutOfStock}
                       />
+                      {!isOutOfStock && maxQuantity > 0 && (
+                        <span style={{ ...styles.itemSize, marginLeft: '8px' }}>
+                        </span>
+                      )}
                     </div>
                     <p style={styles.itemPrice}>
                       ₹{item.price * item.quantity}
                       {appliedPromo?.product_id === item.id && discount > 0 && (
-                        <span style={{ color: '#Ffa500', marginLeft: '8px',fontSize: '15px' , display: 'block'}}>
+                        <span style={{ color: '#Ffa500', marginLeft: '8px', fontSize: '15px', display: 'block' }}>
                           ( -₹{discount.toFixed(2)})
                         </span>
                       )}
@@ -497,6 +524,40 @@ const CartCheckout = () => {
           >
             {loadingOrder ? 'Proceeding...' : 'Proceed to Checkout'}
           </button>
+          <div style={{ textAlign: 'center', marginTop: '12px' }}>
+            <a
+              href="/internationalorders"
+              onClick={(e) => {
+                e.preventDefault();
+                if (cartItems.length === 0) {
+                  setToastMessage({ message: 'Your cart is empty.', type: 'error' });
+                  return;
+                }
+                if (!user) {
+                  setToastMessage({ message: 'Login Needed: Please log in to proceed to international orders.', type: 'error' });
+                  setTimeout(() => navigate('/login'), 1500);
+                  return;
+                }
+                if (hasOutOfStockItems) {
+                  setToastMessage({ message: 'Please remove out-of-stock items before proceeding.', type: 'error' });
+                  return;
+                }
+                navigate('/internationalorders', {
+                  state: {
+                    subtotal,
+                    discount,
+                    pointsToRedeem: redeemPoints ? Math.min(points, 495) : 0,
+                    pointsDiscount,
+                    total: totalAfterDiscount,
+                    appliedPromo,
+                  },
+                });
+              }}
+              style={styles.internationalOrdersLink}
+            >
+              Click here for International Orders
+            </a>
+          </div>
         </div>
       </div>
 
@@ -706,6 +767,17 @@ const styles = {
     transition: 'background-color 0.2s ease',
     fontSize: '0.9rem',
   },
+ internationalOrdersLink: {
+    color: '#Ffa500',
+    fontFamily: "'Louvette Semi Bold', sans-serif",
+    fontSize: window.innerWidth <= 768 ? '0.9rem' : '1rem', 
+    fontWeight: '600',
+    textDecoration: 'underline',
+    cursor: 'pointer',
+    transition: 'color 0.2s ease-in-out',
+    display: 'inline-block',
+    marginBottom: '24px',
+},
   checkboxContainer: {
     display: 'flex',
     alignItems: 'center',

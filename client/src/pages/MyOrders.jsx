@@ -14,7 +14,6 @@ const MyOrders = () => {
   const [exchangeReason, setExchangeReason] = useState('');
   const [selectedItems, setSelectedItems] = useState([]);
 
-  // Predefined exchange reasons
   const exchangeReasons = [
     'Wrong item received',
     'Item defective or damaged',
@@ -22,23 +21,22 @@ const MyOrders = () => {
     'Other'
   ];
 
-  // Window resize listener
   useEffect(() => {
     const handleResize = () => {
       setWindowWidth(window.innerWidth);
     };
 
-    if (typeof generation !== 'undefined') {
+    if (typeof window !== 'undefined') {
       window.addEventListener('resize', handleResize);
       return () => window.removeEventListener('resize', handleResize);
     }
   }, []);
 
-  // Check if mobile view
   const isMobile = windowWidth < 768;
 
   useEffect(() => {
     const fetchOrders = async () => {
+      setLoading(true);
       const { data: { session } } = await supabase.auth.getSession();
       const user = session?.user;
       if (!user) {
@@ -46,72 +44,105 @@ const MyOrders = () => {
         return;
       }
 
-      const { data, error } = await supabase
+      const { data: regularOrders, error: regularError } = await supabase
         .from('orders')
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
-      if (!error) {
-        const filteredOrders = [];
-        const orderMap = new Map();
-        const skus = new Set();
+      const { data: internationalOrders, error: internationalError } = await supabase
+        .from('international_orders')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
 
-        // Collect unique SKUs and filter orders with valid payment methods
-        data.forEach((order) => {
-          if (
-            order.order_id === order.display_order_id &&
-            order.payment_method && // Ensure payment_method exists
-            order.payment_method !== 'N/A' // Exclude 'N/A'
-          ) {
-            order.items.forEach(item => skus.add(item.sku));
-            if (!orderMap.has(order.order_id) || new Date(order.created_at) > new Date(orderMap.get(order.order_id).created_at)) {
-              const itemsWithUniqueIds = order.items.map((item, index) => ({
-                ...item,
-                id: item.id || `${order.order_id}-item-${index}`
-              }));
-              orderMap.set(order.order_id, {
-                ...order,
-                items: itemsWithUniqueIds
-              });
-            }
-          }
+      if (regularError || internationalError) {
+        setToastMessage({ 
+          message: `Error loading orders: ${regularError?.message || internationalError?.message}`, 
+          type: 'error' 
         });
-
-        // Fetch product images for all SKUs in one query
-        const { data: products, error: productError } = await supabase
-          .from('products')
-          .select('id, media_urls')
-          .in('id', Array.from(skus));
-
-        if (productError) {
-          // console.error('Error fetching products:', productError.message);
-          setToastMessage({ message: 'Error fetching product images: ' + productError.message, type: 'error' });
-        }
-
-        // Create a map of SKU to image URL
-        const productImageMap = new Map();
-        products?.forEach(product => {
-          const img = Array.isArray(product.media_urls)
-            ? product.media_urls.find(url => url.match(/\.(jpeg|jpg|png|gif|webp)$/i))
-            : null;
-          productImageMap.set(product.id, img || 'https://via.placeholder.com/100?text=No+Image');
-        });
-
-        // Add image_url to each item
-        orderMap.forEach((order) => {
-          const updatedItems = order.items.map(item => ({
-            ...item,
-            image_url: productImageMap.get(item.sku) || 'https://via.placeholder.com/100?text=No+Image'
-          }));
-          filteredOrders.push({ ...order, items: updatedItems });
-        });
-
-        setOrders(filteredOrders);
-      } else {
-        // console.error('Error loading orders:', error.message);
-        setToastMessage({ message: 'Error loading orders: ' + error.message, type: 'error' });
+        setLoading(false);
+        return;
       }
+
+      const filteredOrders = [];
+      const orderMap = new Map();
+      const skus = new Set();
+
+      regularOrders.forEach((order) => {
+        if (
+          order.order_id === order.display_order_id &&
+          order.payment_method && 
+          order.payment_method !== 'N/A'
+        ) {
+          order.items.forEach(item => skus.add(item.sku));
+          if (!orderMap.has(order.order_id) || new Date(order.created_at) > new Date(orderMap.get(order.order_id).created_at)) {
+            const itemsWithUniqueIds = order.items.map((item, index) => ({
+              ...item,
+              id: item.id || `${order.order_id}-item-${index}`
+            }));
+            orderMap.set(order.order_id, {
+              ...order,
+              items: itemsWithUniqueIds,
+              isInternational: false
+            });
+          }
+        }
+      });
+
+      internationalOrders.forEach((order) => {
+        if (!orderMap.has(order.id) || new Date(order.created_at) > new Date(orderMap.get(order.id).created_at)) {
+          const itemsWithUniqueIds = order.items.map((item, index) => ({
+            ...item,
+            id: item.id || `${order.id}-item-${index}`,
+            sku: item.sku || item.id
+          }));
+          orderMap.set(order.id, {
+            ...order,
+            order_id: order.id,
+            display_order_id: order.id,
+            shipping_status: order.status,
+            shipping_name: order.name,
+            shipping_phone: order.phone,
+            shipping_address: order.address,
+            shipping_city: order.city,
+            shipping_pincode: order.pincode,
+            payment_method: order.payment_method || 'N/A',
+            items: itemsWithUniqueIds,
+            isInternational: true
+          });
+          order.items.forEach(item => item.sku && skus.add(item.sku));
+        }
+      });
+
+      const { data: products, error: productError } = await supabase
+        .from('products')
+        .select('id, media_urls')
+        .in('id', Array.from(skus));
+
+      if (productError) {
+        setToastMessage({ message: 'Error fetching product images: ' + productError.message, type: 'error' });
+      }
+
+      const productImageMap = new Map();
+      products?.forEach(product => {
+        const img = Array.isArray(product.media_urls)
+          ? product.media_urls.find(url => url.match(/\.(jpeg|jpg|png|gif|webp)$/i))
+          : null;
+        productImageMap.set(product.id, img || 'https://via.placeholder.com/100?text=No+Image');
+      });
+
+      orderMap.forEach((order) => {
+        const updatedItems = order.items.map(item => ({
+          ...item,
+          image_url: productImageMap.get(item.sku) || 'https://via.placeholder.com/100?text=No+Image'
+        }));
+        filteredOrders.push({ ...order, items: updatedItems });
+      });
+
+      filteredOrders.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+      setOrders(filteredOrders);
       setLoading(false);
     };
 
@@ -190,8 +221,9 @@ const MyOrders = () => {
           name: item.name
         }));
 
+      const tableName = orderToUpdate.isInternational ? 'international_orders' : 'orders';
       const { error } = await supabase
-        .from('orders')
+        .from(tableName)
         .update({
           items: updatedItems,
           exchange_requested: true,
@@ -199,7 +231,7 @@ const MyOrders = () => {
           exchanged_items: exchangedItemsWithDetails,
           exchange_status: 'pending'
         })
-        .eq('order_id', selectedOrderId);
+        .eq(orderToUpdate.isInternational ? 'id' : 'order_id', selectedOrderId);
 
       if (error) {
         throw new Error(error.message);
@@ -228,7 +260,6 @@ const MyOrders = () => {
       setExchangeReason('');
       setSelectedItems([]);
     } catch (error) {
-      // console.error('Error requesting exchange:', error.message);
       setToastMessage({
         message: `Failed to request exchange for order #${selectedOrderId}: ${error.message}`,
         type: 'error'
@@ -252,15 +283,23 @@ const MyOrders = () => {
               {isMobile ? (
                 <>
                   <div style={styles.orderHeaderMobile}>
-                    <h3 style={styles.orderIdMobile}>#{order.display_order_id}</h3>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <h3 style={styles.orderIdMobile}>#{order.display_order_id}</h3>
+                      {order.isInternational && (
+                        <span style={styles.internationalTagMobile}>International Order</span>
+                      )}
+                    </div>
                     <span style={{
                       ...styles.orderStatusMobile,
                       backgroundColor:
-                        order.shipping_status.toLowerCase() === 'placed' ? '#28a745' :
-                        order.shipping_status.toLowerCase() === 'shipped' ? '#007bff' :
-                        order.shipping_status.toLowerCase() === 'delivered' ? '#17a2b8' :
-                        order.shipping_status.toLowerCase() === 'cancelled' ? '#dc3545' :
-                        '#6c757d'
+                        order.shipping_status.toLowerCase() === 'placed' ? '#1e7e34' :
+                        order.shipping_status.toLowerCase() === 'shipped' ? '#005cbf' :
+                        order.shipping_status.toLowerCase() === 'delivered' ? '#117a8b' :
+                        order.shipping_status.toLowerCase() === 'order cancelled' ? '#c82333' :
+                        order.shipping_status.toLowerCase() === 'payment pending' ? '#1e4976' :
+                        order.shipping_status.toLowerCase() === 'payment successful' ? '#1c7430' :
+                        order.shipping_status.toLowerCase() === 'payment failed' ? '#a71d2a' :
+                        '#5a6268'
                     }}>
                       {order.shipping_status}
                     </span>
@@ -269,13 +308,21 @@ const MyOrders = () => {
                   <div style={styles.mobileMetaInfo}>
                     <p style={styles.metaMobile}><strong>Date:</strong> {new Date(order.created_at).toLocaleString()}</p>
                     <p style={styles.metaMobile}><strong>Total:</strong> ₹{order.total.toFixed(2)}</p>
-                    <p style={styles.metaMobile}><strong>Payment Method:</strong> {order.payment_method}</p>
+                    {!order.isInternational && (
+                      <p style={styles.metaMobile}><strong>Payment Method:</strong> {order.payment_method}</p>
+                    )}
+                    {order.isInternational && (
+                      <p style={styles.metaMobile}><strong>Country:</strong> {order.country || 'N/A'}</p>
+                    )}
                   </div>
 
                   <div style={styles.mobileSection}>
                     <p style={styles.subTitleMobile}>Shipping Address</p>
                     <p style={styles.metaMobile}>{order.shipping_name}, {order.shipping_phone}</p>
                     <p style={styles.metaMobile}>{order.shipping_address}, {order.shipping_city} - {order.shipping_pincode}</p>
+                    {order.isInternational && (
+                      <p style={styles.metaMobile}>{order.country}</p>
+                    )}
                   </div>
 
                   <div style={styles.mobileSection}>
@@ -289,7 +336,7 @@ const MyOrders = () => {
                         />
                         <div style={styles.itemInfoMobile}>
                           <p style={styles.itemNameMobile}>{item.name}</p>
-                          <p style={styles.itemDetailsMobile}>Size: {item.selectedSize || 'N/A'} × {item.quantity || 1}</p>
+                          <p style={styles.itemDetailsMobile}>Size: {item.selectedSize || 'N/A'} × {item.quantity || item.units || 1}</p>
                           {item.exchange_requested && (
                             <p style={styles.exchangeTagMobile}>Exchange Requested</p>
                           )}
@@ -306,11 +353,11 @@ const MyOrders = () => {
                       </p>
                       <p style={styles.metaMobile}><strong>Reason:</strong> {order.exchange_reason}</p>
                     </div>
-                  ) : isExchangeTimelineExceeded(order.created_at, order.shipping_status) ? (
+                  ) : !order.isInternational && isExchangeTimelineExceeded(order.created_at, order.shipping_status) ? (
                     <p style={styles.exchangeTimelineExceededMobile}>
                       Exchange timeline exceeded. Products can only be exchanged within 5 days of delivery.
                     </p>
-                  ) : canExchange(order.created_at, order.shipping_status) && (
+                  ) : !order.isInternational && canExchange(order.created_at, order.shipping_status) && (
                     <button
                       style={styles.exchangeButtonMobile}
                       onClick={() => openExchangeModal(order.order_id)}
@@ -323,15 +370,23 @@ const MyOrders = () => {
                 <div style={styles.row}>
                   <div style={styles.leftCol}>
                     <div style={styles.orderHeader}>
-                      <h3 style={styles.orderId}>#{order.display_order_id}</h3>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <h3 style={styles.orderId}>#{order.display_order_id}</h3>
+                        {order.isInternational && (
+                          <span style={styles.internationalTag}>International Order</span>
+                        )}
+                      </div>
                       <span style={{
                         ...styles.orderStatus,
                         backgroundColor:
-                          order.shipping_status.toLowerCase() === 'placed' ? '#28a745' :
-                          order.shipping_status.toLowerCase() === 'shipped' ? '#007bff' :
-                          order.shipping_status.toLowerCase() === 'delivered' ? '#17a2b8' :
-                          order.shipping_status.toLowerCase() === 'cancelled' ? '#dc3545' :
-                          '#6c757d'
+                          order.shipping_status.toLowerCase() === 'placed' ? '#1e7e34' :
+                          order.shipping_status.toLowerCase() === 'shipped' ? '#005cbf' :
+                          order.shipping_status.toLowerCase() === 'delivered' ? '#117a8b' :
+                          order.shipping_status.toLowerCase() === 'order cancelled' ? '#c82333' :
+                          order.shipping_status.toLowerCase() === 'payment pending' ? '#1e4976' :
+                          order.shipping_status.toLowerCase() === 'payment successful' ? '#1c7430' :
+                          order.shipping_status.toLowerCase() === 'payment failed' ? '#a71d2a' :
+                          '#5a6268'
                       }}>
                         {order.shipping_status}
                       </span>
@@ -339,12 +394,20 @@ const MyOrders = () => {
 
                     <p style={styles.meta}><strong>Date:</strong> {new Date(order.created_at).toLocaleString()}</p>
                     <p style={styles.meta}><strong>Total:</strong> ₹{order.total.toFixed(2)}</p>
-                    <p style={styles.meta}><strong>Payment Method:</strong> {order.payment_method}</p>
+                    {!order.isInternational && (
+                      <p style={styles.meta}><strong>Payment Method:</strong> {order.payment_method}</p>
+                    )}
+                    {order.isInternational && (
+                      <p style={styles.meta}><strong>Country:</strong> {order.country || 'N/A'}</p>
+                    )}
 
                     <div style={styles.section}>
                       <p style={styles.subTitle}>Shipping Address</p>
                       <p style={styles.meta}>{order.shipping_name}, {order.shipping_phone}</p>
                       <p style={styles.meta}>{order.shipping_address}, {order.shipping_city} - {order.shipping_pincode}</p>
+                      {order.isInternational && (
+                        <p style={styles.meta}>{order.country}</p>
+                      )}
                     </div>
 
                     {order.exchange_requested ? (
@@ -355,11 +418,11 @@ const MyOrders = () => {
                         </p>
                         <p style={styles.meta}><strong>Reason:</strong> {order.exchange_reason}</p>
                       </div>
-                    ) : isExchangeTimelineExceeded(order.created_at, order.shipping_status) ? (
+                    ) : !order.isInternational && isExchangeTimelineExceeded(order.created_at, order.shipping_status) ? (
                       <p style={styles.exchangeTimelineExceeded}>
-                        Exchange timeline exceeded. Products can only be exchanged within 5 days of delivery.
+                        Exchange timeline exceeded.<br/> Products can only be exchanged within 5 days of delivery.
                       </p>
-                    ) : canExchange(order.created_at, order.shipping_status) && (
+                    ) : !order.isInternational && canExchange(order.created_at, order.shipping_status) && (
                       <button
                         style={styles.exchangeButton}
                         onClick={() => openExchangeModal(order.order_id)}
@@ -380,7 +443,7 @@ const MyOrders = () => {
                         />
                         <div style={styles.itemInfo}>
                           <p style={styles.itemName}>{item.name}</p>
-                          <p style={styles.itemDetails}>Size: {item.selectedSize || 'N/A'} × {item.quantity || 1}</p>
+                          <p style={styles.itemDetails}>Size: {item.selectedSize || 'N/A'} × {item.quantity || item.units || 1}</p>
                           {item.exchange_requested && (
                             <p style={styles.exchangeTag}>Exchange Requested</p>
                           )}
@@ -430,7 +493,7 @@ const MyOrders = () => {
                         <div>
                           <p style={styles.exchangeItemName}>{item.name}</p>
                           <p style={styles.exchangeItemDetails}>
-                            Size: {item.selectedSize || 'N/A'} × {item.quantity || 1}
+                            Size: {item.selectedSize || 'N/A'} × {item.quantity || item.units || 1}
                           </p>
                         </div>
                       </div>
@@ -475,7 +538,6 @@ const MyOrders = () => {
   );
 };
 
-// Styles remain unchanged
 const styles = {
   pageWrapper: {
     display: 'flex',
@@ -547,6 +609,15 @@ const styles = {
     fontSize: '0.85rem',
     textTransform: 'capitalize',
     fontFamily: "'Louvette Semi Bold', sans-serif"
+  },
+  internationalTag: {
+    display: 'inline-block',
+    color: 'black',
+    border:'1px solid black',
+    fontSize: '0.85rem',
+    padding: '2px 8px',
+    borderRadius: '4px',
+    fontFamily: "'Louvette Semi Bold', sans-serif",
   },
   meta: {
     fontSize: '0.95rem',
@@ -667,6 +738,15 @@ const styles = {
     fontSize: '0.8rem',
     textTransform: 'capitalize',
     fontFamily: "'Louvette Semi Bold', sans-serif"
+  },
+  internationalTagMobile: {
+    display: 'inline-block',
+    backgroundColor: '#Ffa500',
+    color: 'black',
+    fontSize: '0.75rem',
+    padding: '1px 6px',
+    borderRadius: '4px',
+    fontFamily: "'Louvette Semi Bold', sans-serif",
   },
   mobileMetaInfo: {
     marginBottom: '12px',

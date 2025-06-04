@@ -27,7 +27,6 @@ const ViewProducts = () => {
       .order('created_at', { ascending: false });
 
     if (error) {
-      // console.error('Error loading products:', error.message);
       setToast({ message: 'Failed to load products.', type: 'error' });
       setProducts([]);
       setFilteredProducts([]);
@@ -81,7 +80,6 @@ const ViewProducts = () => {
     try {
       const { error: deleteError } = await supabase.from('products').delete().eq('id', id);
       if (deleteError) {
-        // console.error('Error deleting product record:', deleteError);
         throw new Error('Failed to delete product from database.');
       }
 
@@ -95,10 +93,8 @@ const ViewProducts = () => {
               if (bucketNameIndex !== -1 && bucketNameIndex + 1 < pathSegments.length) {
                 return pathSegments.slice(bucketNameIndex + 1).join('/');
               }
-              // console.warn('Could not parse file path from URL:', url);
               return null;
             } catch (e) {
-              // console.error('Error parsing media URL:', url, e);
               return null;
             }
           })
@@ -110,7 +106,6 @@ const ViewProducts = () => {
             .remove(filePaths);
 
           if (storageError) {
-            // console.error('Error deleting product media from storage:', storageError);
             setToast({ message: 'Product record deleted, but failed to delete some media files.', type: 'warning' });
           } else {
             setToast({ message: 'Product and associated media deleted successfully!', type: 'success' });
@@ -141,7 +136,7 @@ const ViewProducts = () => {
       composition_fabric: product.composition_fabric || '',
       shipping_info: product.shipping_info || '',
       exchange: product.exchange || '',
-      strike_price: product.strike_price || '', // NEW: Initialize strike_price
+      strike_price: product.strike_price || '', 
     });
   };
 
@@ -179,19 +174,15 @@ const ViewProducts = () => {
       composition_fabric,
       shipping_info,
       exchange,
-      strike_price, // NEW: Destructure strike_price
+      strike_price,
     } = editFormData;
 
-    const hasStock = Object.values(size).some(stock => stock > 0);
-
-    // NEW: Validate strike_price (optional, can be null or a number)
-    if (!name || !description || !price || !category || !gender || !hasStock || !care_guide || !composition_fabric || !shipping_info || !exchange) {
-      setToast({ message: 'All required fields must be filled, and at least one size must have stock.', type: 'error' });
+   if (!name || !description || !price || !category || !gender || !care_guide || !composition_fabric || !shipping_info || !exchange) {
+  setToast({ message: 'All required fields must be filled.', type: 'error' });
       setIsUpdating(false);
       return;
     }
 
-    // NEW: Ensure strike_price is either a number or null
     const formattedStrikePrice = strike_price ? parseFloat(strike_price) : null;
 
     try {
@@ -210,7 +201,6 @@ const ViewProducts = () => {
       }).eq('id', id);
 
       if (error) {
-        // console.error('Update Error:', error);
         throw new Error('Failed to update product.');
       }
 
@@ -510,7 +500,6 @@ const ViewProducts = () => {
                   <h4>{product.name}</h4>
                   <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
                     <p style={{ margin: '5px 0', fontWeight: 'bold' }}>₹{product.price}</p>
-                    {/* NEW: Display strike_price if it exists */}
                     {product.strike_price && (
                       <p
                         style={{
@@ -625,7 +614,6 @@ const ViewProducts = () => {
   );
 };
 
-// Styles remain unchanged
 const inputStyle = {
   width: '100%',
   padding: '10px',

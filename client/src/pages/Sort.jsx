@@ -38,7 +38,6 @@ const Sort = () => {
         .select('category');
 
       if (error) {
-        // console.error('Error fetching categories:', error.message);
       } else if (data) {
         const uniqueCategories = [...new Set(data.map(item => item.category).filter(Boolean))];
         setAvailableCategories(uniqueCategories.sort());
@@ -78,7 +77,7 @@ const Sort = () => {
         .productCard {
           height: 300px !important;
           width: 100% !important;
-          max-width: 130px !important; /* Restrict width */
+          max-width: 130px !important;
           padding: 0 !important;
           border: none !important;
           border-radius: 0 !important;
@@ -88,13 +87,13 @@ const Sort = () => {
         .productImageWrapper {
           height: 180px !important;
           width: 120% !important;
-          max-width: 120px !important; /* Restrict width */
+          max-width: 120px !important;
           border-radius: 8px !important;
           position: relative;
         }
         .productImage {
           width: 100% !important;
-          max-width: 120px !important; /* Restrict image width */
+          max-width: 120px !important;
           height: 100% !important;
           object-fit: cover !important;
         }
@@ -110,25 +109,25 @@ const Sort = () => {
           white-space: nowrap !important;
           font-family: 'Louvette Semi Bold', sans-serif !important;
         }
-       .productPrice {
-  display: flex !important;
-  align-items: center !important;
-  gap: 6px !important;
-  margin-top: 2px !important;
-  margin-bottom: 8px !important;
-}
-.productPrice .strikePrice {
-  font-size: 10px !important;
-  color: #ccc !important;
-  text-decoration: line-through !important;
-  font-family: 'Louvette Semi Bold', sans-serif !important;
-}
-.productPrice .currentPrice {
-  font-size: 10px !important;
-  color: #Ffa500 !important;
-  font-weight: bold !important;
-  font-family: 'Louvette Semi Bold', sans-serif !important;
-}
+        .productPrice {
+          display: flex !important;
+          align-items: center !important;
+          gap: 6px !important;
+          margin-top: 2px !important;
+          margin-bottom: 8px !important;
+        }
+        .productPrice .strikePrice {
+          font-size: 10px !important;
+          color: #ccc !important;
+          text-decoration: line-through !important;
+          font-family: 'Louvette Semi Bold', sans-serif !important;
+        }
+        .productPrice .currentPrice {
+          font-size: 10px !important;
+          color: #Ffa500 !important;
+          font-weight: bold !important;
+          font-family: 'Louvette Semi Bold', sans-serif !important;
+        }
         .wishlistButton {
           position: absolute !important;
           top: 10px !important;
@@ -136,6 +135,21 @@ const Sort = () => {
           z-index: 10 !important;
           width: 30px !important;
           height: 30px !important;
+        }
+        .outOfStockTag {
+          position: absolute !important;
+          top: 40px !important;
+          left: -15px !important;
+          background-color: #dc3545 !important;
+          color: #fff !important;
+          font-size: 10px !important;
+          padding: 2px 12px !important;
+          border-radius: 3px !important;
+          font-family: 'Louvette Semi Bold', sans-serif !important;
+          z-index: 20 !important;
+          transform: rotate(-45deg) !important;
+          transform-origin: top left !important;
+          width: 80px !important;
         }
         .addToCartButton {
           display: flex !important;
@@ -150,7 +164,7 @@ const Sort = () => {
           font-weight: bold !important;
           cursor: pointer !important;
           width: 100% !important;
-          max-width: 180px !important; /* Restrict width */
+          max-width: 180px !important;
           margin-top: 6px !important;
           transition: background-color 0.2s ease !important;
           font-family: 'Abril Extra Bold', sans-serif !important;
@@ -237,7 +251,6 @@ const Sort = () => {
         .select('items');
 
       if (ordersError) {
-        // console.error('Error fetching orders:', ordersError.message);
         setProducts([]);
         setLoading(false);
         return;
@@ -257,7 +270,6 @@ const Sort = () => {
       const { data: productsData, error: productsError } = await query;
       
       if (productsError) {
-        // console.error('Error fetching products:', productsError.message);
         setProducts([]);
         setLoading(false);
         return;
@@ -288,7 +300,6 @@ const Sort = () => {
     const { data, error } = await query;
 
     if (error) {
-      // console.error('Error fetching products:', error.message);
       setProducts([]);
     } else {
       setProducts(data || []);
@@ -372,7 +383,7 @@ const Sort = () => {
                       onChange={() => handleCheckboxChange(gen, selectedGenders, setSelectedGenders)}
                     />
                     <span style={styles.checkboxText}>{gen}</span>
-                  </label>
+                    </label>
                 ))}
               </div>
               <div style={styles.filterSection}>
@@ -401,63 +412,96 @@ const Sort = () => {
             </p>
           ) : (
             <div className="gridContainer" style={styles.gridContainer}>
-              {products.map((product) => (
-                <Link to={`/product/${product.id}`} key={product.id} style={styles.productLink}>
-                  <div
-                    className="productCard"
-                    style={styles.productCard}
-                    onMouseEnter={() => setHoveredProductId(product.id)}
-                    onMouseLeave={() => setHoveredProductId(null)}
-                  >
-                    <div style={styles.imageWrapper} className="productImageWrapper">
-                      {user && (
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            toggleWishlist(product.id);
+              {products.map((product) => {
+                let sizeStock = {};
+                try {
+                  sizeStock = product.size ? JSON.parse(product.size) : {};
+                } catch (error) {
+                  sizeStock = {};
+                }
+                const allSizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'];
+                const isOutOfStock = allSizes.every(size => !sizeStock[size] || sizeStock[size] <= 0);
+
+                return (
+                  <Link to={`/product/${product.id}`} key={product.id} style={styles.productLink}>
+                    <div
+                      className="productCard"
+                      style={styles.productCard}
+                      onMouseEnter={() => setHoveredProductId(product.id)}
+                      onMouseLeave={() => setHoveredProductId(null)}
+                    >
+                      <div style={styles.imageWrapper} className="productImageWrapper">
+                        {user && (
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              toggleWishlist(product.id);
+                            }}
+                            style={styles.wishlistButton}
+                            className="wishlistButton"
+                            title={wishlist.includes(product.id) ? 'Remove from wishlist' : 'Add to wishlist'}
+                          >
+                            {wishlist.includes(product.id) ? <FaHeart color="red" size={18} /> : <FaRegHeart color="black" size={18} />}
+                          </button>
+                        )}
+                        {isOutOfStock && (
+                          <div
+                            style={{
+                              position: 'absolute',
+                              top: '50px',
+                              left: '-20px',
+                              backgroundColor: '#dc3545',
+                              color: '#fff',
+                              fontSize: '12px',
+                              padding: '3px 15px',
+                              borderRadius: '3px',
+                              fontFamily: "'Louvette Semi Bold', sans-serif",
+                              zIndex: '20',
+                              transform: 'rotate(-45deg)',
+                              transformOrigin: 'top left',
+                              width: '100px',
+                            }}
+                            className="outOfStockTag"
+                          >
+                            Out of Stock
+                          </div>
+                        )}
+                        <img
+                          className="productImage"
+                          src={getImageUrl(product.media_urls, hoveredProductId === product.id ? 1 : 0)}
+                          alt={product.name || 'Product Image'}
+                          style={{
+                            ...styles.productImage,
+                            transform: hoveredProductId === product.id ? 'scale(1.1)' : 'scale(1)',
                           }}
-                          style={styles.wishlistButton}
-                          className="wishlistButton"
-                          title={wishlist.includes(product.id) ? 'Remove from wishlist' : 'Add to wishlist'}
+                        />
+                      </div>
+                      <h3 className="productName" style={styles.productName}>{product.name}</h3>
+                      <div className="productPrice" style={styles.productPrice}>
+                        {product.strike_price ? (
+                          <>
+                            <span style={styles.strikePrice}>₹{product.strike_price}</span>
+                            <span style={styles.currentPrice}>₹{product.price}</span>
+                          </>
+                        ) : (
+                          <span style={styles.currentPrice}>₹{product.price}</span>
+                        )}
+                      </div>
+                      {isMobile && (
+                        <button
+                          onClick={(e) => handleAddToCart(e, product.id)}
+                          className="addToCartButton"
+                          style={styles.addToCartButton}
                         >
-                          {wishlist.includes(product.id) ? <FaHeart color="red" size={18} /> : <FaRegHeart color="black" size={18} />}
+                          <FaShoppingCart className="cartIcon" size={14} />
+                          Add to Cart
                         </button>
                       )}
-                      <img
-                        className="productImage"
-                        src={getImageUrl(product.media_urls, hoveredProductId === product.id ? 1 : 0)}
-                        alt={product.name || 'Product Image'}
-                        style={{
-                          ...styles.productImage,
-                          transform: hoveredProductId === product.id ? 'scale(1.1)' : 'scale(1)',
-                        }}
-                      />
                     </div>
-                    <h3 className="productName" style={styles.productName}>{product.name}</h3>
-                   <div className="productPrice" style={styles.productPrice}>
-                    {product.strike_price ? (
-                      <>
-                        <span style={styles.strikePrice}>₹{product.strike_price}</span>
-                        <span style={styles.currentPrice}>₹{product.price}</span>
-                      </>
-                    ) : (
-                      <span style={styles.currentPrice}>₹{product.price}</span>
-                    )}
-                  </div>
-                    {isMobile && (
-                      <button
-                        onClick={(e) => handleAddToCart(e, product.id)}
-                        className="addToCartButton"
-                        style={styles.addToCartButton}
-                      >
-                        <FaShoppingCart className="cartIcon" size={14} />
-                        Add to Cart
-                      </button>
-                    )}
-                  </div>
-                </Link>
-              ))}
+                  </Link>
+                );
+              })}
             </div>
           )}
         </div>
@@ -598,13 +642,11 @@ const styles = {
     alignItems: 'center',
     height: '500px',
     width: '100%',
-    maxWidth: '300px', // Restrict maximum width
+    maxWidth: '300px',
     margin: '0 auto',
     overflow: 'hidden',
     transition: 'transform 0.3s ease, box-shadow 0.3s ease',
     position: 'relative',
-    ':hover': {
-    },
   },
   wishlistButton: {
     position: 'absolute',
@@ -628,7 +670,7 @@ const styles = {
   },
   imageWrapper: {
     width: '100%',
-    maxWidth: '300px', // Restrict maximum width
+    maxWidth: '300px',
     height: '350px',
     overflow: 'hidden',
     marginBottom: '15px',
@@ -638,7 +680,7 @@ const styles = {
   productImage: {
     display: 'block',
     width: '100%',
-    maxWidth: '300px', // Restrict maximum width
+    maxWidth: '300px',
     height: '100%',
     objectFit: 'cover',
     transition: 'transform 0.4s ease-out',
@@ -666,25 +708,25 @@ const styles = {
     textOverflow: 'ellipsis',
     fontFamily: "'Louvette Semi Bold', sans-serif",
   },
-productPrice: {
-  display: 'flex',
-  alignItems: 'center',
-  gap: '10px',
-  marginTop: 'auto',
-  paddingTop: '5px',
-},
-strikePrice: {
-  fontSize: '0.9rem',
-  color: '#ccc',
-  textDecoration: 'line-through',
-  fontFamily: "'Louvette Semi Bold', sans-serif",
-},
-currentPrice: {
-  fontWeight: 'bold',
-  fontSize: '1rem',
-  color: 'white',
-  fontFamily: "'Louvette Semi Bold', sans-serif",
-},
+  productPrice: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+    marginTop: 'auto',
+    paddingTop: '5px',
+  },
+  strikePrice: {
+    fontSize: '0.9rem',
+    color: '#ccc',
+    textDecoration: 'line-through',
+    fontFamily: "'Louvette Semi Bold', sans-serif",
+  },
+  currentPrice: {
+    fontWeight: 'bold',
+    fontSize: '1rem',
+    color: 'white',
+    fontFamily: "'Louvette Semi Bold', sans-serif",
+  },
   addToCartButton: {
     display: 'none',
     alignItems: 'center',
@@ -697,7 +739,7 @@ currentPrice: {
     fontWeight: 'bold',
     cursor: 'pointer',
     width: '100%',
-    maxWidth: '300px', // Restrict maximum width
+    maxWidth: '300px',
     marginTop: '8px',
     transition: 'background-color 0.2s ease',
     fontFamily: "'Abril Extra Bold', sans-serif",

@@ -68,7 +68,8 @@ const Checkout = () => {
         const { data, error } = await supabase
           .from('user_addresses')
           .select('*')
-          .eq('user_id', user.id);
+          .eq('user_id', user.id)
+          .eq('shipping', "National");
         if (!error) {
           setAddresses(data);
         } else {
@@ -151,7 +152,7 @@ const Checkout = () => {
 
     const { data, error } = await supabase
       .from('user_addresses')
-      .insert([{ user_id: user.id, name, address, city, pincode, phone }])
+      .insert([{ user_id: user.id, name, address, city, pincode, phone, shipping: "National" }])
       .select();
 
     if (error) {
@@ -163,7 +164,8 @@ const Checkout = () => {
       const { data: updatedAddresses, error } = await supabase
         .from('user_addresses')
         .select('*')
-        .eq('user_id', user.id);
+        .eq('user_id', user.id)
+        .eq('shipping', "National");
       if (!error) {
         setAddresses(updatedAddresses);
       } else {
